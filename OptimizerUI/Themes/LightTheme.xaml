@@ -1,0 +1,177 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================================
+         SEMANTIC COLOR SYSTEM - LIGHT THEME
+         ============================================================ -->
+
+    <!-- Brand Colors (Same as Dark) -->
+    <Color x:Key="BrandPrimaryColor">#0078D4</Color>
+    <Color x:Key="BrandPrimaryDarkColor">#005A9E</Color>
+    <Color x:Key="BrandPrimaryLightColor">#409EFF</Color>
+    <Color x:Key="BrandAccentColor">#0078D4</Color>
+    <Color x:Key="BrandAccentSecondaryColor">#7B3FE4</Color>
+
+    <!-- Semantic Surface Colors -->
+    <Color x:Key="SurfaceBaseColor">#F3F3F3</Color>
+    <Color x:Key="SurfaceContainerColor">#FFFFFF</Color>
+    <Color x:Key="SurfaceContainerHighColor">#EBEBEB</Color>
+    <Color x:Key="SurfaceContainerHighestColor">#E0E0E0</Color>
+    <Color x:Key="SurfaceVariantColor">#D0D0D0</Color>
+    <Color x:Key="SurfaceOutlineColor">#C4C4C4</Color>
+
+    <!-- Semantic Content Colors -->
+    <Color x:Key="ContentPrimaryColor">#1F1F1F</Color>
+    <Color x:Key="ContentSecondaryColor">#4A4A4A</Color>
+    <Color x:Key="ContentTertiaryColor">#6D6D6D</Color>
+    <Color x:Key="ContentDisabledColor">#9E9E9E</Color>
+    <Color x:Key="ContentOnPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="ContentOnAccentColor">#FFFFFF</Color>
+
+    <!-- Semantic State Colors -->
+    <Color x:Key="StateSuccessColor">#059669</Color>
+    <Color x:Key="StateSuccessContainerColor">#D1FAE5</Color>
+    <Color x:Key="StateWarningColor">#D97706</Color>
+    <Color x:Key="StateWarningContainerColor">#FEF3C7</Color>
+    <Color x:Key="StateErrorColor">#DC2626</Color>
+    <Color x:Key="StateErrorContainerColor">#FEE2E2</Color>
+    <Color x:Key="StateInfoColor">#2563EB</Color>
+    <Color x:Key="StateInfoContainerColor">#DBEAFE</Color>
+
+    <!-- Interactive Colors -->
+    <Color x:Key="InteractiveHoverColor">#0F000000</Color>
+    <Color x:Key="InteractivePressedColor">#1A000000</Color>
+    <Color x:Key="InteractiveFocusColor">#0078D4</Color>
+    <Color x:Key="InteractiveDisabledColor">#33000000</Color>
+
+    <!-- Elevation Shadows -->
+    <Color x:Key="ShadowColor">#000000</Color>
+
+    <!-- ============================================================
+         SOLID COLOR BRUSHES
+         ============================================================ -->
+
+    <!-- Brand -->
+    <SolidColorBrush x:Key="BrandPrimaryBrush" Color="{StaticResource BrandPrimaryColor}"/>
+    <SolidColorBrush x:Key="BrandPrimaryDarkBrush" Color="{StaticResource BrandPrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="BrandPrimaryLightBrush" Color="{StaticResource BrandPrimaryLightColor}"/>
+    <SolidColorBrush x:Key="BrandAccentBrush" Color="{StaticResource BrandAccentColor}"/>
+    <SolidColorBrush x:Key="BrandAccentSecondaryBrush" Color="{StaticResource BrandAccentSecondaryColor}"/>
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="SurfaceBaseBrush" Color="{StaticResource SurfaceBaseColor}"/>
+    <SolidColorBrush x:Key="SurfaceContainerBrush" Color="{StaticResource SurfaceContainerColor}"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighBrush" Color="{StaticResource SurfaceContainerHighColor}"/>
+    <SolidColorBrush x:Key="SurfaceContainerHighestBrush" Color="{StaticResource SurfaceContainerHighestColor}"/>
+    <SolidColorBrush x:Key="SurfaceVariantBrush" Color="{StaticResource SurfaceVariantColor}"/>
+    <SolidColorBrush x:Key="SurfaceOutlineBrush" Color="{StaticResource SurfaceOutlineColor}"/>
+
+    <!-- Content -->
+    <SolidColorBrush x:Key="ContentPrimaryBrush" Color="{StaticResource ContentPrimaryColor}"/>
+    <SolidColorBrush x:Key="ContentSecondaryBrush" Color="{StaticResource ContentSecondaryColor}"/>
+    <SolidColorBrush x:Key="ContentTertiaryBrush" Color="{StaticResource ContentTertiaryColor}"/>
+    <SolidColorBrush x:Key="ContentDisabledBrush" Color="{StaticResource ContentDisabledColor}"/>
+    <SolidColorBrush x:Key="ContentOnPrimaryBrush" Color="{StaticResource ContentOnPrimaryColor}"/>
+    <SolidColorBrush x:Key="ContentOnAccentBrush" Color="{StaticResource ContentOnAccentColor}"/>
+
+    <!-- States -->
+    <SolidColorBrush x:Key="StateSuccessBrush" Color="{StaticResource StateSuccessColor}"/>
+    <SolidColorBrush x:Key="StateSuccessContainerBrush" Color="{StaticResource StateSuccessContainerColor}"/>
+    <SolidColorBrush x:Key="StateWarningBrush" Color="{StaticResource StateWarningColor}"/>
+    <SolidColorBrush x:Key="StateWarningContainerBrush" Color="{StaticResource StateWarningContainerColor}"/>
+    <SolidColorBrush x:Key="StateErrorBrush" Color="{StaticResource StateErrorColor}"/>
+    <SolidColorBrush x:Key="StateErrorContainerBrush" Color="{StaticResource StateErrorContainerColor}"/>
+    <SolidColorBrush x:Key="StateInfoBrush" Color="{StaticResource StateInfoColor}"/>
+    <SolidColorBrush x:Key="StateInfoContainerBrush" Color="{StaticResource StateInfoContainerColor}"/>
+
+    <!-- Interactive -->
+    <SolidColorBrush x:Key="InteractiveHoverBrush" Color="{StaticResource InteractiveHoverColor}"/>
+    <SolidColorBrush x:Key="InteractivePressedBrush" Color="{StaticResource InteractivePressedColor}"/>
+    <SolidColorBrush x:Key="InteractiveFocusBrush" Color="{StaticResource InteractiveFocusColor}"/>
+    <SolidColorBrush x:Key="InteractiveDisabledBrush" Color="{StaticResource InteractiveDisabledColor}"/>
+
+    <!-- ============================================================
+         GRADIENT BRUSHES
+         ============================================================ -->
+
+    <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource BrandPrimaryColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource BrandAccentColor}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="PrimaryGradientVerticalBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource BrandPrimaryColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource BrandAccentColor}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource BrandAccentColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource BrandAccentSecondaryColor}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SurfaceGradientBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource SurfaceContainerColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource SurfaceContainerHighColor}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlassBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#33000000" Offset="0"/>
+        <GradientStop Color="#0A000000" Offset="0.5"/>
+        <GradientStop Color="#00000000" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GlassBorderHoverBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#66000000" Offset="0"/>
+        <GradientStop Color="#1A000000" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SuccessGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#10B981" Offset="0"/>
+        <GradientStop Color="#34D399" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="WarningGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F59E0B" Offset="0"/>
+        <GradientStop Color="#FBBF24" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="ErrorGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#EF4444" Offset="0"/>
+        <GradientStop Color="#F87171" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- ============================================================
+         LEGACY COMPATIBILITY ALIASES
+         ============================================================ -->
+
+    <Color x:Key="AppBackgroundColor">#F3F3F3</Color>
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}"/>
+
+    <Color x:Key="GlassCardBackgroundColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="GlassCardBackgroundBrush" Color="{StaticResource GlassCardBackgroundColor}"/>
+
+    <Color x:Key="SidebarBackgroundColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}"/>
+
+    <SolidColorBrush x:Key="GlassCardBorderBrush" Color="#C4C4C4"/>
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="#D0D0D0"/>
+
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F1F1F"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#4A4A4A"/>
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+    <SolidColorBrush x:Key="AccentLightBrush" Color="#330078D4"/>
+
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#1A000000"/>
+    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#0F000000"/>
+
+    <SolidColorBrush x:Key="TitleBarHoverBrush" Color="#0F000000"/>
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="#10B981"/>
+    <SolidColorBrush x:Key="SuccessLightBrush" Color="#3310B981"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="WarningLightBrush" Color="#33F59E0B"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#EF4444"/>
+    <SolidColorBrush x:Key="DangerLightBrush" Color="#33EF4444"/>
+
+</ResourceDictionary>

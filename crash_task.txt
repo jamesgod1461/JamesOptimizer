@@ -1,0 +1,9 @@
+System.AggregateException: A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (An exception occurred during a Ping request.)
+ ---> System.Net.NetworkInformation.PingException: An exception occurred during a Ping request.
+ ---> System.ComponentModel.Win32Exception (1231): The network location cannot be reached. For information about network troubleshooting, see Windows Help.
+   at System.Net.NetworkInformation.Ping.GetStatusFromCode(Int32 statusCode)
+   at System.Net.NetworkInformation.Ping.DoSendPingCore(IPAddress address, Byte[] buffer, Int32 timeout, PingOptions options, Boolean isAsync)
+   at System.Net.NetworkInformation.Ping.SendPingAsyncInternal[TArg](TArg getAddressArg, Func`3 getAddress, Int32 timeout, Byte[] buffer, PingOptions options, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.NetworkInformation.Ping.SendPingAsyncInternal[TArg](TArg getAddressArg, Func`3 getAddress, Int32 timeout, Byte[] buffer, PingOptions options, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
