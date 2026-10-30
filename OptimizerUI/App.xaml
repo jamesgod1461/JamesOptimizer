@@ -6,28 +6,39 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
+                <!-- V3 Design System — load order matters -->
+                <ResourceDictionary Source="Themes/ThemeColors.xaml"/>
+                <ResourceDictionary Source="Themes/Typography.xaml"/>
+                <ResourceDictionary Source="Themes/ControlStyles.xaml"/>
+                <ResourceDictionary Source="Themes/Animations.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Global Styles -->
-            <Style TargetType="ScrollViewer">
-                <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>
-                <Setter Property="IsDeferredScrollingEnabled" Value="True"/>
+            <!-- ── Global Background ────────────────────────── -->
+            <!-- Set via MainWindow; Application-level background token exposed here -->
+
+            <!-- ── Global Text Rendering ────────────────────── -->
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily"                    Value="{DynamicResource PrimaryFontFamily}"/>
+                <Setter Property="Foreground"                    Value="{DynamicResource TextPrimary}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                <Setter Property="TextOptions.TextHintingMode"   Value="Fixed"/>
             </Style>
 
+            <!-- ── Global Control Baseline ──────────────────── -->
+            <Style TargetType="Control">
+                <Setter Property="FocusVisualStyle"              Value="{x:Null}"/>
+                <Setter Property="FontFamily"                    Value="{DynamicResource PrimaryFontFamily}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                <Setter Property="TextOptions.TextHintingMode"   Value="Fixed"/>
+            </Style>
+
+            <!-- ── ListBox / ListView scrolling ─────────────── -->
             <Style TargetType="ListBox">
                 <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>
-            </Style>
-
-            <Style TargetType="TextBlock">
-                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
-                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
-                <Setter Property="TextOptions.TextHintingMode" Value="Animated"/>
-            </Style>
-
-            <!-- Default Focus Visual (Hidden) -->
-            <Style TargetType="Control">
-                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Background"                   Value="Transparent"/>
+                <Setter Property="BorderThickness"              Value="0"/>
             </Style>
 
         </ResourceDictionary>

@@ -1,0 +1,511 @@
+<Page x:Class="JamesOptimizer.NetworkBoost"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="Network Boost"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="NetworkBoost_Loaded"
+      Unloaded="NetworkBoost_Unloaded">
+
+    <Page.Resources>
+        <!-- Interactive Feature Card Style with Lift and Border Glow -->
+        <Style x:Key="NetworkFeatureCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Surface1}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform Y="0"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.55" BlurRadius="24" ShadowDepth="0"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderAccent}"/>
+                    <Setter Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <TranslateTransform Y="-3"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="{DynamicResource ColorAccentCyan}" Opacity="0.25" BlurRadius="28" ShadowDepth="0"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Refresh Icon Button -->
+        <Style x:Key="IconOnlyButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Surface2}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,48">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="Auto"/> <!-- Separator -->
+                <RowDefinition Height="*"/>    <!-- Main Content -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 HEADER
+                 ══════════════════════════════════════════════════════════ -->
+            <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Globe SVG Icon, AccentCyan, 28px -->
+                    <Viewbox Width="28" Height="28" Margin="0,0,14,0">
+                        <Path Fill="{DynamicResource AccentCyan}"
+                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </Viewbox>
+                    <TextBlock Text="NETWORK BOOST" Style="{StaticResource PageTitle}"/>
+                </StackPanel>
+                <TextBlock Text="Optimize TCP/IP parameters, reduce latency, and flush DNS for the best possible networking speeds."
+                           Style="{StaticResource BodyText}"
+                           Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Separator -->
+            <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,20,0,24" SnapsToDevicePixels="True"/>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 MAIN CONTENT: Left 60% / Right 40%
+                 ══════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="4*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ══════════════════════════════════════════════════════
+                     LEFT AREA (60%)
+                     ══════════════════════════════════════════════════════ -->
+                <StackPanel Grid.Column="0">
+                    <!-- ① FEATURE CARDS (2×2 grid, gap 16px) -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="16"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Card 1 — TCP Auto-Tuning -->
+                        <Border x:Name="CardTcp" Grid.Row="0" Grid.Column="0"
+                                Height="120" Padding="20"
+                                Style="{StaticResource NetworkFeatureCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Icon: monitor/speed SVG, AccentCyan -->
+                                <Viewbox Grid.Column="0" Width="26" Height="26" VerticalAlignment="Top" Margin="0,2,14,0">
+                                    <Path Fill="{DynamicResource AccentCyan}"
+                                          Data="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.28-10.43zM10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/>
+                                </Viewbox>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="TCP Auto-Tuning" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock Text="Optimizes receive window to dramatically improve download speeds."
+                                               Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <!-- Status Indicator Pill -->
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource SuccessBackground}"
+                                        BorderBrush="{DynamicResource SuccessBorder}"
+                                        BorderThickness="1" CornerRadius="6" Padding="8,2">
+                                    <TextBlock Text="ENABLED" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Card 2 — DNS Resolver Flush -->
+                        <Border x:Name="CardDns" Grid.Row="0" Grid.Column="2"
+                                Height="120" Padding="20"
+                                Style="{StaticResource NetworkFeatureCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Icon: network/globe SVG, AccentViolet -->
+                                <Viewbox Grid.Column="0" Width="26" Height="26" VerticalAlignment="Top" Margin="0,2,14,0">
+                                    <Path Fill="{DynamicResource AccentViolet}"
+                                          Data="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+                                </Viewbox>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="DNS Resolver Flush" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock Text="Clears stale DNS cache to ensure fastest routing to game servers."
+                                               Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource SuccessBackground}"
+                                        BorderBrush="{DynamicResource SuccessBorder}"
+                                        BorderThickness="1" CornerRadius="6" Padding="8,2">
+                                    <TextBlock Text="OPTIMAL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Card 3 — Congestion Control -->
+                        <Border x:Name="CardCongestion" Grid.Row="2" Grid.Column="0"
+                                Height="120" Padding="20"
+                                Style="{StaticResource NetworkFeatureCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Icon: warning/network SVG, WarningAmber -->
+                                <Viewbox Grid.Column="0" Width="26" Height="26" VerticalAlignment="Top" Margin="0,2,14,0">
+                                    <Path Fill="{DynamicResource WarningAmber}"
+                                          Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                                </Viewbox>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Congestion Control" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock Text="Enables CTCP provider to reduce packet loss in crowded networks."
+                                               Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource WarningBackground}"
+                                        BorderBrush="{DynamicResource WarningBorder}"
+                                        BorderThickness="1" CornerRadius="6" Padding="8,2">
+                                    <TextBlock Text="CTCP" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource WarningAmber}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Card 4 — Network Throttling -->
+                        <Border x:Name="CardThrottling" Grid.Row="2" Grid.Column="2"
+                                Height="120" Padding="20"
+                                Style="{StaticResource NetworkFeatureCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Icon: radio/signal SVG, SuccessGreen -->
+                                <Viewbox Grid.Column="0" Width="26" Height="26" VerticalAlignment="Top" Margin="0,2,14,0">
+                                    <Path Fill="{DynamicResource SuccessGreen}"
+                                          Data="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-1.52-1.9-2.35-4.32-2.35-6.9C2 6.48 6.48 2 12 2s10 4.48 10 10c0 2.58-.83 5-2.35 6.9l-.62-1.79C20.26 15.07 21 13.12 21 11c0-4.97-4.03-9-9-9zm0 4c-2.76 0-5 2.24-5 5 0 1.28.48 2.45 1.28 3.34L7.56 18.2C6.58 16.95 6 15.05 6 13c0-3.31 2.69-6 6-6s6 2.69 6 6c0 2.05-.58 3.95-1.56 5.2l-.72-1.86C16.52 14.45 17 13.28 17 12c0-2.76-2.24-5-5-5zm0 4c-1.1 0-2 .9-2 2 0 .55.22 1.05.59 1.41L9.17 21h5.66l-1.42-6.59c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2z"/>
+                                </Viewbox>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Network Throttling" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock Text="Disables Windows media throttling to dedicate bandwidth to games."
+                                               Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource SuccessBackground}"
+                                        BorderBrush="{DynamicResource SuccessBorder}"
+                                        BorderThickness="1" CornerRadius="6" Padding="8,2">
+                                    <TextBlock Text="DISABLED" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- ② READY STATE CARD (GlassCard, margin-top 20px) -->
+                    <Border x:Name="CardReadyState" Margin="0,20,0,0" Padding="32,36"
+                            Style="{StaticResource GlassCard}">
+                        <StackPanel HorizontalAlignment="Center">
+                            <!-- Globe Icon with Concentric Expanding Pulse Rings -->
+                            <Grid Width="160" Height="140" HorizontalAlignment="Center">
+                                <!-- Concentric expanding ring 1 -->
+                                <Ellipse x:Name="PulseRing1" Width="72" Height="72"
+                                         Stroke="{DynamicResource AccentCyan}" StrokeThickness="1.5"
+                                         Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="ScaleRing1" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <!-- Concentric expanding ring 2 -->
+                                <Ellipse x:Name="PulseRing2" Width="72" Height="72"
+                                         Stroke="{DynamicResource AccentCyan}" StrokeThickness="1.5"
+                                         Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="ScaleRing2" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <!-- Concentric expanding ring 3 -->
+                                <Ellipse x:Name="PulseRing3" Width="72" Height="72"
+                                         Stroke="{DynamicResource AccentCyan}" StrokeThickness="1.5"
+                                         Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="ScaleRing3" ScaleX="1" ScaleY="1"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+
+                                <!-- Central Glowing Globe SVG Icon (72px) -->
+                                <Viewbox Width="72" Height="72" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Viewbox.Effect>
+                                        <DropShadowEffect Color="{DynamicResource ColorAccentCyan}" BlurRadius="24" Opacity="0.45" ShadowDepth="0"/>
+                                    </Viewbox.Effect>
+                                    <Path Fill="{DynamicResource AccentCyan}"
+                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </Viewbox>
+                            </Grid>
+
+                            <!-- Title -->
+                            <TextBlock Text="Ready to Boost" FontSize="24" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+                            <!-- Tagline: Lower Ping • Faster DNS • Reduced Packet Loss -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                                <TextBlock Text="Lower Ping" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource AccentCyan}"/>
+                                <TextBlock Text="  •  " FontSize="13" Foreground="{DynamicResource TextMuted}"/>
+                                <TextBlock Text="Faster DNS" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource AccentCyan}"/>
+                                <TextBlock Text="  •  " FontSize="13" Foreground="{DynamicResource TextMuted}"/>
+                                <TextBlock Text="Reduced Packet Loss" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource AccentCyan}"/>
+                            </StackPanel>
+
+                            <!-- Description -->
+                            <TextBlock Text="Apply advanced networking tweaks and optimizations to ensure a stable connection during intense gaming sessions."
+                                       Style="{StaticResource BodyText}"
+                                       MaxWidth="420" TextAlignment="Center"
+                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+                            <!-- OPTIMIZE NOW Button -->
+                            <Button x:Name="BtnOptimizeNow" Style="{StaticResource PrimaryButton}"
+                                    Width="200" Height="50" Margin="0,24,0,0"
+                                    Click="BtnOptimizeNow_Click">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Viewbox x:Name="IconOptimizeBolt" Width="18" Height="18" Margin="0,0,8,0">
+                                        <Path Fill="#000000" Data="M7 2v11h3v9l7-12h-4l4-8z"/>
+                                    </Viewbox>
+                                    <TextBlock x:Name="TxtOptimizeBtn" Text="OPTIMIZE NOW" FontSize="15" FontWeight="Bold" Foreground="#000000"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ══════════════════════════════════════════════════════
+                     RIGHT PANEL (40%): 3 stacked cards
+                     ══════════════════════════════════════════════════════ -->
+                <StackPanel Grid.Column="2">
+                    <!-- 1. CONNECTION CARD -->
+                    <Border x:Name="CardConnection" Style="{StaticResource GlassCard}" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="CONNECTION" Style="{StaticResource SectionLabel}"/>
+
+                            <!-- Active Adapter -->
+                            <Grid Margin="0,14,0,6">
+                                <TextBlock Text="Active Adapter:" Style="{StaticResource MetricLabel}"/>
+                                <TextBlock x:Name="TxtAdapterName" Text="Detecting..."
+                                           HorizontalAlignment="Right"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentCyan}"/>
+                            </Grid>
+                            <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                            <!-- Status -->
+                            <Grid Margin="0,8,0,6">
+                                <TextBlock Text="Status:" Style="{StaticResource MetricLabel}"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Ellipse x:Name="DotConnectionStatus" Width="8" Height="8"
+                                             Fill="{DynamicResource SuccessGreen}"
+                                             Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtConnectionStatus" Text="Connected"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource SuccessGreen}"/>
+                                </StackPanel>
+                            </Grid>
+                            <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                            <!-- Type -->
+                            <Grid Margin="0,8,0,0">
+                                <TextBlock Text="Type:" Style="{StaticResource MetricLabel}"/>
+                                <TextBlock x:Name="TxtConnectionType" Text="Ethernet"
+                                           HorizontalAlignment="Right"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 2. LATENCY CARD (8.8.8.8) -->
+                    <Border x:Name="CardLatency" Style="{StaticResource GlassCard}" Margin="0,16,0,0" Padding="20">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="LATENCY (8.8.8.8)" Style="{StaticResource SectionLabel}"/>
+                                <Button HorizontalAlignment="Right" Style="{StaticResource IconOnlyButtonStyle}"
+                                        Click="BtnRefreshPing_Click" ToolTip="Test Ping Now">
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Fill="{DynamicResource TextMuted}"
+                                              Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                    </Viewbox>
+                                </Button>
+                            </Grid>
+
+                            <!-- Large Ping Value Display -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,4">
+                                <TextBlock x:Name="TxtPingValue" Text="24" FontSize="48" FontWeight="Bold"
+                                           Foreground="{DynamicResource SuccessGreen}"/>
+                                <TextBlock Text=" ms" FontSize="20" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+                            </StackPanel>
+
+                            <!-- Mini Relative Latency Bar -->
+                            <Border Height="4" CornerRadius="2" Background="{DynamicResource BorderSubtle}" Margin="0,8,0,12">
+                                <ProgressBar x:Name="BarLatency" Height="4" Minimum="0" Maximum="120" Value="24"
+                                             Style="{StaticResource LiquidProgressBar}"/>
+                            </Border>
+
+                            <!-- 8-point Sparkline Ping History Canvas -->
+                            <Canvas x:Name="CanvasPingSparkline" Height="24" HorizontalAlignment="Stretch" SnapsToDevicePixels="True"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 3. LIVE TRAFFIC CARD -->
+                    <Border x:Name="CardTraffic" Style="{StaticResource GlassCard}" Margin="0,16,0,0" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="LIVE TRAFFIC" Style="{StaticResource SectionLabel}"/>
+
+                            <!-- Stat Rows: Download / Upload -->
+                            <Grid Margin="0,10,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="↓ Download" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock x:Name="TxtDownloadSpeed" Text="0 KB/s" FontSize="13" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentCyan}" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                    <TextBlock Text="↑ Upload" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock x:Name="TxtUploadSpeed" Text="0 KB/s" FontSize="13" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentViolet}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Canvas Chart: 90px height, Bezier smooth curve interpolation -->
+                            <Border Height="90" Background="{DynamicResource Surface2}" CornerRadius="8"
+                                    BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" ClipToBounds="True">
+                                <Canvas x:Name="CanvasTrafficChart" Height="90" HorizontalAlignment="Stretch" SnapsToDevicePixels="True"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 4. DNS BENCHMARK & SWITCHER CARD -->
+                    <Border x:Name="CardDnsSwitcher" Style="{StaticResource GlassCard}" Margin="0,16,0,0" Padding="20">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="DNS BENCHMARK &amp; SWITCHER" Style="{StaticResource SectionLabel}"/>
+                                <Button HorizontalAlignment="Right"
+                                        Style="{StaticResource ConsoleChipStyle}"
+                                        Click="BtnBenchmarkAllDns_Click"
+                                        ToolTip="Ping all DNS providers">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚡" FontSize="10" Margin="0,0,4,0"/>
+                                        <TextBlock Text="TEST ALL" FontSize="10" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <!-- DNS Providers List -->
+                            <StackPanel Margin="0,12,0,0">
+                                <!-- Cloudflare (1.1.1.1) -->
+                                <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="Cloudflare (1.1.1.1)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                            <TextBlock Text="Fastest gaming &amp; privacy" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="TxtPingCloudflare" Grid.Column="1" Text="--" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Button Grid.Column="2" Content="APPLY" Style="{StaticResource ConsoleChipActiveStyle}" Height="24" FontSize="10" Padding="8,2" Click="BtnApplyCloudflare_Click"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Google (8.8.8.8) -->
+                                <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="Google DNS (8.8.8.8)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                            <TextBlock Text="High stability &amp; global CDN" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="TxtPingGoogle" Grid.Column="1" Text="--" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Button Grid.Column="2" Content="APPLY" Style="{StaticResource ConsoleChipStyle}" Height="24" FontSize="10" Padding="8,2" Click="BtnApplyGoogle_Click"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Quad9 (9.9.9.9) -->
+                                <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="Quad9 (9.9.9.9)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                            <TextBlock Text="Malware &amp; threat blocking" FontSize="10" Foreground="{DynamicResource TextMuted}"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="TxtPingQuad9" Grid.Column="1" Text="--" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <Button Grid.Column="2" Content="APPLY" Style="{StaticResource ConsoleChipStyle}" Height="24" FontSize="10" Padding="8,2" Click="BtnApplyQuad9_Click"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Reset to DHCP Button -->
+                                <Button Style="{StaticResource ConsoleChipStyle}"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,4,0,0"
+                                        Click="BtnResetDhcp_Click"
+                                        ToolTip="Reset to automatic ISP DNS">
+                                    <TextBlock Text="↺ Reset to Auto (DHCP)" FontSize="10" FontWeight="SemiBold"/>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

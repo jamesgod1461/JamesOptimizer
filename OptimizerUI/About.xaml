@@ -1,0 +1,456 @@
+<Page x:Class="JamesOptimizer.About"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="About &amp; Settings"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="About_Loaded">
+
+    <Page.Resources>
+        <!-- Spec Row Style with Hover Highlight -->
+        <Style x:Key="SpecRowBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Compact Ghost Button -->
+        <Style x:Key="AboutCompactGhostButtonStyle" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <!-- Amber Accent Ghost Button -->
+        <Style x:Key="AmberGhostButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource WarningAmber}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource WarningAmber}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource WarningBackground}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Violet Accent Ghost Button -->
+        <Style x:Key="VioletGhostButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentViolet}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentViolet}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource GlowViolet}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Pill RadioButton Style -->
+        <Style x:Key="PillRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="16"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentGradient}"/>
+                                <Setter Property="Foreground" Value="#000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Custom Glass Slider Style -->
+        <Style x:Key="GlassSliderStyle" TargetType="Slider">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <!-- Track 4px height, BorderSubtle -->
+                            <Border Height="4" Background="{DynamicResource BorderSubtle}" CornerRadius="2"/>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <!-- Thumb: 16px circle, white, glow AccentCyan -->
+                                                <Grid Width="16" Height="16" Cursor="Hand">
+                                                    <Ellipse Fill="#FFFFFF" Width="16" Height="16">
+                                                        <Ellipse.Effect>
+                                                            <DropShadowEffect Color="{DynamicResource ColorAccentCyan}" BlurRadius="10" Opacity="0.6" ShadowDepth="0"/>
+                                                        </Ellipse.Effect>
+                                                    </Ellipse>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,48">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="Auto"/> <!-- Separator -->
+                <RowDefinition Height="*"/>    <!-- 2x2 Grid -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 HEADER
+                 ══════════════════════════════════════════════════════════ -->
+            <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Info icon (AccentCyan, 28px) -->
+                    <Viewbox Width="28" Height="28" Margin="0,0,14,0">
+                        <Path Fill="{DynamicResource AccentCyan}"
+                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </Viewbox>
+                    <TextBlock Text="ABOUT &amp; SYSTEM INFO" Style="{StaticResource PageTitle}"/>
+                </StackPanel>
+                <TextBlock Text="Application information, your hardware specs, and support links."
+                           Style="{StaticResource BodyText}"
+                           Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Separator -->
+            <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,20,0,24" SnapsToDevicePixels="True"/>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 2×2 CARD GRID (gap 20px)
+                 ══════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ══════════════════════════════════════════════════════
+                     CARD 1 (top-left): PC SPECIFICATIONS
+                     ══════════════════════════════════════════════════════ -->
+                <Border x:Name="CardPcSpecs" Grid.Row="0" Grid.Column="0"
+                        Style="{StaticResource GlassCard}" Padding="20">
+                    <StackPanel>
+                        <!-- Top Accent Bar: AccentCyan 3px -->
+                        <Rectangle Height="3" Fill="{DynamicResource AccentCyan}" Margin="-20,-20,-20,16"/>
+
+                        <!-- Header: CardTitle + cpu icon AccentCyan 16px -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Viewbox Width="16" Height="16" Margin="0,0,8,0">
+                                <Path Fill="{DynamicResource AccentCyan}"
+                                      Data="M9 3L7 5v2H5L3 9v2h2v2H3v2l2 2h2v2l2 2h2v-2h2v2l2-2h2v-2h2l2-2v-2h-2v-2h2V9l-2-2h-2V5l-2-2h-2v2h-2V3H9zm0 6h6v6H9V9z"/>
+                            </Viewbox>
+                            <TextBlock Text="PC Specifications" Style="{StaticResource CardTitle}"/>
+                        </StackPanel>
+
+                        <!-- Spec rows with divider lines and hover highlights -->
+                        <!-- Processor -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="Processor:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtSpecProcessor" Text="Intel(R) Core(TM) i7-14700F" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <!-- GPU -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="GPU:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtSpecGpu" Text="NVIDIA GeForce RTX 4060 Ti" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <!-- RAM -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="RAM:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtSpecRam" Text="32 GB (6000 MHz)" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <!-- Storage Types -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="Storage Types:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="WDC WD10EZEX-75WN4A0 (HDD, 932GB)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="WD_BLACK SN770 1TB (NVMe SSD, 932GB)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" Margin="0,3,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- ══════════════════════════════════════════════════════
+                     CARD 2 (top-right): NETWORK INFO
+                     ══════════════════════════════════════════════════════ -->
+                <Border x:Name="CardNetworkInfo" Grid.Row="0" Grid.Column="2"
+                        Style="{StaticResource GlassCard}" Padding="20">
+                    <StackPanel>
+                        <!-- Top Accent Bar: AccentViolet 3px -->
+                        <Rectangle Height="3" Fill="{DynamicResource AccentViolet}" Margin="-20,-20,-20,16"/>
+
+                        <!-- Header: CardTitle + globe icon AccentViolet 16px -->
+                        <Grid Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Viewbox Width="16" Height="16" Margin="0,0,8,0">
+                                    <Path Fill="{DynamicResource AccentViolet}"
+                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </Viewbox>
+                                <TextBlock Text="Network Info" Style="{StaticResource CardTitle}"/>
+                            </StackPanel>
+
+                            <Button HorizontalAlignment="Right" Style="{StaticResource AboutCompactGhostButtonStyle}"
+                                    Click="BtnRefreshNetwork_Click" ToolTip="Re-ping 8.8.8.8">
+                                <TextBlock Text="↺ Refresh" FontSize="11"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Adapter Row -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Viewbox Width="12" Height="12" Margin="0,0,6,0">
+                                        <Path Fill="{DynamicResource AccentViolet}"
+                                              Data="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+                                    </Viewbox>
+                                    <TextBlock Text="Adapter:" FontSize="12" Foreground="{DynamicResource TextSecondary}"/>
+                                </StackPanel>
+                                <TextBlock x:Name="TxtInfoAdapter" Text="Realtek Gaming 2.5GbE Family Controller"
+                                           FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
+                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <!-- Latency Display -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}" Padding="10,14">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="Latency (Ping to 8.8.8.8)" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                                    <TextBlock x:Name="TxtAboutPing" Text="26" FontSize="36" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}"/>
+                                    <TextBlock Text=" ms" FontSize="20" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- ══════════════════════════════════════════════════════
+                     CARD 3 (bottom-left): DEVELOPER INFO
+                     ══════════════════════════════════════════════════════ -->
+                <Border x:Name="CardDevInfo" Grid.Row="2" Grid.Column="0"
+                        Style="{StaticResource GlassCard}" Padding="20">
+                    <StackPanel>
+                        <!-- Top Accent Bar: Gradient AccentCyan -> AccentViolet 3px -->
+                        <Rectangle Height="3" Fill="{DynamicResource AccentGradient}" Margin="-20,-20,-20,16"/>
+
+                        <TextBlock Text="Developer Info" Style="{StaticResource CardTitle}" Margin="0,0,0,12"/>
+
+                        <!-- Brand Emblem & Typography Header -->
+                        <Grid Margin="0,4,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Genuine James Optimizer Brand Logo -->
+                            <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12"
+                                    Background="#1A00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1"
+                                    Margin="0,0,12,0" SnapsToDevicePixels="True">
+                                <Image Source="pack://application:,,,/Assets/logo-128.png" Width="34" Height="34"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Brand Titles -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="JAMES" FontSize="16" FontWeight="Black" Foreground="{DynamicResource TextPrimary}" Margin="0,0,5,0"/>
+                                    <TextBlock Text="OPTIMIZER" FontSize="16" FontWeight="Black">
+                                        <TextBlock.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#00E5FF" Offset="0"/>
+                                                <GradientStop Color="#8A67FF" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <Border Margin="8,0,0,0" Padding="6,1.5" CornerRadius="4" Background="#2600E5FF" BorderBrush="#5900E5FF" BorderThickness="1">
+                                        <TextBlock Text="PRO v3.2" FontSize="9" FontWeight="Bold" Foreground="#00E5FF"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Lead Engineer: " FontSize="12" Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock Text="James God" FontSize="12" FontWeight="SemiBold" Foreground="#00E5FF" Cursor="Hand" MouseDown="BtnOpenGithub_Click"/>
+                                    <Border Margin="6,0,0,0" Width="14" Height="14" CornerRadius="7" Background="#1A00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1">
+                                        <Path Data="M3 6.5l2.5 2.5 5.5-6" Stroke="#00E5FF" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="9" Height="8" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Mission Statement -->
+                        <TextBlock Text="&quot;Dedicated to building the absolute fastest and most reliable Windows tweaking utility for gamers and power users.&quot;"
+                                   FontSize="12" FontStyle="Italic" Foreground="{DynamicResource TextMuted}"
+                                   TextWrapping="Wrap" Margin="0,12,0,0"/>
+
+                        <!-- Separator -->
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,16,0,16"/>
+
+                        <!-- Links Row -->
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="GitHub" Style="{StaticResource AboutCompactGhostButtonStyle}"
+                                    Click="BtnOpenGithub_Click" Margin="0,0,8,0"/>
+                            <Button Content="Report Issue" Style="{StaticResource AmberGhostButtonStyle}"
+                                    Click="BtnReportIssue_Click" Margin="0,0,8,0"/>
+                            <Button Content="Discord" Style="{StaticResource VioletGhostButtonStyle}"
+                                    Click="BtnOpenDiscord_Click"/>
+                        </StackPanel>
+
+                        <!-- Footer -->
+                        <TextBlock Text="© 2025 James God — All Rights Reserved" FontSize="10" Foreground="{DynamicResource TextMuted}" Margin="0,16,0,2"/>
+                        <TextBlock Text="Build Hash: #a3f9c21" FontSize="9" FontFamily="{DynamicResource MonospaceFontFamily}" Foreground="{DynamicResource TextMuted}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ══════════════════════════════════════════════════════
+                     CARD 4 (bottom-right): VERSION & UPDATES
+                     (Customization lives in the dedicated Settings page)
+                     ══════════════════════════════════════════════════════ -->
+                <Border x:Name="CardVersion" Grid.Row="2" Grid.Column="2"
+                        Style="{StaticResource GlassCard}" Padding="20">
+                    <StackPanel>
+                        <!-- Top Accent Bar: Gradient Accent -> Violet 3px -->
+                        <Rectangle Height="3" Fill="{DynamicResource AccentGradient}" Margin="-20,-20,-20,16"/>
+
+                        <!-- Header: CardTitle + shield icon -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Viewbox Width="16" Height="16" Margin="0,0,8,0">
+                                <Path Fill="{DynamicResource AccentViolet}"
+                                      Data="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                            </Viewbox>
+                            <TextBlock Text="Version &amp; Updates" Style="{StaticResource CardTitle}"/>
+                        </StackPanel>
+
+                        <!-- Version rows -->
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="Application:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock Text="James Optimizer Pro" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="Version:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <TextBlock Text="3.2.0 · PRO SUITE" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource AccentCyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}"/>
+
+                        <Border Style="{StaticResource SpecRowBorderStyle}">
+                            <Grid>
+                                <TextBlock Text="Engine Status:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Ellipse Width="7" Height="7" Fill="{DynamicResource SuccessGreen}" Margin="0,0,6,0" VerticalAlignment="Center">
+                                        <Ellipse.Effect>
+                                            <DropShadowEffect Color="#00FF9D" BlurRadius="6" Opacity="0.9" ShadowDepth="0"/>
+                                        </Ellipse.Effect>
+                                    </Ellipse>
+                                    <TextBlock Text="UP TO DATE" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SuccessGreen}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Update check button -->
+                        <Button x:Name="BtnCheckUpdates" Content="CHECK FOR UPDATES" Style="{StaticResource GhostButton}"
+                                Height="38" Margin="0,16,0,0" Click="BtnCheckUpdates_Click"/>
+
+                        <!-- Pointer to the dedicated Settings page -->
+                        <Border Background="{DynamicResource AccentTint}" BorderBrush="{DynamicResource AccentTintBorder}"
+                                BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,12,0,0">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="🎨" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Themes, accent colors &amp; backdrop live in Settings." FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Button x:Name="BtnOpenSettings" Content="Open →" Background="Transparent" BorderThickness="0"
+                                        Foreground="{DynamicResource AccentCyan}" FontSize="11" FontWeight="SemiBold"
+                                        Cursor="Hand" HorizontalAlignment="Right" Click="BtnOpenSettings_Click"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

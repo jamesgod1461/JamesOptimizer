@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "JamesOptimizer.WinUI (Unpackaged)": {
+      "commandName": "Project"
+    },
+    "JamesOptimizer.WinUI (Package)": {
+      "commandName": "MsixPackage"
+    }
+  }
+}

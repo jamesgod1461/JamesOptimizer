@@ -1,0 +1,217 @@
+<Page x:Class="JamesOptimizer.GamingMode"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="Gaming Mode"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="GamingMode_Loaded">
+
+    <Page.Resources>
+        <!-- Tweak Action Button Style -->
+        <Style x:Key="GameActionButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="14,0" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="{DynamicResource BorderAccent}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource Surface1}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Turbo Hero CTA Button Style -->
+        <Style x:Key="TurboCtaButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="Foreground" Value="#0A0C10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CtaBorder" CornerRadius="10" Padding="24,0" SnapsToDevicePixels="True">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#00F5FF" Offset="0"/>
+                                    <GradientStop Color="#7B5CF0" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00F5FF" BlurRadius="20" Opacity="0.45" ShadowDepth="0"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CtaBorder" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#00F5FF" BlurRadius="28" Opacity="0.75" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,36">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- 0: Header -->
+                <RowDefinition Height="Auto"/> <!-- 1: Separator -->
+                <RowDefinition Height="Auto"/> <!-- 2: Hero Banner -->
+                <RowDefinition Height="Auto"/> <!-- 3: Cards Grid -->
+            </Grid.RowDefinitions>
+
+            <!-- ── HEADER ── -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE7FC;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="26" Foreground="{DynamicResource AccentCyan}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <TextBlock Text="Gaming Mode" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                    </StackPanel>
+                    <TextBlock Text="Locks high process priorities, purges standby RAM, minimizes input latency, and eliminates packet throttling for competitive gaming."
+                               FontSize="13" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Status Badge -->
+                <Border Grid.Column="1" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="16" Padding="14,6" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="DotStatus" Width="8" Height="8" Fill="{DynamicResource AccentCyan}" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="TxtStatus" Text="READY TO ENGAGE" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ── SEPARATOR ── -->
+            <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,20,0,24" SnapsToDevicePixels="True"/>
+
+            <!-- ── HERO TURBO BANNER ── -->
+            <Border Grid.Row="2" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderAccent}" BorderThickness="1" CornerRadius="14" Padding="28,24" Margin="0,0,0,24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="⚡ GAME TURBO ENGINE" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Applies comprehensive kernel, power, GPU, and memory optimizations in one unified pipeline."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,16"/>
+
+                        <!-- Live Metric Pills -->
+                        <WrapPanel>
+                            <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                                <TextBlock Text="🎯 -42% Input Jitter" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            </Border>
+                            <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                                <TextBlock Text="⚡ Core Affinity: Locked" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            </Border>
+                            <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                                <TextBlock Text="🚀 GPU Scheduler: High" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            </Border>
+                            <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                                <TextBlock Text="🛡️ Standby RAM: Purged" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            </Border>
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <!-- Activate Button -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
+                        <Button x:Name="BtnActivateTurbo" Style="{StaticResource TurboCtaButtonStyle}" Content="ACTIVATE GAME TURBO ⚡" Click="BtnActivateTurbo_Click"/>
+                        <TextBlock x:Name="TxtTurboStatus" Text="Standby · Instant Activation" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ── CARDS GRID ── -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- CARD 1: GPU & DISPLAY LATENCY -->
+                <Border Grid.Row="0" Grid.Column="0" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="&#xE790;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentCyan}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="GPU &amp; Display Pipeline" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="Elevates Direct3D scheduling, forces hardware scheduling, and disables Windows composition overhead in games." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,16"/>
+                        <Button Style="{StaticResource GameActionButtonStyle}" Content="Optimize GPU Scheduling" Click="BtnGpuOptimize_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- CARD 2: NETWORK PACKET PRIORITIZATION -->
+                <Border Grid.Row="0" Grid.Column="2" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="&#xE774;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentCyan}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Network Latency &amp; DNS" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="Disables Nagle's TCP packet coalescing algorithm and sets ultra-fast Cloudflare DNS for lower ping." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,16"/>
+                        <Button Style="{StaticResource GameActionButtonStyle}" Content="Apply Zero-Jitter TCP &amp; DNS" Click="BtnNetworkLatency_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- CARD 3: GAME DVR & BACKGROUND OVERHEAD -->
+                <Border Grid.Row="2" Grid.Column="0" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="&#xE714;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentCyan}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Background Capture &amp; DVR" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="Disables Windows Game Bar screen recording and broadcast telemetry to free video memory and CPU cycles." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,16"/>
+                        <Button Style="{StaticResource GameActionButtonStyle}" Content="Disable Background Game DVR" Click="BtnDisableDvr_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- CARD 4: RAM PURGE & PROCESS PRIORITY -->
+                <Border Grid.Row="2" Grid.Column="2" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="&#xE7B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentCyan}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Standby Memory &amp; Affinity" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="Compacts working sets and purges standby cache lists to eliminate micro-stutters during heavy scene loads." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,16"/>
+                        <Button Style="{StaticResource GameActionButtonStyle}" Content="Flush Memory &amp; Lock Affinity" Click="BtnFlushMemory_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

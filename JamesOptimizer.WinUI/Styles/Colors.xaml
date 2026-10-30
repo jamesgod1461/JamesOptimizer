@@ -1,0 +1,175 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:media="using:Microsoft.UI.Xaml.Media">
+
+    <!-- ========================================================================= -->
+    <!-- JAMES OPTIMIZER PRO / JAMESGUI HIGH-CONTRAST BESPOKE PALETTE              -->
+    <!-- Inspired by JamesGui v4.5: Deep Obsidian, Coral Neon, Electric Violet,   -->
+    <!-- Sunset Ember, and Cyan Highlights.                                        -->
+    <!-- ========================================================================= -->
+
+    <!-- Base Atmospheric Backgrounds -->
+    <Color x:Key="BgBaseColor">#070A10</Color>
+    <Color x:Key="BgSurfaceColor">#0D121D</Color>
+    <Color x:Key="BgElevatedColor">#131927</Color>
+    <Color x:Key="BgElevatedHoverColor">#1A2234</Color>
+    <Color x:Key="BorderSubtleColor">#1F293D</Color>
+    <Color x:Key="BorderStrongColor">#2E3C57</Color>
+
+    <!-- Neon Accent Tokens -->
+    <Color x:Key="AccentCoralColor">#FF3366</Color>
+    <Color x:Key="AccentEmberColor">#FF7A45</Color>
+    <Color x:Key="AccentCyanColor">#00F5FF</Color>
+    <Color x:Key="AccentVioletColor">#7B5CF0</Color>
+    <Color x:Key="AccentGreenColor">#00E676</Color>
+    <Color x:Key="AccentAmberColor">#FFB300</Color>
+    <Color x:Key="AccentRedColor">#FF3D57</Color>
+
+    <!-- Typography Colors (Ultra Crisp Contrast) -->
+    <Color x:Key="TextPrimaryColor">#F4F7FC</Color>
+    <Color x:Key="TextSecondaryColor">#A2B0C7</Color>
+    <Color x:Key="TextMutedColor">#677694</Color>
+
+    <!-- Accent Tints for Badges/Tiles -->
+    <Color x:Key="AccentCoralTint15Color">#26FF3366</Color>
+    <Color x:Key="AccentCyanTint10Color">#1A00F5FF</Color>
+    <Color x:Key="AccentVioletTint10Color">#1A7B5CF0</Color>
+    <Color x:Key="AccentGreenTint10Color">#1A00E676</Color>
+    <Color x:Key="AccentAmberTint10Color">#1AFFB300</Color>
+    <Color x:Key="AccentRedTint10Color">#1AFF3D57</Color>
+
+    <!-- Inner Bevel 8% White -->
+    <Color x:Key="InnerBevelWhiteColor">#18FFFFFF</Color>
+
+    <!-- SolidColorBrushes -->
+    <SolidColorBrush x:Key="BgBaseBrush" Color="{StaticResource BgBaseColor}" />
+    <SolidColorBrush x:Key="BgSurfaceBrush" Color="{StaticResource BgSurfaceColor}" />
+    <SolidColorBrush x:Key="BgElevatedBrush" Color="{StaticResource BgElevatedColor}" />
+    <SolidColorBrush x:Key="BgElevatedHoverBrush" Color="{StaticResource BgElevatedHoverColor}" />
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}" />
+
+    <!-- Accent Brushes -->
+    <SolidColorBrush x:Key="AccentCoralBrush" Color="{StaticResource AccentCoralColor}" />
+    <SolidColorBrush x:Key="AccentEmberBrush" Color="{StaticResource AccentEmberColor}" />
+    <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyanColor}" />
+    <SolidColorBrush x:Key="AccentVioletBrush" Color="{StaticResource AccentVioletColor}" />
+    <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreenColor}" />
+    <SolidColorBrush x:Key="AccentAmberBrush" Color="{StaticResource AccentAmberColor}" />
+    <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRedColor}" />
+
+    <!-- Typography Brushes -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+
+    <!-- Badge Brushes -->
+    <SolidColorBrush x:Key="AccentCoralTint15Brush" Color="{StaticResource AccentCoralTint15Color}" />
+    <SolidColorBrush x:Key="AccentCyanTint10Brush" Color="{StaticResource AccentCyanTint10Color}" />
+    <SolidColorBrush x:Key="AccentVioletTint10Brush" Color="{StaticResource AccentVioletTint10Color}" />
+    <SolidColorBrush x:Key="AccentGreenTint10Brush" Color="{StaticResource AccentGreenTint10Color}" />
+    <SolidColorBrush x:Key="AccentAmberTint10Brush" Color="{StaticResource AccentAmberTint10Color}" />
+    <SolidColorBrush x:Key="AccentRedTint10Brush" Color="{StaticResource AccentRedTint10Color}" />
+
+    <SolidColorBrush x:Key="InnerBevelBrush" Color="{StaticResource InnerBevelWhiteColor}" />
+
+    <!-- Compatible Page Aliases -->
+    <SolidColorBrush x:Key="Surface1Brush" Color="{StaticResource BgSurfaceColor}" />
+    <SolidColorBrush x:Key="Surface2Brush" Color="{StaticResource BgElevatedColor}" />
+    <SolidColorBrush x:Key="SuccessGreenBrush" Color="{StaticResource AccentGreenColor}" />
+    <SolidColorBrush x:Key="WarningAmberBrush" Color="{StaticResource AccentAmberColor}" />
+    <SolidColorBrush x:Key="DangerRedBrush" Color="{StaticResource AccentRedColor}" />
+
+    <!-- Frosted Acrylic Brushes -->
+    <AcrylicBrush
+        x:Key="SidebarAcrylicBrush"
+        TintColor="#070A10"
+        TintOpacity="0.88"
+        FallbackColor="#070A10" />
+
+    <AcrylicBrush
+        x:Key="FrostedBadgeAcrylicBrush"
+        TintColor="#131927"
+        TintOpacity="0.82"
+        FallbackColor="#131927" />
+
+    <AcrylicBrush
+        x:Key="AutoOptimizeAcrylicBrush"
+        TintColor="#0D121D"
+        TintOpacity="0.88"
+        FallbackColor="#0D121D" />
+
+    <!-- ========================================================================= -->
+    <!-- HERO GRADIENTS & ATMOSPHERIC LIGHTING (JAMESGUI SIGNATURE)               -->
+    <!-- ========================================================================= -->
+
+    <!-- Iconic "START MISSION" Gradient (Coral to Fiery Ember) -->
+    <LinearGradientBrush x:Key="HeroMissionGradientBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FF3366" Offset="0.0" />
+        <GradientStop Color="#FF7A45" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Hero Button Hover Glow -->
+    <LinearGradientBrush x:Key="HeroMissionGlowBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#80FF3366" Offset="0.0" />
+        <GradientStop Color="#00FF7A45" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Active Card Radiant Glow Backgrounds -->
+    <LinearGradientBrush x:Key="CardActiveCoralBgBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#2C1220" Offset="0.0" />
+        <GradientStop Color="#111624" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="CardActiveCyanBgBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0C202C" Offset="0.0" />
+        <GradientStop Color="#101522" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="CardActiveVioletBgBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#221232" Offset="0.0" />
+        <GradientStop Color="#101522" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Top Window Atmospheric Backdrops -->
+    <LinearGradientBrush x:Key="AtmosphereTopRadialBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Color="#30FF3366" Offset="0.0" />
+        <GradientStop Color="#107B5CF0" Offset="0.5" />
+        <GradientStop Color="#00000000" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="AtmosphereCyanWashBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1800F5FF" Offset="0.0" />
+        <GradientStop Color="#00000000" Offset="0.6" />
+    </LinearGradientBrush>
+
+    <!-- Data-Encoding Gradients (Only for Score Arc and Visualizers) -->
+    <LinearGradientBrush x:Key="ScoreArcGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource AccentCoralColor}" Offset="0.0" />
+        <GradientStop Color="{StaticResource AccentCyanColor}" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="CpuSparklineGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#5900F5FF" Offset="0.0" />
+        <GradientStop Color="#0000F5FF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="GpuSparklineGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#597B5CF0" Offset="0.0" />
+        <GradientStop Color="#007B5CF0" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="RamSparklineGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#5900E676" Offset="0.0" />
+        <GradientStop Color="#0000E676" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Storage Bar Shimmer Gradient -->
+    <LinearGradientBrush x:Key="ShimmerGradientBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#0000F5FF" Offset="0.0" />
+        <GradientStop Color="#8000F5FF" Offset="0.5" />
+        <GradientStop Color="#0000F5FF" Offset="1.0" />
+    </LinearGradientBrush>
+
+</ResourceDictionary>

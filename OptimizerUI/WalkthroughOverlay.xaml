@@ -31,23 +31,23 @@
 
         <!-- Floating Callout Card -->
         <Border x:Name="CalloutCard" HorizontalAlignment="Left" VerticalAlignment="Top" 
-                Width="350" Background="#0A0D14" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="12"
+                Width="350" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource BorderAccent}" BorderThickness="1.5" CornerRadius="12"
                 Margin="0,0,0,0" Padding="20">
             <Border.Effect>
                 <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="30" ShadowDepth="0" Opacity="0.5"/>
             </Border.Effect>
             <StackPanel>
-                <TextBlock x:Name="TxtWalkthroughTitle" Text="Welcome" FontWeight="Black" FontSize="20" Foreground="White" Margin="0,0,0,10"/>
-                <TextBlock x:Name="TxtWalkthroughDesc" Text="Description here..." TextWrapping="Wrap" FontSize="14" Foreground="#8892B0" Margin="0,0,0,20"/>
+                <TextBlock x:Name="TxtWalkthroughTitle" Text="Welcome" FontWeight="Black" FontSize="20" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10"/>
+                <TextBlock x:Name="TxtWalkthroughDesc" Text="Description here..." TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20"/>
                 
                 <Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtStepCounter" Text="1 of 5" Foreground="#666" FontSize="12" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="TxtStepCounter" Text="1 of 5" Foreground="{DynamicResource TextMuted}" FontSize="12" FontWeight="SemiBold"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="BtnWalkthroughSkip" Content="Skip" Background="Transparent" BorderBrush="Transparent" Foreground="#888" FontSize="14" Cursor="Hand" Click="BtnWalkthroughSkip_Click" Margin="0,0,15,0"/>
-                        <Button x:Name="BtnWalkthroughNext" Content="Next &#x2192;" Background="{DynamicResource AccentBrush}" Foreground="#111" FontWeight="Bold" Padding="20,8" BorderThickness="0" Cursor="Hand" Click="BtnWalkthroughNext_Click"/>
+                        <Button x:Name="BtnWalkthroughSkip" Content="Skip" Style="{StaticResource GhostActionButton}" Padding="14,6" FontSize="13" Margin="0,0,12,0" Click="BtnWalkthroughSkip_Click"/>
+                        <Button x:Name="BtnWalkthroughNext" Content="Next &#x2192;" Style="{StaticResource PrimaryActionButton}" Padding="18,8" FontSize="13" Click="BtnWalkthroughNext_Click"/>
                     </StackPanel>
                 </Grid>
             </StackPanel>

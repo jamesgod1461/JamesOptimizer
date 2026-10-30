@@ -96,6 +96,8 @@ public partial class App : System.Windows.Application
         bool isAdmin = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
             .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
+        bool startMinimized = e.Args.Contains("-background") || e.Args.Contains("--silent") || e.Args.Contains("--minimized");
+
         if (!isAdmin)
         {
             var processInfo = new System.Diagnostics.ProcessStartInfo(System.Environment.ProcessPath ?? "James Optimizer.exe")
@@ -103,7 +105,7 @@ public partial class App : System.Windows.Application
                 UseShellExecute = true,
                 Verb = "runas"
             };
-            if (e.Args.Contains("-background"))
+            if (startMinimized)
             {
                 processInfo.Arguments = "-background";
             }
@@ -116,12 +118,16 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        // Load saved theme/accent/backdrop settings BEFORE the window is created
+        // so the saved theme applies without a visual flash.
+        ThemeManager.Initialize();
+
         var mainWindow = new MainWindow();
-        
+
         // Start listening for other instances
         Task.Run(() => StartIpcServer(mainWindow));
 
-        if (!e.Args.Contains("-background"))
+        if (!startMinimized)
         {
             mainWindow.Show();
         }
@@ -159,18 +165,29 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private static bool _isShowingError = false;
     private void ShowErrorDialog(string message, Exception ex)
     {
         // Ignore task cancellations which are normal during async operations
         if (ex is TaskCanceledException || ex is OperationCanceledException) return;
+        if (_isShowingError) return;
 
-        Application.Current.Dispatcher.Invoke(() =>
+        _isShowingError = true;
+        try
         {
-            MessageBox.Show(
-                $"{message}\n\nError Details:\n{ex.Message}\n\nWe apologize for the inconvenience. The application will attempt to continue running.", 
-                "James Optimizer - Error", 
-                MessageBoxButton.OK, 
-                MessageBoxImage.Warning);
-        });
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MessageBox.Show(
+                    $"{message}\n\nError Details:\n{ex.Message}\n\nWe apologize for the inconvenience. The application will attempt to continue running.", 
+                    "James Optimizer - Error", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Warning);
+            });
+        }
+        catch { }
+        finally
+        {
+            _isShowingError = false;
+        }
     }
 }

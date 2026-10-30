@@ -1,24 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
 
 namespace JamesOptimizer
 {
-    public class WalkthroughSettings
-    {
-        public bool HasSeenWalkthrough { get; set; } = false;
-    }
-
     public class WalkthroughController
     {
         private readonly WalkthroughOverlay _overlay;
         private readonly Window _window;
         private List<WalkthroughStep> _steps = new();
         private int _currentIndex = 0;
-        private static readonly string SettingsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WalkthroughSettings.json");
 
         public WalkthroughController(WalkthroughOverlay overlay, Window window)
         {
@@ -62,17 +54,9 @@ namespace JamesOptimizer
 
         public bool HasSeenWalkthrough()
         {
-            try
-            {
-                if (File.Exists(SettingsFile))
-                {
-                    string json = File.ReadAllText(SettingsFile);
-                    var settings = JsonSerializer.Deserialize<WalkthroughSettings>(json);
-                    return settings?.HasSeenWalkthrough ?? false;
-                }
-            }
-            catch { }
-            return false;
+            // Persisted via ThemeManager's settings.json (BaseDirectory can be
+            // read-only when the app is installed under Program Files).
+            return ThemeManager.Settings.WalkthroughSeen;
         }
 
         public void ResetWalkthrough()
@@ -82,12 +66,8 @@ namespace JamesOptimizer
 
         private void MarkAsSeen(bool seen = true)
         {
-            try
-            {
-                var settings = new WalkthroughSettings { HasSeenWalkthrough = seen };
-                File.WriteAllText(SettingsFile, JsonSerializer.Serialize(settings));
-            }
-            catch { }
+            ThemeManager.Settings.WalkthroughSeen = seen;
+            ThemeManager.SaveSettings();
         }
 
         private void ShowCurrentStep()

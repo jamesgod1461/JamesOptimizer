@@ -1,0 +1,347 @@
+<Page x:Class="JamesOptimizer.StorageManagement"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="Storage Management"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="StorageManagement_Loaded">
+
+    <Page.Resources>
+        <!-- Action Card Base Style -->
+        <Style x:Key="StorageActionCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Surface1}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform Y="0"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.55" BlurRadius="24" ShadowDepth="0"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderAccent}"/>
+                    <Setter Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <TranslateTransform Y="-3"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="{DynamicResource ColorAccentCyan}" Opacity="0.25" BlurRadius="28" ShadowDepth="0"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,48">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="Auto"/> <!-- Separator -->
+                <RowDefinition Height="Auto"/> <!-- Disk Overview -->
+                <RowDefinition Height="Auto"/> <!-- Action Cards Grid -->
+                <RowDefinition Height="Auto"/> <!-- Scan Results Panel (slides down) -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 HEADER
+                 ══════════════════════════════════════════════════════════ -->
+            <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Drive icon (AccentCyan, 28px) -->
+                    <Viewbox Width="28" Height="28" Margin="0,0,14,0">
+                        <Path Fill="{DynamicResource AccentCyan}"
+                              Data="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/>
+                    </Viewbox>
+                    <TextBlock Text="STORAGE MANAGEMENT" Style="{StaticResource PageTitle}"/>
+                </StackPanel>
+                <TextBlock Text="Analyze disk usage, find large files, and free up space."
+                           Style="{StaticResource BodyText}"
+                           Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Separator -->
+            <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,20,0,24" SnapsToDevicePixels="True"/>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 DISK OVERVIEW (GlassCard, full width)
+                 ══════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="2" Style="{StaticResource GlassCard}" Padding="24">
+                <StackPanel>
+                    <TextBlock Text="DISK OVERVIEW" Style="{StaticResource SectionLabel}" Margin="0,0,0,16"/>
+
+                    <ItemsControl x:Name="ListDrives">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Height="56" Margin="0,0,0,12" Background="Transparent">
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/> <!-- Badge C: -->
+                                            <ColumnDefinition Width="*"/>    <!-- Center label + Progress bar -->
+                                            <ColumnDefinition Width="Auto"/> <!-- Right space text + % -->
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Left: Drive letter badge 36×36px circle -->
+                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
+                                                Background="{DynamicResource GlowCyan}"
+                                                BorderBrush="{DynamicResource BorderAccent}"
+                                                BorderThickness="1" Margin="0,0,16,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DriveLetter}"
+                                                       FontSize="14" FontWeight="Bold"
+                                                       Foreground="{DynamicResource AccentCyan}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Center (flexible): Label + used text + 8px progress bar -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,24,0">
+                                            <Grid Margin="0,0,0,6">
+                                                <TextBlock Text="{Binding DriveLabel}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                                                <TextBlock Text="{Binding SpaceText}" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Right"/>
+                                            </Grid>
+
+                                            <!-- Progress bar: 8px height, CornerRadius 4 -->
+                                            <Border Height="8" CornerRadius="4" Background="{DynamicResource BorderSubtle}" ClipToBounds="True">
+                                                <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding UsedPercent}"
+                                                             Foreground="{Binding BarBrush}"
+                                                             BorderThickness="0" Background="Transparent"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Right: Large free space display + % used -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding FreeText}" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AccentCyan}" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="{Binding UsedPercentText}" FontSize="11"
+                                                       Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 ACTION CARDS (2×2 grid, gap 16px, margin-top 24px)
+                 ══════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="3" Margin="0,24,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="16"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Card 1 — Deep Cleanup (AccentCyan border-left 3px) -->
+                <Border x:Name="CardDeepClean" Grid.Row="0" Grid.Column="0"
+                        Style="{StaticResource StorageActionCardStyle}"
+                        BorderBrush="{DynamicResource BorderSubtle}"
+                        MouseDown="CardDeepClean_Click">
+                    <Grid>
+                        <!-- 3px Left Accent Bar -->
+                        <Rectangle Width="3" Fill="{DynamicResource AccentCyan}" HorizontalAlignment="Left" Margin="-20,-20,0,-20"/>
+
+                        <Grid Margin="10,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Viewbox Grid.Column="0" Width="24" Height="24" VerticalAlignment="Top" Margin="0,2,14,0">
+                                <Path Fill="{DynamicResource AccentCyan}"
+                                      Data="M19.36 2.72l1.42 1.42-3.18 3.18-1.42-1.42 3.18-3.18zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </Viewbox>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Deep Cleanup" Style="{StaticResource CardTitle}"/>
+                                <TextBlock Text="Perform a full cleanup scan — removes temp files, shader cache, and Windows update leftovers."
+                                           Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2" Text="›" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Card 2 — Large Files (AccentViolet border-left 3px) -->
+                <Border x:Name="CardLargeFiles" Grid.Row="0" Grid.Column="2"
+                        Style="{StaticResource StorageActionCardStyle}"
+                        MouseDown="CardLargeFiles_Click">
+                    <Grid>
+                        <Rectangle Width="3" Fill="{DynamicResource AccentViolet}" HorizontalAlignment="Left" Margin="-20,-20,0,-20"/>
+                        <Grid Margin="10,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Viewbox Grid.Column="0" Width="24" Height="24" VerticalAlignment="Top" Margin="0,2,14,0">
+                                <Path Fill="{DynamicResource AccentViolet}"
+                                      Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </Viewbox>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Large Files" Style="{StaticResource CardTitle}"/>
+                                <TextBlock Text="Find and manage files over 100MB taking up disk space."
+                                           Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2" Text="›" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Card 3 — Duplicate Files (WarningAmber border-left 3px) -->
+                <Border x:Name="CardDuplicates" Grid.Row="2" Grid.Column="0"
+                        Style="{StaticResource StorageActionCardStyle}"
+                        MouseDown="CardDuplicates_Click">
+                    <Grid>
+                        <Rectangle Width="3" Fill="{DynamicResource WarningAmber}" HorizontalAlignment="Left" Margin="-20,-20,0,-20"/>
+                        <Grid Margin="10,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Viewbox Grid.Column="0" Width="24" Height="24" VerticalAlignment="Top" Margin="0,2,14,0">
+                                <Path Fill="{DynamicResource WarningAmber}"
+                                      Data="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </Viewbox>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Duplicate Files" Style="{StaticResource CardTitle}"/>
+                                <TextBlock Text="Scan for and remove identical files wasting space."
+                                           Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2" Text="›" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Card 4 — WizTree (TextMuted border-left 3px) -->
+                <Border x:Name="CardWizTree" Grid.Row="2" Grid.Column="2"
+                        Style="{StaticResource StorageActionCardStyle}"
+                        Opacity="0.88"
+                        MouseDown="CardWizTree_Click">
+                    <Grid>
+                        <Rectangle Width="3" Fill="{DynamicResource TextMuted}" HorizontalAlignment="Left" Margin="-20,-20,0,-20"/>
+                        <Grid Margin="10,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Viewbox Grid.Column="0" Width="24" Height="24" VerticalAlignment="Top" Margin="0,2,14,0">
+                                <Path Fill="{DynamicResource TextMuted}"
+                                      Data="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7z"/>
+                            </Viewbox>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="WizTree" Style="{StaticResource CardTitle}"/>
+                                <TextBlock Text="Analyze disk space visually to find large files instantly."
+                                           Style="{StaticResource BodyText}" FontSize="12" Margin="0,4,0,0"/>
+                                <TextBlock Text="Opens WizTree disk analyzer" FontSize="10" FontStyle="Italic"
+                                           Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <!-- External Link Icon -->
+                            <Viewbox Grid.Column="2" Width="14" Height="14" VerticalAlignment="Center">
+                                <Path Fill="{DynamicResource TextMuted}"
+                                      Data="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                            </Viewbox>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 SCAN RESULTS PANEL (hidden by default, slides down)
+                 ══════════════════════════════════════════════════════════ -->
+            <Border x:Name="PanelScanResults" Grid.Row="4" Margin="0,24,0,0"
+                    Style="{StaticResource GlassCard}" Padding="24"
+                    Visibility="Collapsed" Height="0" ClipToBounds="True">
+                <StackPanel>
+                    <!-- Header -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="SCAN RESULTS" Style="{StaticResource SectionLabel}"/>
+                            <TextBlock x:Name="TxtScanStats" Text=" — 12 items found · 4.8 GB recoverable"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AccentCyan}"/>
+                        </StackPanel>
+
+                        <Button HorizontalAlignment="Right" Content="✕ Close"
+                                Style="{StaticResource GhostButton}" Height="30" Padding="10,0"
+                                Click="BtnCloseScanResults_Click"/>
+                    </Grid>
+
+                    <!-- File List (Scrollable) -->
+                    <Border MaxHeight="240" Background="{DynamicResource Surface2}" CornerRadius="10" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" Padding="12">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="ListScanResults">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Height="40" Margin="0,0,0,4" Background="Transparent">
+                                            <Grid VerticalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/> <!-- Checkbox -->
+                                                    <ColumnDefinition Width="*"/>    <!-- Name + Path -->
+                                                    <ColumnDefinition Width="Auto"/> <!-- Size -->
+                                                </Grid.ColumnDefinitions>
+
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,12,0"/>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Path}" FontSize="10" FontFamily="{DynamicResource MonospaceFontFamily}" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="2" Text="{Binding FormattedSize}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Bottom Buttons -->
+                    <Grid Margin="0,16,0,0">
+                        <Button HorizontalAlignment="Left" Content="Select All" Height="38"
+                                Style="{StaticResource GhostButton}"
+                                Click="BtnSelectAll_Click"/>
+
+                        <Button HorizontalAlignment="Right" Content="Delete Selected" Height="38"
+                                Style="{StaticResource DangerButton}"
+                                Click="BtnDeleteSelected_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>

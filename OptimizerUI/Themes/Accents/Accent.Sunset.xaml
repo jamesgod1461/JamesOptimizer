@@ -1,0 +1,83 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ════════════════════════════════════════════════════════════════
+         ACCENT OVERLAY — Solar Flare
+         Merged AFTER the color dictionary by ThemeManager so these keys
+         win. Values are tuned to stay legible on both dark and light.
+         ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Raw colors -->
+    <Color x:Key="ColorAccentCyan">#FB7C25</Color>
+    <Color x:Key="ColorAccentViolet">#FBBF24</Color>
+    <Color x:Key="ColorAccentGradientStart">#FB7C25</Color>
+    <Color x:Key="ColorAccentGradientEnd">#FBBF24</Color>
+    <Color x:Key="ColorAccentGlow">#FB7C25</Color>
+    <Color x:Key="ColorBorderAccent">#66FB7C25</Color>
+    <Color x:Key="ColorGlowCyan">#33FB7C25</Color>
+    <Color x:Key="ColorPrimaryAccent">#FB7C25</Color>
+    <Color x:Key="ColorSecondaryAccent">#FBBF24</Color>
+    <Color x:Key="ColorSidebarBorder">#33FB7C25</Color>
+    <Color x:Key="ColorBorderHover">#66FB7C25</Color>
+    <Color x:Key="ColorBorderFocus">#99FB7C25</Color>
+    <Color x:Key="ColorGlowCyanIntense">#66FB7C25</Color>
+    <Color x:Key="AccentColor">#FB7C25</Color>
+
+    <!-- Core accent brushes -->
+    <SolidColorBrush x:Key="AccentCyan" Color="#FB7C25"/>
+    <SolidColorBrush x:Key="AccentViolet" Color="#FBBF24"/>
+    <SolidColorBrush x:Key="BorderAccent" Color="#66FB7C25"/>
+    <SolidColorBrush x:Key="GlowCyan" Color="#33FB7C25"/>
+    <SolidColorBrush x:Key="AccentTint" Color="#1AFB7C25"/>
+    <SolidColorBrush x:Key="AccentTintBorder" Color="#33FB7C25"/>
+    <SolidColorBrush x:Key="AccentTintStrong" Color="#2EFB7C25"/>
+    <SolidColorBrush x:Key="SectionLabelBrush" Color="#CCFB7C25"/>
+
+    <!-- Gradients -->
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FB7C25" Offset="0.0"/>
+        <GradientStop Color="#FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AccentGradientHorizontal" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FB7C25" Offset="0.0"/>
+        <GradientStop Color="#FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="NavActiveGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#2EFB7C25" Offset="0"/>
+        <GradientStop Color="#14FBBF24" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardHoverBorderGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#99FB7C25" Offset="0.0"/>
+        <GradientStop Color="#59FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- Interactive + legacy aliases -->
+    <SolidColorBrush x:Key="NavActiveBackground" Color="#24FB7C25"/>
+    <SolidColorBrush x:Key="NavActiveBackgroundBrush" Color="#1AFB7C25"/>
+    <SolidColorBrush x:Key="PrimaryAccentBrush" Color="#FB7C25"/>
+    <SolidColorBrush x:Key="SecondaryAccentBrush" Color="#FBBF24"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#FB7C25"/>
+    <SolidColorBrush x:Key="AccentLightBrush" Color="#33FB7C25"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#FB7C25"/>
+    <SolidColorBrush x:Key="PrimaryGlowBrush" Color="#33FB7C25"/>
+    <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FB7C25" Offset="0.0"/>
+        <GradientStop Color="#FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PrimaryGradientHorizontalBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FB7C25" Offset="0.0"/>
+        <GradientStop Color="#FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardHoverBorderGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#80FB7C25" Offset="0.0"/>
+        <GradientStop Color="#40FBBF24" Offset="1.0"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="GlowCyanBrush" Color="#33FB7C25"/>
+    <SolidColorBrush x:Key="BorderHoverBrush" Color="#66FB7C25"/>
+    <SolidColorBrush x:Key="BorderFocusBrush" Color="#99FB7C25"/>
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="#33FB7C25"/>
+    <SolidColorBrush x:Key="GlassBorderCyanBrush" Color="#4DFB7C25"/>
+    <SolidColorBrush x:Key="ActionGhostHoverBrush" Color="#14FB7C25"/>
+    <SolidColorBrush x:Key="ActionGhostBorderBrush" Color="#59FB7C25"/>
+
+</ResourceDictionary>

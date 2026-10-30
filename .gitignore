@@ -430,4 +430,5 @@ FodyWeavers.xsd
 
 # Custom application outputs
 PublishOutput/
-Installer/
+Installer/Output/
+*.bak

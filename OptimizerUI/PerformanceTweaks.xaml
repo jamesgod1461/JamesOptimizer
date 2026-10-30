@@ -1,0 +1,598 @@
+<Page x:Class="JamesOptimizer.PerformanceTweaks"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="Performance Tweaks"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="PerformanceTweaks_Loaded">
+
+    <Page.Resources>
+        <!-- ── TWEAK GHOST BUTTON STYLE (Height 46px) ── -->
+        <Style x:Key="TweakGhostButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform X="0" Y="0"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                Padding="16,0"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource BorderAccent}"/>
+                                <Setter TargetName="ButtonBorder" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{DynamicResource ColorAccentGlow}" BlurRadius="12" Opacity="0.3" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource Surface1}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── BOTTOM FULL-WIDTH CTA BUTTON STYLE ── -->
+        <Style x:Key="BottomCtaButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CtaBorder" CornerRadius="14" SnapsToDevicePixels="True">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="{DynamicResource ColorAccentGlow}" Offset="0"/>
+                                    <GradientStop Color="{DynamicResource ColorAccentViolet}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="CtaShadow" Color="{DynamicResource ColorAccentGlow}" BlurRadius="24" Opacity="0.4" ShadowDepth="0"/>
+                            </Border.Effect>
+                            <ContentPresenter x:Name="CtaContent" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CtaBorder" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{DynamicResource ColorAccentGlow}" BlurRadius="32" Opacity="0.75" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="1.02" ScaleY="1.02"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <!-- ── ROOT SCROLLVIEWER ── -->
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <!-- Page padding: 32px horizontal, 28px top, 36px bottom -->
+        <Grid Margin="32,28,32,36">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Row 0: Header -->
+                <RowDefinition Height="Auto"/> <!-- Row 1: Separator -->
+                <RowDefinition Height="Auto"/> <!-- Row 2: Grid Row 1 (Top Cards) -->
+                <RowDefinition Height="Auto"/> <!-- Row 3: Grid Row 2 (Bottom Cards) -->
+                <RowDefinition Height="Auto"/> <!-- Row 4: Bottom CTA -->
+            </Grid.RowDefinitions>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 HEADER
+                 ══════════════════════════════════════════════════════════ -->
+            <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Gear icon (WarningAmber, 28px) -->
+                    <Viewbox Width="28" Height="28" VerticalAlignment="Center">
+                        <Path Data="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                              Fill="{DynamicResource WarningAmber}"/>
+                    </Viewbox>
+
+                    <!-- Page title: "PERFORMANCE TWEAKS" -->
+                    <TextBlock Text="PERFORMANCE TWEAKS"
+                               Style="{StaticResource PageTitle}"
+                               Margin="14,0,0,0"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Subtitle -->
+                <TextBlock Text="Apply registry tweaks, hardware optimizations, and power settings to push your system to maximum performance."
+                           Style="{StaticResource BodyText}"
+                           Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Separator line: 1px BorderSubtle, margin 20px 0 -->
+            <Rectangle Grid.Row="1"
+                       Height="1"
+                       Fill="{DynamicResource BorderSubtle}"
+                       Margin="0,20,0,24"
+                       SnapsToDevicePixels="True"/>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 MAIN GRID: ROW 1 (3 equal columns, gap 20px)
+                 ══════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 1 — Aggressive Optimizations (WarningAmber bar)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card1"
+                        Grid.Column="0"
+                        Style="{StaticResource GlassCard}"
+                        Padding="0"
+                        ClipToBounds="True"
+                        Opacity="0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TransCard1" Y="16"/>
+                    </Border.RenderTransform>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top: WarningAmber accent bar (3px) -->
+                        <Border Grid.Row="0" Background="{DynamicResource WarningAmber}" CornerRadius="16,16,0,0"/>
+
+                        <!-- Card Content -->
+                        <StackPanel Grid.Row="1" Margin="24">
+                            <TextBlock Text="Aggressive Optimizations" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="These tweaks alter system registry and priority settings to force maximum resources to your games."
+                                       FontSize="12"
+                                       Foreground="{DynamicResource WarningAmber}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,4,0,16"/>
+
+                            <!-- Buttons (4) -->
+                            <StackPanel>
+                                <Button x:Name="BtnReg" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnReg_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnReg" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M7 2v11h3v9l7-12h-4l4-8z" Fill="{DynamicResource WarningAmber}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Registry Repair" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnElite" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnElite_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnElite" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M7 2v11h3v9l7-12h-4l4-8z" Fill="{DynamicResource WarningAmber}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Elite Hardware Mode" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnVisual" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnVisual_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnVisual" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M7 2v11h3v9l7-12h-4l4-8z" Fill="{DynamicResource WarningAmber}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Visual FX Optimizer" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnGaming" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnGaming_Click" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnGaming" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M7 2v11h3v9l7-12h-4l4-8z" Fill="{DynamicResource WarningAmber}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Gaming Priority Mode" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Progress / Result Overlay -->
+                        <Border x:Name="OverlayCard1" Background="{DynamicResource OverlayScrim}" CornerRadius="16" Visibility="Collapsed" Panel.ZIndex="10">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid x:Name="SpinnerHostCard1" Width="32" Height="32" HorizontalAlignment="Center">
+                                    <Path x:Name="SpinnerArcCard1" Data="M16 2 A14 14 0 0 1 30 16" Stroke="{DynamicResource AccentCyan}" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform><RotateTransform x:Name="SpinnerRotateCard1" Angle="0"/></Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                                <Viewbox x:Name="CheckHostCard1" Width="32" Height="32" HorizontalAlignment="Center" Visibility="Collapsed">
+                                    <Path Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="{DynamicResource SuccessGreen}"/>
+                                </Viewbox>
+                                <TextBlock x:Name="TxtStatusCard1" Text="Applying..." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 2 — Input & Peripheral (AccentCyan bar)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card2"
+                        Grid.Column="2"
+                        Style="{StaticResource GlassCard}"
+                        Padding="0"
+                        ClipToBounds="True"
+                        Opacity="0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TransCard2" Y="16"/>
+                    </Border.RenderTransform>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top: AccentCyan bar (3px) -->
+                        <Border Grid.Row="0" Background="{DynamicResource AccentCyan}" CornerRadius="16,16,0,0"/>
+
+                        <!-- Card Content -->
+                        <StackPanel Grid.Row="1" Margin="24">
+                            <TextBlock Text="Input &amp; Peripheral" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="Reduces input latency and configures keyboard and mouse settings for lowest delay in competitive gaming."
+                                       Style="{StaticResource BodyText}"
+                                       Margin="0,6,0,20"/>
+
+                            <!-- Buttons (3) -->
+                            <StackPanel>
+                                <Button x:Name="BtnMouseFix" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnMouseFix_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnMouseFix" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M13 1.07V9h7c-.55-4.42-4.08-7.93-8.5-8.43zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C6.58 1.57 3.05 5.08 2.5 9.5H11V1.07z" Fill="{DynamicResource AccentCyan}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Mouse Latency Fix" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnKeyboardFix" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnKeyboardFix_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnKeyboardFix" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z" Fill="{DynamicResource AccentCyan}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Keyboard Latency Fix" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnGpuTweaks" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnGpuTweaks_Click" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnGpuTweaks" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" Fill="{DynamicResource AccentCyan}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="GPU Max Performance" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Progress / Result Overlay -->
+                        <Border x:Name="OverlayCard2" Background="{DynamicResource OverlayScrim}" CornerRadius="16" Visibility="Collapsed" Panel.ZIndex="10">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid x:Name="SpinnerHostCard2" Width="32" Height="32" HorizontalAlignment="Center">
+                                    <Path x:Name="SpinnerArcCard2" Data="M16 2 A14 14 0 0 1 30 16" Stroke="{DynamicResource AccentCyan}" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform><RotateTransform x:Name="SpinnerRotateCard2" Angle="0"/></Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                                <Viewbox x:Name="CheckHostCard2" Width="32" Height="32" HorizontalAlignment="Center" Visibility="Collapsed">
+                                    <Path Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="{DynamicResource SuccessGreen}"/>
+                                </Viewbox>
+                                <TextBlock x:Name="TxtStatusCard2" Text="Applying..." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 3 — System & Network (AccentViolet bar)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card3"
+                        Grid.Column="4"
+                        Style="{StaticResource GlassCard}"
+                        Padding="0"
+                        ClipToBounds="True"
+                        Opacity="0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TransCard3" Y="16"/>
+                    </Border.RenderTransform>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top: AccentViolet bar (3px) -->
+                        <Border Grid.Row="0" Background="{DynamicResource AccentViolet}" CornerRadius="16,16,0,0"/>
+
+                        <!-- Card Content -->
+                        <StackPanel Grid.Row="1" Margin="24">
+                            <TextBlock Text="System &amp; Network" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="Flush network buffers and debloat Windows to reduce background processes and improve hit registration."
+                                       Style="{StaticResource BodyText}"
+                                       Margin="0,6,0,20"/>
+
+                            <!-- Buttons (3) -->
+                            <StackPanel>
+                                <Button x:Name="BtnWindowsDebloat" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnWindowsDebloat_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnWindowsDebloat" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z" Fill="{DynamicResource AccentViolet}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Windows OS Debloat" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnNetworkFlush" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnNetworkFlush_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnNetworkFlush" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" Fill="{DynamicResource AccentViolet}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Network DNS Flush" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnJamesRegedit" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnJamesRegedit_Click" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnJamesRegedit" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" Fill="{DynamicResource AccentViolet}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="James Regedit V2" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Progress / Result Overlay -->
+                        <Border x:Name="OverlayCard3" Background="{DynamicResource OverlayScrim}" CornerRadius="16" Visibility="Collapsed" Panel.ZIndex="10">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid x:Name="SpinnerHostCard3" Width="32" Height="32" HorizontalAlignment="Center">
+                                    <Path x:Name="SpinnerArcCard3" Data="M16 2 A14 14 0 0 1 30 16" Stroke="{DynamicResource AccentCyan}" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform><RotateTransform x:Name="SpinnerRotateCard3" Angle="0"/></Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                                <Viewbox x:Name="CheckHostCard3" Width="32" Height="32" HorizontalAlignment="Center" Visibility="Collapsed">
+                                    <Path Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="{DynamicResource SuccessGreen}"/>
+                                </Viewbox>
+                                <TextBlock x:Name="TxtStatusCard3" Text="Applying..." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 MAIN GRID: ROW 2 (3 columns, gap 20px, margin-top 20px)
+                 Col 0: Card 4 | Col 2: Card 5 (Advice) | Col 4: Empty Spacer
+                 ══════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="3" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 4 — Power & Energy (SuccessGreen bar)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card4"
+                        Grid.Column="0"
+                        Style="{StaticResource GlassCard}"
+                        Padding="0"
+                        ClipToBounds="True"
+                        Opacity="0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TransCard4" Y="16"/>
+                    </Border.RenderTransform>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top: SuccessGreen bar (3px) -->
+                        <Border Grid.Row="0" Background="{DynamicResource SuccessGreen}" CornerRadius="16,16,0,0"/>
+
+                        <!-- Card Content -->
+                        <StackPanel Grid.Row="1" Margin="24">
+                            <TextBlock Text="Power &amp; Energy" Style="{StaticResource CardTitle}"/>
+                            <TextBlock Text="Unlock hidden power plans to ensure your CPU maintains maximum clock speeds and disables sleep states."
+                                       Style="{StaticResource BodyText}"
+                                       Margin="0,6,0,20"/>
+
+                            <!-- Buttons (2) -->
+                            <StackPanel>
+                                <Button x:Name="BtnUltimatePower" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnUltimatePower_Click" Margin="0,0,0,10" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnUltimatePower" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M7 2v11h3v9l7-12h-4l4-8z" Fill="{DynamicResource SuccessGreen}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Ultimate Performance Plan" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="BtnCpuUnpark" Style="{StaticResource TweakGhostButtonStyle}" Click="BtnCpuUnpark_Click" Opacity="0">
+                                    <Button.RenderTransform><TranslateTransform x:Name="TransBtnCpuUnpark" Y="10"/></Button.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Path Data="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z" Fill="{DynamicResource SuccessGreen}" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Text="Unpark CPU Cores" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Progress / Result Overlay -->
+                        <Border x:Name="OverlayCard4" Background="{DynamicResource OverlayScrim}" CornerRadius="16" Visibility="Collapsed" Panel.ZIndex="10">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Grid x:Name="SpinnerHostCard4" Width="32" Height="32" HorizontalAlignment="Center">
+                                    <Path x:Name="SpinnerArcCard4" Data="M16 2 A14 14 0 0 1 30 16" Stroke="{DynamicResource AccentCyan}" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform><RotateTransform x:Name="SpinnerRotateCard4" Angle="0"/></Path.RenderTransform>
+                                    </Path>
+                                </Grid>
+                                <Viewbox x:Name="CheckHostCard4" Width="32" Height="32" HorizontalAlignment="Center" Visibility="Collapsed">
+                                    <Path Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" Fill="{DynamicResource SuccessGreen}"/>
+                                </Viewbox>
+                                <TextBlock x:Name="TxtStatusCard4" Text="Applying..." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 5 — Modern Obsidian Advisory Card (High Contrast)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card5"
+                        Grid.Column="2"
+                        CornerRadius="16"
+                        Background="{DynamicResource Surface1}"
+                        BorderBrush="#4DFFB703"
+                        BorderThickness="1"
+                        Padding="0"
+                        SnapsToDevicePixels="True"
+                        Opacity="0">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TransCard5" Y="16"/>
+                    </Border.RenderTransform>
+                    <Border.Effect>
+                        <DropShadowEffect Color="#FFB703" BlurRadius="22" Opacity="0.16" ShadowDepth="2"/>
+                    </Border.Effect>
+                    <Grid ClipToBounds="True">
+                        <!-- Specular Top Rim Highlight -->
+                        <Border Height="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="1,1,1,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FFB703" Offset="0"/>
+                                    <GradientStop Color="#80FFB703" Offset="0.5"/>
+                                    <GradientStop Color="#00FFB703" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <Grid Margin="22">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Glowing Amber Squircle Icon -->
+                            <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12"
+                                    Background="#1EFFB703" BorderBrush="#59FFB703" BorderThickness="1"
+                                    VerticalAlignment="Top" Margin="0,0,16,0">
+                                <Viewbox Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                          Fill="#FFB703"/>
+                                </Viewbox>
+                            </Border>
+
+                            <!-- Advisory Details -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Optimization Advice"
+                                               FontSize="15"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource TextPrimary}"/>
+                                    <Border Margin="10,0,0,0" Padding="8,2" CornerRadius="4"
+                                            Background="#26FFB703" BorderBrush="#59FFB703" BorderThickness="1">
+                                        <TextBlock Text="SAFETY ADVISORY" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource WarningAmber}"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <TextBlock Text="These tweaks forcefully adjust registry keys. Always create a restore point before applying Aggressive Optimizations!"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,8,0,10"
+                                           LineHeight="18"/>
+
+                                <Border Background="#1CFF4B72" BorderBrush="#4DFF4B72" BorderThickness="1"
+                                        CornerRadius="6" Padding="10,6" Margin="0,2,0,0">
+                                    <TextBlock Text="If you experience stutters after applying, restore your system from the restore point you created (Toolbox › Create Restore Point)."
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource DangerRed}"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- ──────────────────────────────────────────────────────
+                     CARD 6 — (Empty / Spacer — preserves 3-column balance)
+                     ────────────────────────────────────────────────────── -->
+                <Border x:Name="Card6Spacer" Grid.Column="4"/>
+            </Grid>
+
+            <!-- ══════════════════════════════════════════════════════════
+                 STICKY BOTTOM CTA (sits at bottom of page scroll)
+                 Height: 60px, Margin-top: 28px
+                 Background: LinearGradient AccentCyan→AccentViolet 135 deg
+                 CornerRadius: 14
+                 Content: 🚀 "RUN ALL ADVANCED TWEAKS NOW"
+                 ══════════════════════════════════════════════════════════ -->
+            <Button x:Name="BtnRunAllTweaks"
+                    Grid.Row="4"
+                    Style="{StaticResource BottomCtaButtonStyle}"
+                    Margin="0,28,0,0"
+                    Click="BtnRunAllTweaks_Click"
+                    Opacity="0">
+                <Button.RenderTransform>
+                    <TranslateTransform x:Name="TransBtnRunAllTweaks" Y="16"/>
+                </Button.RenderTransform>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="🚀" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="RUN ALL ADVANCED TWEAKS NOW"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="#FFFFFF"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+    </ScrollViewer>
+</Page>

@@ -46,13 +46,15 @@ namespace JamesOptimizer
         /// <summary>
         /// Enable Mica backdrop for the window (Windows 11 22H2+)
         /// </summary>
-        public static void EnableMica(Window window)
+        public static void EnableMica(Window window) => EnableMica(window, isDarkMode: true);
+
+        public static void EnableMica(Window window, bool isDarkMode)
         {
             if (!IsWindows11_22H2OrGreater())
                 return;
 
             var hwnd = new WindowInteropHelper(window).EnsureHandle();
-            
+
             // Extend frame into client area for custom titlebar
             var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
             DwmExtendFrameIntoClientArea(hwnd, ref margins);
@@ -61,30 +63,55 @@ namespace JamesOptimizer
             int backdropType = (int)DWM_SYSTEMBACKDROP_TYPE.DWMSBT_MAINWINDOW;
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
 
-            // Enable dark mode for titlebar
-            int darkMode = 1;
-            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+            SetImmersiveDarkMode(window, isDarkMode);
+        }
+
+        /// <summary>
+        /// Toggle the DWM immersive dark mode (titlebar/backdrop tint) to match the app theme.
+        /// </summary>
+        public static void SetImmersiveDarkMode(Window window, bool isDarkMode)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(window).EnsureHandle();
+                int darkMode = isDarkMode ? 1 : 0;
+                DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+            }
+            catch { }
         }
 
         /// <summary>
         /// Enable Acrylic backdrop for the window (Windows 11 22H2+)
+        /// Returns true if successful, false if fallback is needed.
         /// </summary>
+        public static bool TryEnableAcrylic(Window window) => TryEnableAcrylic(window, isDarkMode: true);
+
+        public static bool TryEnableAcrylic(Window window, bool isDarkMode)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(window).EnsureHandle();
+
+                var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+                DwmExtendFrameIntoClientArea(hwnd, ref margins);
+
+                // DWMWA_SYSTEMBACKDROP_TYPE = 38, Acrylic = 3 (DWMSBT_TRANSIENTWINDOW)
+                int backdropType = 3;
+                int hr = DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
+
+                SetImmersiveDarkMode(window, isDarkMode);
+
+                return hr == 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static void EnableAcrylic(Window window)
         {
-            if (!IsWindows11_22H2OrGreater())
-                return;
-
-            var hwnd = new WindowInteropHelper(window).EnsureHandle();
-            
-            var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
-            DwmExtendFrameIntoClientArea(hwnd, ref margins);
-
-            // Set system backdrop type to Acrylic (Tabbed Window)
-            int backdropType = (int)DWM_SYSTEMBACKDROP_TYPE.DWMSBT_TABBEDWINDOW;
-            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
-
-            int darkMode = 1;
-            DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+            TryEnableAcrylic(window);
         }
 
         /// <summary>

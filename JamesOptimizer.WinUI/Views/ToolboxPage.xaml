@@ -1,0 +1,196 @@
+<Page
+    x:Class="JamesOptimizer.WinUI.Views.ToolboxPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="Page_Loaded">
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="28,24,28,32">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="&#xE74C;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="SYSTEM TOOLBOX &amp; BENCHMARK" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="Stress benchmark your rig, clean bloated context menus, run debloaters, and repair system health." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <!-- 1. HARDWARE BENCHMARK CARD (0-100 Score) -->
+            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="24">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="18"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="Hardware Stress Benchmark (0–100 Index)" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <Border x:Name="TierBadge" Background="#1F00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtTier" Text="TIER: UNTESTED" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Executes multi-threaded CPU stress, memory copy throughput, and unbuffered disk sector I/O." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <!-- Big Score Display -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtBenchmarkScore" Text="--" FontSize="48" FontWeight="Black" Foreground="{StaticResource AccentCyanBrush}"/>
+                        <TextBlock Text="/100" FontSize="18" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,10"/>
+                    </StackPanel>
+
+                    <!-- Subscores & Action -->
+                    <Grid Grid.Row="2" Grid.ColumnSpan="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- CPU Subscore -->
+                        <Border Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,10,0">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="CPU Multi-Core" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock x:Name="TxtCpuScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- RAM Subscore -->
+                        <Border Grid.Column="1" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,10,0">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="RAM Bandwidth" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock x:Name="TxtRamScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Disk Subscore -->
+                        <Border Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,14,0">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Disk Direct I/O" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock x:Name="TxtDiskScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Button x:Name="BtnRunBenchmark" Grid.Column="3" Click="BtnRunBenchmark_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="46" Padding="20,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="RUN BENCHMARK" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- 2. CONTEXT MENU CLEANER -->
+            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
+                <StackPanel Spacing="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="2">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="Context Menu Cleaner" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Border Background="#1F00E5FF" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
+                                    <TextBlock x:Name="TxtContextMenuCount" Text="0 Extensions" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Inspect and toggle third-party shell extensions bloating your right-click Explorer menu." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Button Click="BtnRestartExplorer_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Restart Explorer"/>
+                            <Button Click="BtnScanContextMenu_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan Handlers"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Extensions List -->
+                    <ItemsControl x:Name="ContextMenuList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Spacing="1">
+                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding KeyPath}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsOn="{Binding IsActive, Mode=TwoWay}" Toggled="ContextMenuToggle_Toggled" Tag="{Binding}" VerticalAlignment="Center" OnContent="Active" OffContent="Disabled"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. QUICK UTILITIES GRID -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- God Mode -->
+                <Border Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Enable God Mode" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Text="Creates master control panel shortcut on Desktop with all 200+ Windows settings." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button Grid.Row="2" Click="BtnGodMode_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Create God Mode"/>
+                    </Grid>
+                </Border>
+
+                <!-- DISM Health Check -->
+                <Border Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="DISM / SFC Health Repair" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Text="Scans and restores corrupted Windows system image components and protected DLL files." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button Grid.Row="2" Click="BtnDismRepair_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Repair System Image"/>
+                    </Grid>
+                </Border>
+
+                <!-- Windows Debloater -->
+                <Border Grid.Column="4" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Windows Debloater" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Text="Purges pre-installed consumer bloatware UWP apps and telemetry packages." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                        <Button Grid.Row="2" Click="BtnDebloater_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Run Debloater Script"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

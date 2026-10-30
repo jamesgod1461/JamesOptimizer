@@ -1,0 +1,562 @@
+<Page
+    x:Class="JamesOptimizer.WinUI.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    xmlns:models="using:JamesOptimizer.WinUI.Models"
+    xmlns:vm="using:JamesOptimizer.WinUI.ViewModels"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Grid Margin="22,12,22,14">
+        <Grid.RowDefinitions>
+            <!-- Scrollable Dashboard Content Area -->
+            <RowDefinition Height="*" />
+            <!-- Hero "START MISSION" Button Bar -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ========================================================================= -->
+        <!-- MAIN DASHBOARD CONTENT (BALANCED 2-COLUMN LAYOUT)                         -->
+        <!-- ========================================================================= -->
+        <ScrollViewer Grid.Row="0" Margin="0,0,0,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- Left: Profiles, Efficiency Score, Quick Actions, Auto-Timer (*) -->
+                    <ColumnDefinition Width="*" />
+                    <!-- Right: Session Behavior, Hardware Sparklines, Storage (350px) -->
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT COLUMN -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0" Spacing="14">
+
+                    <!-- 1. STREAMLINED PROFILES MATRIX (COMPACT / SLEEK 68px HEIGHT) -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="14,12">
+                        <StackPanel Spacing="10">
+                            <!-- Category Header -->
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Border Style="{StaticResource PillTagCoralStyle}">
+                                        <TextBlock Text="MODE" FontFamily="{StaticResource DisplayFontFamily}" FontSize="10" FontWeight="Black" Foreground="#FFFFFF" />
+                                    </Border>
+                                    <TextBlock Text="HARDWARE PERFORMANCE PROFILES" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock HorizontalAlignment="Right" Text="PREDATOR ENGINE v3.2" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- 4 Compact Profile Cards (Low Height) -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Profile 1: Game Turbo (Default Active) -->
+                                <Border x:Name="ProfileCard1" Grid.Column="0" Margin="0,0,5,0"
+                                        Style="{StaticResource JamesGuiActiveCoralCardStyle}"
+                                        PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ProfileCard_Pressed"
+                                        Tag="GameTurbo" Padding="10,8" Height="68">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{StaticResource HeroMissionGradientBrush}" VerticalAlignment="Center">
+                                            <TextBlock Text="⚡" FontSize="14" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Game Turbo" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="0.5ms · GPU Max" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+
+                                        <!-- Pulsing Beacon -->
+                                        <Ellipse x:Name="ActiveBeaconDot" Grid.Column="2" Width="8" Height="8" Fill="{StaticResource AccentCoralBrush}" VerticalAlignment="Top" Margin="0,2,2,0">
+                                            <Ellipse.Resources>
+                                                <Storyboard x:Name="BeaconPulseStoryboard" RepeatBehavior="Forever" AutoReverse="True">
+                                                    <DoubleAnimation Storyboard.TargetName="ActiveBeaconDot" Storyboard.TargetProperty="Opacity" From="1.0" To="0.25" Duration="0:0:0.6" />
+                                                </Storyboard>
+                                            </Ellipse.Resources>
+                                        </Ellipse>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Profile 2: Max Power -->
+                                <Border x:Name="ProfileCard2" Grid.Column="1" Margin="3,0,3,0"
+                                        Style="{StaticResource JamesGuiCardStyle}"
+                                        PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ProfileCard_Pressed"
+                                        Tag="MaxPerf" Padding="10,8" Height="68">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{StaticResource AccentCyanTint10Brush}" VerticalAlignment="Center">
+                                            <TextBlock Text="🚀" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Max Power" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Unparked Cores" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Profile 3: Workstation -->
+                                <Border x:Name="ProfileCard3" Grid.Column="2" Margin="3,0,3,0"
+                                        Style="{StaticResource JamesGuiCardStyle}"
+                                        PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ProfileCard_Pressed"
+                                        Tag="Workstation" Padding="10,8" Height="68">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{StaticResource AccentVioletTint10Brush}" VerticalAlignment="Center">
+                                            <TextBlock Text="💻" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Workstation" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Fast Queue" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Profile 4: Eco Mode -->
+                                <Border x:Name="ProfileCard4" Grid.Column="3" Margin="5,0,0,0"
+                                        Style="{StaticResource JamesGuiCardStyle}"
+                                        PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ProfileCard_Pressed"
+                                        Tag="EcoSilent" Padding="10,8" Height="68">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{StaticResource AccentGreenTint10Brush}" VerticalAlignment="Center">
+                                            <TextBlock Text="🍃" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Eco Mode" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Quiet Fan · Low W" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 2. SYSTEM EFFICIENCY SCORECARD (SCANNED AT STARTUP, NOT JITTERING IN REAL TIME) -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="18,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Arc Gauge Left -->
+                            <Grid Grid.Column="0" Width="180" Height="136" HorizontalAlignment="Center">
+                                <canvas:CanvasControl x:Name="ScoreArcCanvas" Width="180" Height="136"
+                                                      Draw="ScoreArcCanvas_Draw" CreateResources="ScoreArcCanvas_CreateResources" />
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,18,0,0">
+                                    <TextBlock x:Name="HeroScoreText" Text="96" FontFamily="{StaticResource DisplayFontFamily}" FontSize="42" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="ScanStatusLabel" Text="PEAK OPTIMAL" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Scorecard Details Right -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="10" Margin="12,0,0,0">
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="EFFICIENCY BENCHMARK" FontFamily="{StaticResource DisplayFontFamily}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        <Border Style="{StaticResource PillTagCoralStyle}">
+                                            <TextBlock x:Name="TotalScoreBadgeText" Text="96 / 100" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Re-Scan Button -->
+                                    <Button x:Name="BtnRescan" HorizontalAlignment="Right" Click="BtnRescan_Click" Style="{StaticResource GhostButtonStyle}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFontFamily}" FontSize="11" VerticalAlignment="Center" />
+                                            <TextBlock Text="Re-Scan" FontSize="11" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+
+                                <TextBlock x:Name="ScanDetailSummary" Text="Baseline scan verified. Kernel responsiveness optimal, zero orphaned memory locks, telemetry services suppressed."
+                                           FontFamily="{StaticResource BodyFontFamily}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" />
+
+                                <!-- 4 Sub-Metrics Pills -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Health -->
+                                    <Border Grid.Column="0" Style="{StaticResource MetricPillBadgeStyle}" Margin="0,0,4,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Width="3" Height="12" Background="{StaticResource AccentGreenBrush}" CornerRadius="1.5" />
+                                            <TextBlock Text="Health" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="HealthScoreLabel" Text="98%" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Perf -->
+                                    <Border Grid.Column="1" Style="{StaticResource MetricPillBadgeStyle}" Margin="2,0,2,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Width="3" Height="12" Background="{StaticResource AccentCyanBrush}" CornerRadius="1.5" />
+                                            <TextBlock Text="Perf" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="PerfScoreLabel" Text="94%" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Security -->
+                                    <Border Grid.Column="2" Style="{StaticResource MetricPillBadgeStyle}" Margin="2,0,2,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Width="3" Height="12" Background="{StaticResource AccentVioletBrush}" CornerRadius="1.5" />
+                                            <TextBlock Text="Security" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="SecScoreLabel" Text="99%" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Stability -->
+                                    <Border Grid.Column="3" Style="{StaticResource MetricPillBadgeStyle}" Margin="4,0,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Width="3" Height="12" Background="{StaticResource AccentAmberBrush}" CornerRadius="1.5" />
+                                            <TextBlock Text="Stability" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="StabScoreLabel" Text="95%" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 3. DIRECT ACTION OPTIMIZERS (HIGH-VALUE ONE-CLICK PURGES) -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Action 1: RAM Flush -->
+                        <Border Grid.Column="0" Margin="0,0,6,0" Style="{StaticResource CardPanelStyle}" Padding="12,10"
+                                PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ActionTile_Pressed" Tag="ram_purge">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource AccentCyanTint10Brush}" VerticalAlignment="Center">
+                                    <TextBlock Text="🧠" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Flush Working Sets" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Trim standby list &amp; heaps" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Action 2: Clean Temp -->
+                        <Border Grid.Column="1" Margin="3,0,3,0" Style="{StaticResource CardPanelStyle}" Padding="12,10"
+                                PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ActionTile_Pressed" Tag="temp_clean">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource AccentCoralTint15Brush}" VerticalAlignment="Center">
+                                    <TextBlock Text="🧹" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Clean Temp Caches" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Purge %TEMP% &amp; prefetch" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Action 3: DNS Flush -->
+                        <Border Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource CardPanelStyle}" Padding="12,10"
+                                PointerEntered="Tile_PointerEntered" PointerExited="Tile_PointerExited" PointerPressed="ActionTile_Pressed" Tag="dns_boost">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="36" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource AccentGreenTint10Brush}" VerticalAlignment="Center">
+                                    <TextBlock Text="🌐" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Flush DNS Resolver" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Renew socket cache" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- 4. AUTO-OPTIMIZE FREQUENCY (SLIDER BAR WITH 10M, 15M, 30M, 45M, 1H, 3H PRESETS) -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="16,12">
+                        <StackPanel Spacing="10">
+                            <!-- Header -->
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="⏱" FontSize="14" Foreground="{StaticResource AccentVioletBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="AUTO-OPTIMIZE FREQUENCY" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" Style="{StaticResource PillTagVioletStyle}" Padding="10,2">
+                                    <TextBlock x:Name="AutoTimerValueLabel" Text="30M" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Smooth Slider with 6 Stepped Intervals (0=10m, 1=15m, 2=30m, 3=45m, 4=1h, 5=3h) -->
+                            <Slider x:Name="AutoTimerSlider" Minimum="0" Maximum="5" StepFrequency="1"
+                                    Style="{StaticResource JamesGuiNeonSliderStyle}" />
+
+                            <!-- 6 Preset Pills (10m, 15m, 30m, 45m, 1h, 3h) -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button x:Name="PresetPill0" Grid.Column="0" Margin="0,0,3,0" Click="PresetPill_Click" Tag="0" Style="{StaticResource SegmentedPillButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="10M" FontSize="10" />
+                                </Button>
+                                <Button x:Name="PresetPill1" Grid.Column="1" Margin="2,0,2,0" Click="PresetPill_Click" Tag="1" Style="{StaticResource SegmentedPillButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="15M" FontSize="10" />
+                                </Button>
+                                <Button x:Name="PresetPill2" Grid.Column="2" Margin="2,0,2,0" Click="PresetPill_Click" Tag="2" Style="{StaticResource SegmentedPillActiveButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="30M" FontSize="10" />
+                                </Button>
+                                <Button x:Name="PresetPill3" Grid.Column="3" Margin="2,0,2,0" Click="PresetPill_Click" Tag="3" Style="{StaticResource SegmentedPillButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="45M" FontSize="10" />
+                                </Button>
+                                <Button x:Name="PresetPill4" Grid.Column="4" Margin="2,0,2,0" Click="PresetPill_Click" Tag="4" Style="{StaticResource SegmentedPillButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="1H" FontSize="10" />
+                                </Button>
+                                <Button x:Name="PresetPill5" Grid.Column="5" Margin="3,0,0,0" Click="PresetPill_Click" Tag="5" Style="{StaticResource SegmentedPillButtonStyle}" HorizontalAlignment="Stretch">
+                                    <TextBlock Text="3H" FontSize="10" />
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+                <!-- RIGHT COLUMN (SESSION BEHAVIOR & LIVE MONITOR) -->
+                <StackPanel Grid.Column="1" Spacing="14">
+
+                    <!-- SESSION BEHAVIOR (NEON CORAL SWITCHES) -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="16,12">
+                        <StackPanel Spacing="10">
+                            <!-- Category Header -->
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="🛡" FontSize="13" Foreground="{StaticResource AccentCoralBrush}" VerticalAlignment="Center" />
+                                    <TextBlock Text="SESSION BEHAVIOR" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="6,2">
+                                    <TextBlock Text="PERSISTENT SETTINGS" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Switch 1: Stay Awake -->
+                            <Grid Height="32">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="STAY AWAKE &amp; RESPONSIVE" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Prevent standby &amp; CPU sleep" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="SwitchStayAwake" HorizontalAlignment="Right" OnContent="" OffContent="" />
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- Switch 2: Zero Delay TCP/IP -->
+                            <Grid Height="32">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="ZERO DELAY TCP/IP" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Disable socket buffering" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="SwitchZeroDelay" HorizontalAlignment="Right" OnContent="" OffContent="" />
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- Switch 3: Silence Telemetry -->
+                            <Grid Height="32">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="KILL TELEMETRY" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Mute diagnostics &amp; trackers" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="SwitchSilenceTelemetry" HorizontalAlignment="Right" OnContent="" OffContent="" />
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- Switch 4: Auto Standby Clean -->
+                            <Grid Height="32">
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="AUTO STANDBY PURGE" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Background cache trimming" FontFamily="{StaticResource BodyFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="AutoRunSwitch" HorizontalAlignment="Right" OnContent="" OffContent="" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- HARDWARE TELEMETRY SPARKLINES (CPU, GPU, RAM, DISK) -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="16,12">
+                        <StackPanel Spacing="8">
+                            <Grid>
+                                <TextBlock Text="HARDWARE TELEMETRY" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <Button HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Padding="0" Click="BtnOpenDiagnostics_Click" ToolTipService.ToolTip="View Specifications">
+                                    <TextBlock Text="Specs →" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" Foreground="{StaticResource AccentCyanBrush}" />
+                                </Button>
+                            </Grid>
+
+                            <!-- CPU -->
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="54" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="CPU" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <canvas:CanvasControl x:Name="CpuSparkCanvas" Grid.Column="1" Height="22" Margin="6,0" Draw="CpuSparkCanvas_Draw" />
+                                <TextBlock x:Name="CpuPercentText" Grid.Column="2" Text="14%" FontFamily="{StaticResource DisplayFontFamily}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- GPU -->
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="54" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="GPU" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <canvas:CanvasControl x:Name="GpuSparkCanvas" Grid.Column="1" Height="22" Margin="6,0" Draw="GpuSparkCanvas_Draw" />
+                                <TextBlock x:Name="GpuPercentText" Grid.Column="2" Text="18%" FontFamily="{StaticResource DisplayFontFamily}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- RAM -->
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="64" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="RAM" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <canvas:CanvasControl x:Name="RamSparkCanvas" Grid.Column="1" Height="22" Margin="6,0" Draw="RamSparkCanvas_Draw" />
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <TextBlock x:Name="RamPercentText" Text="57%" FontFamily="{StaticResource DisplayFontFamily}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock x:Name="RamSubLabelText" Text="18.3/32 GB" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" Margin="0,-2,0,0" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{StaticResource BorderSubtleBrush}" />
+
+                            <!-- DISK -->
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="54" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="DISK" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <canvas:CanvasControl x:Name="DiskSparkCanvas" Grid.Column="1" Height="22" Margin="6,0" Draw="DiskSparkCanvas_Draw" />
+                                <TextBlock x:Name="DiskPercentText" Grid.Column="2" Text="4%" FontFamily="{StaticResource DisplayFontFamily}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- STORAGE VOLUMES -->
+                    <Border Style="{StaticResource CardPanelStyle}" Padding="16,12">
+                        <StackPanel Spacing="8">
+                            <Grid>
+                                <TextBlock Text="STORAGE VOLUMES" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <Button HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Padding="0" Click="BtnOpenStorage_Click" ToolTipService.ToolTip="Open Storage Manager">
+                                    <TextBlock Text="View All →" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" Foreground="{StaticResource AccentCyanBrush}" />
+                                </Button>
+                            </Grid>
+
+                            <!-- Drive C: -->
+                            <StackPanel Spacing="4">
+                                <Grid>
+                                    <TextBlock Text="C: NVMe System" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="412 GB / 1 TB" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Height="6">
+                                    <Border Background="{StaticResource BgElevatedBrush}" CornerRadius="3" />
+                                    <Border x:Name="DriveCBar" HorizontalAlignment="Left" Width="130" Background="{StaticResource AccentCyanBrush}" CornerRadius="3">
+                                        <Border.Resources>
+                                            <Storyboard x:Name="DriveCShimmerStoryboard">
+                                                <DoubleAnimation Storyboard.TargetName="DriveCBar" Storyboard.TargetProperty="Opacity" From="0.6" To="1.0" Duration="0:0:0.8" />
+                                            </Storyboard>
+                                        </Border.Resources>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Drive D: -->
+                            <StackPanel Spacing="4">
+                                <Grid>
+                                    <TextBlock Text="D: SSD High-Speed" FontFamily="{StaticResource DisplayFontFamily}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="1420 GB / 2 TB" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Height="6">
+                                    <Border Background="{StaticResource BgElevatedBrush}" CornerRadius="3" />
+                                    <Border x:Name="DriveDBar" HorizontalAlignment="Left" Width="220" Background="{StaticResource AccentVioletBrush}" CornerRadius="3">
+                                        <Border.Resources>
+                                            <Storyboard x:Name="DriveDShimmerStoryboard">
+                                                <DoubleAnimation Storyboard.TargetName="DriveDBar" Storyboard.TargetProperty="Opacity" From="0.6" To="1.0" Duration="0:0:0.8" />
+                                            </Storyboard>
+                                        </Border.Resources>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ========================================================================= -->
+        <!-- THE ICONIC "START MISSION" HERO CTA BUTTON (AT BASE OF WINDOW)           -->
+        <!-- ========================================================================= -->
+        <Border Grid.Row="1" Margin="0,2,0,0">
+            <Button x:Name="HeroStartMissionBtn" Click="HeroStartMissionBtn_Click" Style="{StaticResource HeroMissionButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                    <Border Width="26" Height="26" CornerRadius="13" Background="#FFFFFF">
+                        <TextBlock Text="▶" FontSize="12" Foreground="{StaticResource AccentCoralBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0" />
+                    </Border>
+                    <TextBlock Text="START MISSION: EXECUTE FULL SYSTEM OPTIMIZATION" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Border>
+    </Grid>
+</Page>

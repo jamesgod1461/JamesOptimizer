@@ -1,0 +1,308 @@
+<Page x:Class="JamesOptimizer.Settings"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:JamesOptimizer"
+      Title="Settings"
+      Background="Transparent"
+      FontFamily="{DynamicResource PrimaryFontFamily}"
+      Loaded="Settings_Loaded">
+
+    <Page.Resources>
+        <!-- Segmented option pill (theme / backdrop choices) -->
+        <Style x:Key="SegmentedOptionStyle" TargetType="RadioButton">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Background" Value="{DynamicResource Surface2}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="SegmentBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SegmentBorder" Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="SegmentBorder" Property="Background" Value="{DynamicResource AccentGradient}"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter TargetName="SegmentBorder" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{DynamicResource ColorAccentGlow}" BlurRadius="10" Opacity="0.35" ShadowDepth="0"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Dynamic Accent Color Swatch Style -->
+        <Style x:Key="AccentPickerRadioStyle" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+            <Setter Property="GroupName" Value="AccentGroup"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <!-- Outer glow & selection ring -->
+                            <Border x:Name="ColorOuterBorder" Width="38" Height="38" CornerRadius="19" 
+                                    BorderThickness="2" BorderBrush="{TemplateBinding Background}" 
+                                    Background="Transparent" Padding="3" Opacity="0"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="{DynamicResource ColorAccentGlow}" Opacity="0.5"/>
+                                </Border.Effect>
+                            </Border>
+
+                            <!-- Color Swatch Circle -->
+                            <Border x:Name="ColorPill" Width="28" Height="28" CornerRadius="14" 
+                                    Background="{TemplateBinding Background}" 
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.35"/>
+                                </Border.Effect>
+
+                                <!-- Active Checkmark Icon -->
+                                <Path x:Name="CheckMark" Data="M2,6 L5,9 L11,3" Stroke="#FFFFFF" StrokeThickness="2" 
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" Width="12" Height="10" 
+                                      Stretch="Uniform" Visibility="Collapsed">
+                                    <Path.Effect>
+                                        <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.6"/>
+                                    </Path.Effect>
+                                </Path>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ColorOuterBorder" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ColorOuterBorder" Property="Opacity" Value="1.0"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Setting Row Style with Interactive Hover -->
+        <Style x:Key="SettingRowStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Surface1}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20,16"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderAccent}"/>
+                    <Setter Property="Background" Value="{DynamicResource SurfaceHover}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="32,28,32,40">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="Auto"/> <!-- Separator -->
+                <RowDefinition Height="Auto"/> <!-- Appearance Section -->
+                <RowDefinition Height="Auto"/> <!-- Integration Section -->
+                <RowDefinition Height="Auto"/> <!-- Privacy Section -->
+            </Grid.RowDefinitions>
+
+            <!-- ── HEADER ── -->
+            <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="42" Height="42" CornerRadius="12" Background="{DynamicResource GlowCyan}" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" Foreground="{DynamicResource AccentCyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Application Settings" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                        <TextBlock Text="Personalize interface theme, dynamic color accents, system startup automation, and hardware monitoring behavior."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ── SEPARATOR ── -->
+            <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,20,0,24" SnapsToDevicePixels="True"/>
+
+            <!-- ── SECTION 1: APPEARANCE & THEMING ── -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,24">
+                <TextBlock Text="APPEARANCE &amp; ACCENTS" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}" Margin="0,0,0,12"/>
+
+                <!-- Theme Mode -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="App Theme Mode" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Switch between Cyber Dark (recommended for OLED) and Clean Light mode." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource Surface2}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="10" Padding="3" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="RadioThemeDark" Style="{StaticResource SegmentedOptionStyle}" Content="Dark" GroupName="ThemeGroup" IsChecked="True" Checked="RadioThemeDark_Checked"/>
+                                <RadioButton x:Name="RadioThemeLight" Style="{StaticResource SegmentedOptionStyle}" Content="Light" GroupName="ThemeGroup" Checked="RadioThemeLight_Checked"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Accent Color -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Dynamic Accent Glow" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Select dynamic accent color for buttons, glowing indicators, and focus outlines." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <RadioButton x:Name="AccentCyan" Style="{StaticResource AccentPickerRadioStyle}" Background="#00C8F5" ToolTip="Cyber Cyan" IsChecked="True" Click="AccentRadio_Click"/>
+                            <RadioButton x:Name="AccentViolet" Style="{StaticResource AccentPickerRadioStyle}" Background="#8B5CF6" ToolTip="Violet Nebula" Click="AccentRadio_Click"/>
+                            <RadioButton x:Name="AccentEmerald" Style="{StaticResource AccentPickerRadioStyle}" Background="#10C98F" ToolTip="Emerald Rush" Click="AccentRadio_Click"/>
+                            <RadioButton x:Name="AccentSunset" Style="{StaticResource AccentPickerRadioStyle}" Background="#FB7C25" ToolTip="Solar Flare" Click="AccentRadio_Click"/>
+                            <RadioButton x:Name="AccentRose" Style="{StaticResource AccentPickerRadioStyle}" Background="#F43F5E" ToolTip="Cosmic Rose" Click="AccentRadio_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- DWM Window Backdrop -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Windows 11 Backdrop Material" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Configure translucent DWM desktop composition effect." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource Surface2}" BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1" CornerRadius="10" Padding="3" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="BackdropAcrylic" Style="{StaticResource SegmentedOptionStyle}" Content="Acrylic" GroupName="BackdropGroup" IsChecked="True" Checked="Backdrop_Checked"/>
+                                <RadioButton x:Name="BackdropMica" Style="{StaticResource SegmentedOptionStyle}" Content="Mica Alt" GroupName="BackdropGroup" Checked="Backdrop_Checked"/>
+                                <RadioButton x:Name="BackdropSolid" Style="{StaticResource SegmentedOptionStyle}" Content="Solid" GroupName="BackdropGroup" Checked="Backdrop_Checked"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- ── SECTION 2: SYSTEM INTEGRATION & AUTOMATION ── -->
+            <StackPanel Grid.Row="3" Margin="0,0,0,24">
+                <TextBlock Text="STARTUP &amp; BACKGROUND AUTOMATION" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}" Margin="0,0,0,12"/>
+
+                <!-- Launch with Windows -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Launch on Windows Startup" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Automatically start JamesOptimizer silently in tray when signing into Windows." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <CheckBox x:Name="ChkStartup" Style="{StaticResource ToggleSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="ChkStartup_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Close to System Tray -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Minimize to System Tray" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Keep background hardware monitor and auto-cleaner active in notification tray." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <CheckBox x:Name="ChkTray" Style="{StaticResource ToggleSwitch}" Grid.Column="1" VerticalAlignment="Center" IsChecked="True" Click="ChkTray_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Smooth Animations -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Fluid UI Transitions &amp; Animations" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Enable smooth 60fps storyboard page transitions and interactive micro-animations." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <CheckBox x:Name="ChkAnimations" Style="{StaticResource ToggleSwitch}" Grid.Column="1" VerticalAlignment="Center" IsChecked="True" Click="ChkAnimations_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Tips & Walkthrough -->
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Tips &amp; Walkthrough" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="Replay the guided tour of the sidebar, command palette (Ctrl+K) and customization options." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <Button x:Name="BtnShowTips" Grid.Column="1" Content="SHOW TIPS" Style="{StaticResource GhostButton}"
+                                Height="36" Padding="16,0" VerticalAlignment="Center" Click="BtnShowTips_Click"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- ── SECTION 3: PRIVACY & SYSTEM INTEGRITY ── -->
+            <StackPanel Grid.Row="4">
+                <TextBlock Text="PRIVACY &amp; LOCAL CONTROL" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}" Margin="0,0,0,12"/>
+
+                <Border Style="{StaticResource SettingRowStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Zero Telemetry Commitment" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+                            <TextBlock Text="All system scans, tweaks, and optimizations execute 100% locally. Zero telemetry data is ever collected." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{DynamicResource GlowCyan}" BorderBrush="{DynamicResource BorderAccent}" BorderThickness="1" CornerRadius="12" Padding="14,6" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE72E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12" Foreground="{DynamicResource AccentCyan}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="LOCKED LOCAL" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentCyan}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <Resource Include="app_icon.ico" />
+    <Resource Include="Assets\**\*.png" />
     <EmbeddedResource Include="Resources\Windows 10 Debloater.ps1" />
     <EmbeddedResource Include="Resources\Windows11Debloater.ps1" />
   </ItemGroup>
