@@ -115,12 +115,9 @@ public sealed partial class SettingsPage : Page
 
     private async Task CheckServiceStatusAsync()
     {
-        TxtServiceStatus.Text = "Checking \\\\.\\pipe\\JamesOptimizerPipe...";
-        var (ok, msg) = await BackgroundServiceClient.HelloHandshakeAsync();
-        if (ok)
-            TxtServiceStatus.Text = $"Active · {msg}";
-        else
-            TxtServiceStatus.Text = $"Service Idle / Admin Pipe Unavailable ({msg})";
+        TxtServiceStatus.Text = "Checking service state & \\\\.\\pipe\\JamesOptimizerPipe...";
+        var report = await BackgroundServiceClient.GetServiceStatusReportAsync();
+        TxtServiceStatus.Text = report.Summary;
     }
 
     private async void BtnPingService_Click(object sender, RoutedEventArgs e)

@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Description>JamesOptimizer Background Optimization Windows Service</Description>
     <UserSecretsId>dotnet-JamesOptimizer.Service-ba0ddfbe-808b-4540-a409-7c5479453681</UserSecretsId>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>

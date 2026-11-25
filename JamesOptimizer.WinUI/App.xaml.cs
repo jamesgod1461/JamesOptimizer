@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading.Tasks;
 using JamesOptimizer.Core;
 using JamesOptimizer.WinUI.ViewModels;
 using Microsoft.UI.Xaml;
@@ -29,13 +31,19 @@ public partial class App : Application
 
         UnhandledException += (sender, e) =>
         {
-            LogCrash("WinUI UnhandledException", e.Exception, e.Message);
+            LogCrash("WinUI UnhandledException", e.Exception, e.Message, showUserDialog: true);
         };
 
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
             if (e.ExceptionObject is Exception ex)
-                LogCrash("AppDomain UnhandledException", ex, ex.Message);
+                LogCrash("AppDomain UnhandledException", ex, ex.Message, showUserDialog: true);
+        };
+
+        TaskScheduler.UnobservedTaskException += (sender, e) =>
+        {
+            LogCrash("TaskScheduler UnobservedTaskException", e.Exception, e.Exception.Message, showUserDialog: false);
+            e.SetObserved();
         };
     }
 
@@ -126,19 +134,38 @@ public partial class App : Application
         return false;
     }
 
-    private static void LogCrash(string source, Exception? ex, string message)
+    private static void LogCrash(string source, Exception? ex, string message, bool showUserDialog = false)
     {
         SharedLogger.Error(source, message, ex);
+        string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CoreConstants.ProductName, "logs");
         try
         {
-            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JamesOptimizer");
             Directory.CreateDirectory(logDir);
             string logPath = Path.Combine(logDir, "winui_crash.log");
+            if (File.Exists(logPath) && new FileInfo(logPath).Length > 2 * 1024 * 1024)
+            {
+                string rotated = Path.Combine(logDir, "winui_crash.1.log");
+                if (File.Exists(rotated)) File.Delete(rotated);
+                File.Move(logPath, rotated);
+            }
             string content = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{source}] {message}\nException: {ex?.ToString()}\nInner: {ex?.InnerException?.ToString()}\n----------------------------------------\n";
             File.AppendAllText(logPath, content);
         }
         catch { }
+
+        if (showUserDialog)
+        {
+            try
+            {
+                string summary = $"{CoreConstants.ProductName} encountered an unexpected error and wrote diagnostics to:\n{logDir}\n\nDetails: {ex?.Message ?? message}";
+                MessageBoxW(IntPtr.Zero, summary, $"{CoreConstants.ProductName} — Error", 0x00000010 /* MB_ICONERROR */);
+            }
+            catch { }
+        }
     }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
@@ -150,7 +177,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            LogCrash("OnLaunched Exception", ex, ex.Message);
+            LogCrash("OnLaunched Exception", ex, ex.Message, showUserDialog: true);
             throw;
         }
     }

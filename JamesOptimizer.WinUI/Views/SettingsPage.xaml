@@ -225,7 +225,7 @@
             <Border x:Name="CardAbout" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="JAMESOPTIMIZER V3" FontFamily="{StaticResource Font.Display}" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                        <TextBlock Text="JAMESOPTIMIZER v3.0.0" FontFamily="{StaticResource Font.Display}" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
                         <Border Style="{StaticResource Badge.Sm}">
                             <TextBlock Text="WINUI 3 · JAMES GOD" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
                         </Border>

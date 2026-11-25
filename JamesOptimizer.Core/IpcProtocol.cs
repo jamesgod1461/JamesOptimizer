@@ -61,6 +61,21 @@ public static partial class IpcProtocol
         return true;
     }
 
+    public static string EvaluateHello(string? arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+            return "HELLO:ERROR:Missing version";
+
+        string trimmed = arg.Trim();
+        string expectedComposite = $"{CoreConstants.AppVersion}|{CoreConstants.ProtocolVersion}";
+        bool compatible = string.Equals(trimmed, expectedComposite, StringComparison.OrdinalIgnoreCase) ||
+                          string.Equals(trimmed, CoreConstants.ProtocolVersion, StringComparison.OrdinalIgnoreCase);
+
+        return compatible
+            ? $"HELLO:OK:{expectedComposite}"
+            : $"HELLO:MISMATCH:Service={expectedComposite},UI={trimmed}";
+    }
+
     public static bool TryValidateTimerMinutes(string arg, out int minutes)
     {
         minutes = 0;

@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AnalysisLevel>latest</AnalysisLevel>
+    <Description>JamesOptimizer Core Optimization Engine and IPC Library</Description>
   </PropertyGroup>
 
   <ItemGroup>

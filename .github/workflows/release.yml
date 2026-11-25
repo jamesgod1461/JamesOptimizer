@@ -1,0 +1,77 @@
+name: Release Gate & Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore & Test
+        shell: pwsh
+        run: |
+          dotnet test optimizer.slnx -c Release --nologo
+          dotnet list optimizer.slnx package --vulnerable --include-transitive
+
+      - name: Run Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build, Sign & Package Installer
+        shell: pwsh
+        env:
+          SIGN_CERT_PFX_B64: ${{ secrets.SIGN_CERT_PFX_BASE64 }}
+          SIGN_CERT_PWD: ${{ secrets.SIGN_CERT_PASSWORD }}
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:SIGN_CERT_PFX_B64)) {
+            $pfxPath = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+            [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:SIGN_CERT_PFX_B64))
+            $cert = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString $env:SIGN_CERT_PWD -AsPlainText -Force)
+            Remove-Item $pfxPath -Force
+            .\Installer\Build-Installer.ps1 -CertThumbprint $cert.Thumbprint
+          } else {
+            Write-Warning "No production signing secret configured; building unsigned for verification check."
+            .\Installer\Build-Installer.ps1 -AllowUnsigned
+          }
+
+      - name: Run Release Verification Gate
+        shell: pwsh
+        run: |
+          .\Installer\Verify-Release.ps1 -OutputPath "Installer\Output\release-report.md"
+
+      - name: Attest Build Provenance
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            Installer/Output/JamesOptimizer-*-Setup.exe
+            Installer/Output/SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Installer/Output/JamesOptimizer-*-Setup.exe
+            Installer/Output/SHA256SUMS.txt
+            Installer/Output/release-report.md
+          generate_release_notes: true

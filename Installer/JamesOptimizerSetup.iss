@@ -29,8 +29,12 @@ AllowNoIcons=yes
 DisableWelcomePage=no
 DisableProgramGroupPage=yes
 OutputDir=Output
-OutputBaseFilename=JamesOptimizer_V3_Setup
+OutputBaseFilename=JamesOptimizer-v{#MyAppVersion}-Setup
 SetupIconFile=..\JamesOptimizer.WinUI\Assets\AppIcon.ico
+#ifdef UseSignTool
+SignedUninstaller=yes
+SignTool=signtool_cmd
+#endif
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64
@@ -98,9 +102,17 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [UninstallRun]
 ; Offer clean revert of tweaks before stopping/removing service
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--revert-all"; RunOnceId: "RevertTweaks"; Flags: runhidden
-; Stop and Delete Background Service
-Filename: "{sys}\sc.exe"; Parameters: "stop ""{#MyServiceName}"""; RunOnceId: "StopService"; Flags: runhidden
-Filename: "{sys}\sc.exe"; Parameters: "delete ""{#MyServiceName}"""; RunOnceId: "DeleteService"; Flags: runhidden
+; Stop and Delete Background Service cleanly (wait briefly so SCM releases handle)
+Filename: "{cmd}"; Parameters: "/c sc.exe stop ""{#MyServiceName}"" & ping -n 3 127.0.0.1 >nul & sc.exe delete ""{#MyServiceName}"""; RunOnceId: "DeleteService"; Flags: runhidden
+; Remove app-owned config/startup registry entries on uninstall
+Filename: "{sys}\reg.exe"; Parameters: "delete ""HKLM\SOFTWARE\JamesOptimizer"" /f"; RunOnceId: "CleanHklmReg"; Flags: runhidden
+Filename: "{sys}\reg.exe"; Parameters: "delete ""HKCU\Software\JamesOptimizer"" /f"; RunOnceId: "CleanHkcuReg"; Flags: runhidden
+Filename: "{sys}\reg.exe"; Parameters: "delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""JamesOptimizer"" /f"; RunOnceId: "CleanRunReg"; Flags: runhidden
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "{commonappdata}\JamesOptimizer"
+Type: filesandordirs; Name: "{localappdata}\JamesOptimizer"
 
 [Code]
 var

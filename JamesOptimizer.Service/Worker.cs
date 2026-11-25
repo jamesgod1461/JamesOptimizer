@@ -243,15 +243,7 @@ public class Worker : BackgroundService
             _ => Task.FromResult("ERROR:Unknown command.")
         };
 
-    private static string HandleHello(string arg)
-    {
-        if (string.IsNullOrWhiteSpace(arg))
-            return "HELLO:ERROR:Missing version";
-        bool compatible = arg.StartsWith("3.", StringComparison.Ordinal);
-        return compatible
-            ? $"HELLO:OK:{CoreConstants.ProtocolVersion}"
-            : $"HELLO:MISMATCH:Service={CoreConstants.ProtocolVersion},UI={arg}";
-    }
+    private static string HandleHello(string arg) => IpcProtocol.EvaluateHello(arg);
 
     private string HandleStatus()
     {
@@ -316,7 +308,12 @@ public class Worker : BackgroundService
         try
         {
             var cfg = arg.Split('|', 2);
-            int enabled = cfg.Length > 0 && cfg[0] == "1" ? 1 : 0;
+            if (cfg.Length == 0 || (cfg[0] != "0" && cfg[0] != "1"))
+            {
+                SharedLogger.Warn("IPC", $"Rejected SET_GAME_WATCH with invalid flag '{arg}'.");
+                return "ERROR:Invalid AutoGameWatch flag (0 or 1 allowed).";
+            }
+            int enabled = cfg[0] == "1" ? 1 : 0;
             string rawGames = cfg.Length > 1 ? cfg[1] : "";
             if (!IpcProtocol.TrySanitizeGameList(rawGames, out string cleanGames))
                 return "ERROR:Invalid watched game list.";

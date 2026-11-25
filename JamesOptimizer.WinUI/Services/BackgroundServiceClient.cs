@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.IO.Pipes;
+using System.Management;
+using System.ServiceProcess;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -8,6 +10,16 @@ using System.Threading.Tasks;
 using JamesOptimizer.Core;
 
 namespace JamesOptimizer.WinUI.Services;
+
+public enum ServiceHealthState
+{
+    NotInstalled,
+    Stopped,
+    Running,
+    Failed
+}
+
+public readonly record struct ServiceStatusReport(ServiceHealthState State, bool HandshakeOk, string Summary);
 
 public readonly record struct ServiceCommandResult(bool Success, string? Error, bool IsOffline = false);
 
@@ -38,12 +50,76 @@ public class BackgroundServiceClient
 
     public static async Task<(bool Compatible, string Message)> HelloHandshakeAsync()
     {
-        var res = await SendCommandAsync($"HELLO:{CoreConstants.ProtocolVersion}", 1000);
+        var res = await SendCommandAsync($"HELLO:{CoreConstants.AppVersion}|{CoreConstants.ProtocolVersion}", 1000);
         if (res.StartsWith("HELLO:OK:", StringComparison.OrdinalIgnoreCase))
             return (true, $"Connected (v{res[9..]})");
         if (res.StartsWith("HELLO:MISMATCH:", StringComparison.OrdinalIgnoreCase))
             return (false, $"Version mismatch: {res[15..]}");
         return (false, res);
+    }
+
+    public static async Task<ServiceStatusReport> GetServiceStatusReportAsync()
+    {
+        ServiceControllerStatus? scStatus = null;
+        try
+        {
+            using var sc = new ServiceController(CoreConstants.ServiceName);
+            scStatus = sc.Status;
+        }
+        catch (InvalidOperationException)
+        {
+            return new ServiceStatusReport(ServiceHealthState.NotInstalled, false,
+                "Not installed — JamesOptimizer Background Service is not registered on this PC.");
+        }
+        catch (Exception ex)
+        {
+            return new ServiceStatusReport(ServiceHealthState.Failed, false,
+                $"Failed to query service state: {ex.Message}");
+        }
+
+        if (scStatus == ServiceControllerStatus.Running)
+        {
+            var (ok, msg) = await HelloHandshakeAsync();
+            if (ok)
+                return new ServiceStatusReport(ServiceHealthState.Running, true, $"Running · {msg}");
+
+            bool mismatch = msg.StartsWith("Version mismatch:", StringComparison.OrdinalIgnoreCase);
+            return new ServiceStatusReport(ServiceHealthState.Failed, false,
+                mismatch
+                    ? $"Failed · {msg}. Reinstall or restart the service so UI and Service versions match."
+                    : $"Failed · Service is running but IPC pipe handshake failed ({msg}).");
+        }
+
+        if (scStatus == ServiceControllerStatus.Stopped)
+        {
+            int exitCode = TryReadServiceWin32ExitCode();
+            if (exitCode != 0)
+                return new ServiceStatusReport(ServiceHealthState.Failed, false,
+                    $"Failed · Service stopped with exit code {exitCode}.");
+            return new ServiceStatusReport(ServiceHealthState.Stopped, false,
+                "Stopped · Service is installed but not currently running.");
+        }
+
+        return new ServiceStatusReport(ServiceHealthState.Stopped, false,
+            $"Transitioning ({scStatus}) — please retry in a moment.");
+    }
+
+    private static int TryReadServiceWin32ExitCode()
+    {
+        try
+        {
+            string escaped = CoreConstants.ServiceName.Replace("'", "''");
+            using var searcher = new ManagementObjectSearcher($"SELECT ExitCode FROM Win32_Service WHERE Name='{escaped}'");
+            using var results = searcher.Get();
+            foreach (var obj in results)
+            using (obj)
+            {
+                if (obj["ExitCode"] != null && int.TryParse(obj["ExitCode"].ToString(), out int code))
+                    return code;
+            }
+        }
+        catch { }
+        return 0;
     }
 
     public static Task<bool> PingAsync() => IsServiceOnlineAsync();

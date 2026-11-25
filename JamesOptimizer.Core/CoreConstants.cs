@@ -6,6 +6,7 @@ namespace JamesOptimizer.Core;
 public static class CoreConstants
 {
     public const string ProductName = "JamesOptimizer";
+    public const string AppVersion = "3.0.0";
     public const string PublisherName = "James God";
     public const string ServiceName = "JamesOptimizer Background Service";
     public const string PipeName = "JamesOptimizerPipe";

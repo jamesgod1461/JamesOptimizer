@@ -97,14 +97,22 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
 
         _ = Task.Run(async () =>
         {
-            var status = await BackgroundServiceClient.GetStatusAsync();
-            if (status.StartsWith("STATUS:", StringComparison.OrdinalIgnoreCase))
+            var report = await BackgroundServiceClient.GetServiceStatusReportAsync();
+            if (report.State == ServiceHealthState.Running && report.HandshakeOk)
             {
-                AddLog("SERVICE", $"Connected to Background Service ({status[7..]})");
+                var status = await BackgroundServiceClient.GetStatusAsync();
+                string detail = status.StartsWith("STATUS:", StringComparison.OrdinalIgnoreCase) ? status[7..] : report.Summary;
+                AddLog("SERVICE", $"Running ({detail})");
+            }
+            else if (report.State == ServiceHealthState.Failed)
+            {
+                AddLog("SERVICE", report.Summary);
+                _dispatcherQueue?.TryEnqueue(() =>
+                    MainWindow.Current?.ShowToast("Background Service Warning", report.Summary, "State.Bad"));
             }
             else
             {
-                AddLog("SERVICE", "Background Service: Standby / Independent execution mode.");
+                AddLog("SERVICE", $"Background Service [{report.State}]: {report.Summary}");
             }
         });
     }

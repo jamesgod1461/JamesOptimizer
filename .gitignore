@@ -431,4 +431,9 @@ FodyWeavers.xsd
 # Custom application outputs
 PublishOutput/
 Installer/Output/
+release-report.md
 *.bak
+*.cer
+*.key
+*.pem
+*.snk

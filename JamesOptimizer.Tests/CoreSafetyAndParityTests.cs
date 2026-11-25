@@ -920,4 +920,22 @@ public class CoreSafetyAndParityTests : IDisposable
         Assert.False(IpcProtocol.TryParseCommand("UNLISTED_CMD:foo", out _, out _, out string parseErr));
         Assert.Contains("allow-list", parseErr, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void IpcProtocol_EvaluateHello_VerifiesExactVersionAndFlagsMismatch()
+    {
+        string okRes = IpcProtocol.EvaluateHello($"{CoreConstants.AppVersion}|{CoreConstants.ProtocolVersion}");
+        Assert.StartsWith("HELLO:OK:", okRes);
+
+        string legacyProtoOk = IpcProtocol.EvaluateHello(CoreConstants.ProtocolVersion);
+        Assert.StartsWith("HELLO:OK:", legacyProtoOk);
+
+        string mismatchRes = IpcProtocol.EvaluateHello("2.9.0|3.0");
+        Assert.StartsWith("HELLO:MISMATCH:", mismatchRes);
+
+        string minorMismatchRes = IpcProtocol.EvaluateHello("3.0.1|3.1");
+        Assert.StartsWith("HELLO:MISMATCH:", minorMismatchRes);
+
+        Assert.Equal("HELLO:ERROR:Missing version", IpcProtocol.EvaluateHello(""));
+    }
 }

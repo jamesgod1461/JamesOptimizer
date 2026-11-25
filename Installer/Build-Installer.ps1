@@ -121,9 +121,13 @@ $signTool = $null
 if (-not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
     $signTool = Find-SignTool
     if (-not $signTool) { throw "signtool.exe not found in PATH or Windows Kits 10 SDK." }
-    Write-Host "`n[2.5/3] Signing application executables with thumbprint $CertThumbprint..." -ForegroundColor Yellow
-    Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile (Join-Path $servicePublish "JamesOptimizer.Service.exe") -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
-    Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile (Join-Path $winuiPublish "JamesOptimizer.WinUI.exe") -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
+    Write-Host "`n[2.5/3] Signing built executables & owned DLLs with thumbprint $CertThumbprint..." -ForegroundColor Yellow
+    $ownedPeFiles = @()
+    $ownedPeFiles += Get-ChildItem -Path $servicePublish -Recurse -File | Where-Object { $_.Name -like 'JamesOptimizer*.exe' -or $_.Name -like 'JamesOptimizer*.dll' }
+    $ownedPeFiles += Get-ChildItem -Path $winuiPublish -Recurse -File | Where-Object { $_.Name -like 'JamesOptimizer*.exe' -or $_.Name -like 'JamesOptimizer*.dll' }
+    foreach ($pe in ($ownedPeFiles | Sort-Object FullName -Unique)) {
+        Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile $pe.FullName -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
+    }
 } elseif (-not $AllowUnsigned) {
     throw "Release IPC requires Authenticode-signed JamesOptimizer.WinUI.exe ('James God'). Pass -CertThumbprint <sha1> or -AllowUnsigned."
 } else {
@@ -133,6 +137,8 @@ if (-not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
 # 3. Compile Inno Setup Script
 Write-Host "`n[3/3] Compiling Installer..." -ForegroundColor Yellow
 $issPath = Join-Path $PSScriptRoot "JamesOptimizerSetup.iss"
+$appVersion = "3.0.0"
+$setupExe = Join-Path $PSScriptRoot "Output\JamesOptimizer-v$appVersion-Setup.exe"
 
 $iscc = @(
     "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
@@ -142,15 +148,33 @@ $iscc = @(
 
 if ($iscc -and -not $SkipCompileInstaller) {
     Write-Host "Found Inno Setup Compiler at: $iscc" -ForegroundColor Cyan
-    & $iscc $issPath
-    if ($LASTEXITCODE -eq 0) {
-        $setupExe = Join-Path $PSScriptRoot "Output\JamesOptimizer_V3_Setup.exe"
+    $psi = [System.Diagnostics.ProcessStartInfo]::new($iscc)
+    $psi.UseShellExecute = $false
+    if ($signTool -and -not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
+        $signToolDir = Split-Path $signTool -Parent
+        if ($env:PATH -notlike "*$signToolDir*") {
+            $env:PATH = "$signToolDir;$env:PATH"
+        }
+        $storeFlag = if ($UseMachineStore) { "/sm " } else { "" }
+        $tsArgs = if (-not [string]::IsNullOrWhiteSpace($TimestampUrl)) { "/tr $TimestampUrl /td sha256 " } else { "" }
+        $signCmd = "signtool.exe sign /sha1 $CertThumbprint $storeFlag/fd sha256 $tsArgs`$f"
+        $psi.Arguments = "/DUseSignTool `"/Ssigntool_cmd=$signCmd`" `"$issPath`""
+    } else {
+        $psi.Arguments = "`"$issPath`""
+    }
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $proc.WaitForExit()
+    if ($proc.ExitCode -eq 0) {
         if ($signTool -and -not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
             Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile $setupExe -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
         }
+        $sumsPath = Join-Path $PSScriptRoot "Output\SHA256SUMS.txt"
+        $hash = (Get-FileHash -Path $setupExe -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  $(Split-Path $setupExe -Leaf)" | Set-Content -Path $sumsPath -Encoding UTF8
         Write-Host "`n🎉 Setup installer generated at: $setupExe" -ForegroundColor Green
+        Write-Host "   SHA256SUMS.txt written to: $sumsPath" -ForegroundColor Green
     } else {
-        Write-Warning "Inno Setup compilation exited with error code $LASTEXITCODE"
+        throw "Inno Setup compilation failed with exit code $($proc.ExitCode)"
     }
 } else {
     Write-Host "Inno Setup (ISCC.exe) not found on system path." -ForegroundColor Yellow
