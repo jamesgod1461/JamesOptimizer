@@ -77,6 +77,7 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.7.1" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.14" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.14" />
     <PackageReference Include="System.Management" Version="10.0.14" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.10" />
@@ -97,10 +98,12 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(SelfContained)' == 'true'">
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>

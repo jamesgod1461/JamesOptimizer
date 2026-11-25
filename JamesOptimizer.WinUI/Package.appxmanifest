@@ -10,14 +10,14 @@
 
   <Identity
     Name="078082C2-FA1A-48DC-96E3-1EE39A2B74E1"
-    Publisher="CN=AppPublisher"
-    Version="1.0.0.0" />
+    Publisher="CN=James God"
+    Version="3.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="078082C2-FA1A-48DC-96E3-1EE39A2B74E1" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>JamesOptimizer.WinUI</DisplayName>
-    <PublisherDisplayName>AppPublisher</PublisherDisplayName>
+    <DisplayName>JamesOptimizer</DisplayName>
+    <PublisherDisplayName>James God</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -35,8 +35,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="JamesOptimizer.WinUI"
-        Description="JamesOptimizer.WinUI"
+        DisplayName="JamesOptimizer"
+        Description="JamesOptimizer Windows Performance Suite"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
