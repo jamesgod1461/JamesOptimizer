@@ -88,15 +88,10 @@ public sealed partial class NetworkPage : Page
     private void NetTab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string tag) return;
-        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-        TabDns.Style = tag == "DNS" ? active : normal;
-        TabHosts.Style = tag == "HOSTS" ? active : normal;
-        TabSockets.Style = tag == "SOCKETS" ? active : normal;
-
-        PanelDns.Visibility = tag == "DNS" ? Visibility.Visible : Visibility.Collapsed;
-        PanelHosts.Visibility = tag == "HOSTS" ? Visibility.Visible : Visibility.Collapsed;
-        PanelSockets.Visibility = tag == "SOCKETS" ? Visibility.Visible : Visibility.Collapsed;
+        SegmentedPillHelper.SelectTab(tag,
+            (TabDns, PanelDns, "DNS"),
+            (TabHosts, PanelHosts, "HOSTS"),
+            (TabSockets, PanelSockets, "SOCKETS"));
 
         if (tag == "HOSTS" && HostsEntries.Count == 0) ReloadHosts();
         if (tag == "SOCKETS" && SocketEntries.Count == 0) RefreshSockets();

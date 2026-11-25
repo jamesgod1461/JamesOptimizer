@@ -78,16 +78,10 @@ public sealed partial class CleanupsPage : Page
     private void ModeTab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string mode) return;
-        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-
-        TabJunk.Style = mode == "JUNK" ? active : normal;
-        TabAppx.Style = mode == "APPX" ? active : normal;
-        TabDeep.Style = mode == "DEEP" ? active : normal;
-
-        PanelJunk.Visibility = mode == "JUNK" ? Visibility.Visible : Visibility.Collapsed;
-        PanelAppx.Visibility = mode == "APPX" ? Visibility.Visible : Visibility.Collapsed;
-        PanelDeep.Visibility = mode == "DEEP" ? Visibility.Visible : Visibility.Collapsed;
+        SegmentedPillHelper.SelectTab(mode,
+            (TabJunk, PanelJunk, "JUNK"),
+            (TabAppx, PanelAppx, "APPX"),
+            (TabDeep, PanelDeep, "DEEP"));
 
         if (mode == "APPX" && _allAppx.Count == 0)
             _ = LoadAppxAsync();

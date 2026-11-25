@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using JamesOptimizer.Core;
+using JamesOptimizer.WinUI.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Win32;
@@ -73,18 +74,11 @@ public sealed partial class ToolboxPage : Page
 
     private void SwitchToolboxTab(string tag)
     {
-        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-
-        TabBenchmark.Style = tag == "BENCH" ? active : normal;
-        TabFileLock.Style = tag == "LOCK" ? active : normal;
-        TabIntegrator.Style = tag == "INTEG" ? active : normal;
-        TabWinget.Style = tag == "WINGET" ? active : normal;
-
-        PanelBench.Visibility = tag == "BENCH" ? Visibility.Visible : Visibility.Collapsed;
-        PanelFileLock.Visibility = tag == "LOCK" ? Visibility.Visible : Visibility.Collapsed;
-        PanelIntegrator.Visibility = tag == "INTEG" ? Visibility.Visible : Visibility.Collapsed;
-        PanelWinget.Visibility = tag == "WINGET" ? Visibility.Visible : Visibility.Collapsed;
+        SegmentedPillHelper.SelectTab(tag,
+            (TabBenchmark, PanelBench, "BENCH"),
+            (TabFileLock, PanelFileLock, "LOCK"),
+            (TabIntegrator, PanelIntegrator, "INTEG"),
+            (TabWinget, PanelWinget, "WINGET"));
 
         if (tag == "INTEG")
         {

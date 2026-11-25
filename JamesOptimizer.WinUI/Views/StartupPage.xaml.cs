@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using JamesOptimizer.WinUI.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -49,14 +50,12 @@ public sealed partial class StartupPage : Page
     {
         if (sender is not Button btn || btn.Tag is not string scope) return;
         _activeScope = scope;
-
-        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-        TabApps.Style = scope == "App" ? active : normal;
-        TabTasks.Style = scope == "ScheduledTask" ? active : normal;
-        TabAutoruns.Style = scope == "Autorun" ? active : normal;
-        TabServices.Style = scope == "Service" ? active : normal;
-        TabAll.Style = scope == "ALL" ? active : normal;
+        SegmentedPillHelper.SelectPill(scope,
+            (TabApps, "App"),
+            (TabTasks, "ScheduledTask"),
+            (TabAutoruns, "Autorun"),
+            (TabServices, "Service"),
+            (TabAll, "ALL"));
 
         ApplyStartupFilter();
     }

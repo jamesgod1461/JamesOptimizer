@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JamesOptimizer.Core;
+using JamesOptimizer.WinUI.Core;
 using JamesOptimizer.WinUI.Theme;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -201,17 +202,14 @@ public sealed partial class PerformancePage : Page
     {
         if (sender is not Button btn || btn.Tag is not string cat) return;
         _currentCategory = cat;
-
-        var activeStyle = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normalStyle = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-
-        FilterBtnAll.Style = _currentCategory == "ALL" ? activeStyle : normalStyle;
-        FilterBtnLatency.Style = _currentCategory == "LATENCY" ? activeStyle : normalStyle;
-        FilterBtnGaming.Style = _currentCategory == "GAMING" ? activeStyle : normalStyle;
-        FilterBtnDisplay.Style = _currentCategory == "DISPLAY" ? activeStyle : normalStyle;
-        FilterBtnPrivacy.Style = _currentCategory == "PRIVACY" ? activeStyle : normalStyle;
-        FilterBtnSystem.Style = _currentCategory == "SYSTEM" ? activeStyle : normalStyle;
-        FilterBtnNetwork.Style = _currentCategory == "NETWORK" ? activeStyle : normalStyle;
+        SegmentedPillHelper.SelectPill(_currentCategory,
+            (FilterBtnAll, "ALL"),
+            (FilterBtnLatency, "LATENCY"),
+            (FilterBtnGaming, "GAMING"),
+            (FilterBtnDisplay, "DISPLAY"),
+            (FilterBtnPrivacy, "PRIVACY"),
+            (FilterBtnSystem, "SYSTEM"),
+            (FilterBtnNetwork, "NETWORK"));
 
         ApplyFilter();
     }

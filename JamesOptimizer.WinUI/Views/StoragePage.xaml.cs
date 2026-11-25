@@ -85,15 +85,10 @@ public sealed partial class StoragePage : Page
     private void StorageTab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not string tag) return;
-        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
-        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
-        TabVisualizer.Style = tag == "VIS" ? active : normal;
-        TabDuplicates.Style = tag == "DUP" ? active : normal;
-        TabDownloads.Style = tag == "DL" ? active : normal;
-
-        PanelVisualizer.Visibility = tag == "VIS" ? Visibility.Visible : Visibility.Collapsed;
-        PanelDuplicates.Visibility = tag == "DUP" ? Visibility.Visible : Visibility.Collapsed;
-        PanelDownloads.Visibility = tag == "DL" ? Visibility.Visible : Visibility.Collapsed;
+        SegmentedPillHelper.SelectTab(tag,
+            (TabVisualizer, PanelVisualizer, "VIS"),
+            (TabDuplicates, PanelDuplicates, "DUP"),
+            (TabDownloads, PanelDownloads, "DL"));
     }
 
     private void PopulateScanRoots()
