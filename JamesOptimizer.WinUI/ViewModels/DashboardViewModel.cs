@@ -39,17 +39,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private readonly DispatcherQueue _dispatcherQueue;
 
     private int _overallScore = 96;
-    private int _healthScore = 98;
-    private int _perfScore = 94;
-    private int _secScore = 99;
-    private int _stabScore = 95;
-
-    private string _currentConsoleMarquee = "[SYSTEM] Ready. All kernel drivers and memory monitors active.";
-    private string _activeConsoleFilter = "ALL";
-    private bool _autoRunEnabled = false;
-    private bool _isSidebarExpanded = true;
     private bool _isOptimizing = false;
-    private string _lastOptimizationStatus = "PRO SUITE · 100% HEALTHY";
 
     private readonly SolidColorBrush _cyanBrush = ThemeEffects.GetSolidBrush("Accent.Cyan");
     private readonly SolidColorBrush _violetBrush = ThemeEffects.GetSolidBrush("Accent.Purple");
@@ -62,11 +52,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     public MetricItem RamMetric { get; }
     public MetricItem DiskMetric { get; }
 
-    public ObservableCollection<SubMetricBadge> SubMetrics { get; } = new();
-    public ObservableCollection<DriveMetric> Drives { get; } = new();
-    public ObservableCollection<QuickActionItem> QuickActions { get; } = new();
     public ObservableCollection<LogEntry> AllLogs { get; } = new();
-    public ObservableCollection<LogEntry> DisplayedLogs { get; } = new();
 
     public int OverallScore
     {
@@ -74,73 +60,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
         set { _overallScore = value; OnPropertyChanged(); }
     }
 
-    public string CurrentConsoleMarquee
-    {
-        get => _currentConsoleMarquee;
-        set { _currentConsoleMarquee = value; OnPropertyChanged(); }
-    }
-
-    public string ActiveConsoleFilter
-    {
-        get => _activeConsoleFilter;
-        set
-        {
-            if (_activeConsoleFilter != value)
-            {
-                _activeConsoleFilter = value;
-                OnPropertyChanged();
-                ApplyConsoleFilter();
-            }
-        }
-    }
-
-    public bool AutoRunEnabled
-    {
-        get => _autoRunEnabled;
-        set
-        {
-            if (_autoRunEnabled != value)
-            {
-                _autoRunEnabled = value;
-                OnPropertyChanged();
-                int timerMinutes = value ? 30 : 0;
-                AddLog("OPTIMIZER", $"Auto-Run background interval set to: {(value ? "Active (Every 30m)" : "Off")}");
-                _ = Task.Run(async () =>
-                {
-                    var res = await BackgroundServiceClient.SetAutoTimerAsync(timerMinutes);
-                    if (res.Success)
-                        AddLog("SERVICE", $"Background Service AutoTimer synchronized to {timerMinutes}m.");
-                    else if (!res.IsOffline && !string.IsNullOrWhiteSpace(res.Error))
-                        AddLog("SERVICE", $"AutoTimer sync rejected: {res.Error}");
-                });
-            }
-        }
-    }
-
-    public bool IsSidebarExpanded
-    {
-        get => _isSidebarExpanded;
-        set { _isSidebarExpanded = value; OnPropertyChanged(); }
-    }
-
-    public bool IsOptimizing
-    {
-        get => _isOptimizing;
-        set { _isOptimizing = value; OnPropertyChanged(); }
-    }
-
-    public string LastOptimizationStatus
-    {
-        get => _lastOptimizationStatus;
-        set { _lastOptimizationStatus = value; OnPropertyChanged(); }
-    }
-
-    public ICommand RunFullOptimizationCommand { get; }
-    public ICommand RunQuickActionCommand { get; }
-    public ICommand FilterConsoleCommand { get; }
     public ICommand CopyConsoleLogsCommand { get; }
-    public ICommand ClearConsoleLogsCommand { get; }
-    public ICommand ToggleSidebarCommand { get; }
 
     public DashboardViewModel() : this(new SystemMetricsService(), DispatcherQueue.GetForCurrentThread())
     {
@@ -151,13 +71,11 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
         _metricsService = metricsService;
         _dispatcherQueue = dispatcherQueue ?? DispatcherQueue.GetForCurrentThread();
 
-        // 1. Initialize Metric Items with distinct colors and emojis
         CpuMetric = new MetricItem { Name = "CPU", Icon = "💻", AccentBrush = _cyanBrush, Value = 14f };
         GpuMetric = new MetricItem { Name = "GPU", Icon = "🎮", AccentBrush = _violetBrush, Value = 18f };
         RamMetric = new MetricItem { Name = "RAM", Icon = "🧠", AccentBrush = _greenBrush, Value = 57f, SubLabel = "18.3 / 31.8 GB" };
         DiskMetric = new MetricItem { Name = "DISK", Icon = "💾", AccentBrush = _amberBrush, Value = 4f };
 
-        // Prepopulate sparkline history with 30 initial points
         for (int i = 0; i < 30; i++)
         {
             CpuMetric.History.Add(12f + (i % 6));
@@ -168,28 +86,11 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
 
         UpdateMetricValueBrushes();
 
-        // 2. Initialize Sub-metrics pills (Health, Performance, Security, Stability)
-        InitSubMetrics();
-
-        // 3. Initialize Quick Actions (3x2 Grid)
-        InitQuickActions();
-
-        // 4. Initialize Drives
-        InitDrives();
-
-        // 5. Initialize Commands
-        RunFullOptimizationCommand = new RelayCommand(async _ => await RunFullOptimizationAsync());
-        RunQuickActionCommand = new RelayCommand(async param => await ExecuteQuickActionAsync(param as string ?? "ram_purge"));
-        FilterConsoleCommand = new RelayCommand(param => ActiveConsoleFilter = param as string ?? "ALL");
         CopyConsoleLogsCommand = new RelayCommand(_ => CopyLogsToClipboard());
-        ClearConsoleLogsCommand = new RelayCommand(_ => ClearLogs());
-        ToggleSidebarCommand = new RelayCommand(_ => IsSidebarExpanded = !IsSidebarExpanded);
 
-        // 6. Hook Service Events
         _metricsService.SnapshotUpdated += OnSnapshotUpdated;
         _metricsService.Start();
 
-        // Initial Logs
         AddLog("SYSTEM", "JamesOptimizer PRO Kernel Initialized. Ready for power execution.");
         AddLog("KERNEL", "MicaAltController backdrop engaged. Windows 11 64-bit platform detected.");
         AddLog("OPTIMIZER", "Standby list monitoring started. Hardware polling interval 1000ms.");
@@ -208,120 +109,12 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
         });
     }
 
-    private void InitSubMetrics()
-    {
-        SubMetrics.Clear();
-        SubMetrics.Add(new SubMetricBadge { Name = "Health", Percentage = _healthScore, AccentBrush = _greenBrush });
-        SubMetrics.Add(new SubMetricBadge { Name = "Performance", Percentage = _perfScore, AccentBrush = _cyanBrush });
-        SubMetrics.Add(new SubMetricBadge { Name = "Security", Percentage = _secScore, AccentBrush = _violetBrush });
-        SubMetrics.Add(new SubMetricBadge { Name = "Stability", Percentage = _stabScore, AccentBrush = _amberBrush });
-    }
-
-    private void InitQuickActions()
-    {
-        QuickActions.Clear();
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "ram_purge",
-            Glyph = "\uE74C", // Cleanup
-            Title = "Flush Working Sets",
-            Subtitle = "Purge standby list & cache heaps",
-            AccentBrush = _cyanBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "game_mode",
-            Glyph = "\uE950", // Speed
-            Title = "Ultra Game Priority",
-            Subtitle = "Lock core timer resolution to 0.5ms",
-            AccentBrush = _violetBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "temp_clean",
-            Glyph = "\uE74D", // Delete/Clean
-            Title = "Zero-Waste Storage",
-            Subtitle = "Scrub %TEMP% & shader buffers",
-            AccentBrush = _amberBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "dns_boost",
-            Glyph = "\uE770", // Network
-            Title = "Low-Jitter DNS",
-            Subtitle = "Route gaming sockets & flush DNS",
-            AccentBrush = _greenBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "startup_shield",
-            Glyph = "\uE902", // Defender/Shield
-            Title = "Startup Shield",
-            Subtitle = "Suppress rogue background loaders",
-            AccentBrush = _cyanBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-        QuickActions.Add(new QuickActionItem
-        {
-            Id = "telemetry_kill",
-            Glyph = "\uE72E", // Privacy/Lock
-            Title = "Telemetry Kill",
-            Subtitle = "Terminate silent diagnostic spikes",
-            AccentBrush = _redBrush,
-            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
-        });
-    }
-
-    private void InitDrives()
-    {
-        Drives.Clear();
-        var snapshots = _metricsService.GetDriveSnapshots();
-        var colors = new[] { _cyanBrush, _violetBrush, _greenBrush };
-        int colorIdx = 0;
-
-        foreach (var s in snapshots)
-        {
-            double ratio = s.TotalGb > 0 ? (s.UsedGb / s.TotalGb) : 0;
-            Drives.Add(new DriveMetric
-            {
-                DriveLetter = s.Name,
-                VolumeLabel = s.VolumeLabel,
-                TotalGb = s.TotalGb,
-                UsedGb = s.UsedGb,
-                FreeGb = s.FreeGb,
-                UsageRatio = ratio,
-                UsageSummary = $"{s.UsedGb:0} GB / {s.TotalGb:0} GB · {s.FreeGb:0} GB Free",
-                FillBrush = colors[colorIdx % colors.Length]
-            });
-            colorIdx++;
-        }
-    }
-
     private void OnSnapshotUpdated(object? sender, SystemSnapshotEventArgs e)
     {
         _dispatcherQueue?.TryEnqueue(() =>
         {
             OverallScore = e.OverallScore;
 
-            // Submetrics
-            _healthScore = e.CalculatedHealthScore;
-            _perfScore = e.CalculatedPerfScore;
-            _secScore = e.CalculatedSecScore;
-            _stabScore = e.CalculatedStabScore;
-
-            if (SubMetrics.Count == 4)
-            {
-                SubMetrics[0].Percentage = _healthScore;
-                SubMetrics[1].Percentage = _perfScore;
-                SubMetrics[2].Percentage = _secScore;
-                SubMetrics[3].Percentage = _stabScore;
-            }
-
-            // Update Metrics
             CpuMetric.Value = e.CpuPercent;
             GpuMetric.Value = e.GpuPercent;
             if (!string.IsNullOrEmpty(e.GpuSubLabel)) GpuMetric.SubLabel = e.GpuSubLabel;
@@ -365,8 +158,8 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task RunFullOptimizationAsync()
     {
-        if (IsOptimizing) return;
-        IsOptimizing = true;
+        if (_isOptimizing) return;
+        _isOptimizing = true;
         AddLog("OPTIMIZER", "Executing Full PRO System Optimization routine...");
 
         // Trigger background service optimization in parallel
@@ -380,11 +173,9 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
         });
 
         var result = await _metricsService.RunFullOptimizationAsync();
-        IsOptimizing = false;
+        _isOptimizing = false;
 
-        LastOptimizationStatus = $"{result.Title} · {result.Message}";
         AddLog("OPTIMIZER", result.Message);
-        CurrentConsoleMarquee = $"[SYSTEM] {result.Message}";
     }
 
     public async Task ExecuteQuickActionAsync(string actionId)
@@ -392,7 +183,6 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
         AddLog("OPTIMIZER", $"Triggered action '{actionId}'...");
         var result = await _metricsService.ExecuteQuickActionAsync(actionId);
         AddLog("OPTIMIZER", result.Message);
-        CurrentConsoleMarquee = $"[ACTION] {result.Message}";
     }
 
     public void AddLog(string category, string message, bool isError = false)
@@ -407,24 +197,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             };
             AllLogs.Insert(0, entry);
             if (AllLogs.Count > 100) AllLogs.RemoveAt(AllLogs.Count - 1);
-
-            CurrentConsoleMarquee = $"[{category}] {message}";
-            ApplyConsoleFilter();
         });
-    }
-
-    private void ApplyConsoleFilter()
-    {
-        DisplayedLogs.Clear();
-        var filtered = ActiveConsoleFilter == "ALL"
-            ? AllLogs
-            : AllLogs.Where(l => l.Category.Equals(ActiveConsoleFilter, StringComparison.OrdinalIgnoreCase) ||
-                                (ActiveConsoleFilter == "ERRORS" && l.IsError));
-
-        foreach (var l in filtered.Take(40))
-        {
-            DisplayedLogs.Add(l);
-        }
     }
 
     private void CopyLogsToClipboard()
@@ -443,7 +216,6 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     public void ClearLogs()
     {
         AllLogs.Clear();
-        DisplayedLogs.Clear();
         AddLog("SYSTEM", "Console log buffer cleared.");
     }
 
