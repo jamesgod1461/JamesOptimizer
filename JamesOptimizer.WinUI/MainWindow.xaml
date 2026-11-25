@@ -108,8 +108,7 @@
                             Click="ToggleSidebarBtn_Click"
                             Style="{StaticResource SidebarNavButtonStyle}"
                             Margin="8,10,8,6"
-                            AutomationProperties.Name="Toggle Sidebar"
-                            ToolTipService.ToolTip="Toggle Sidebar">
+                            AutomationProperties.Name="Toggle Sidebar">
                         <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="&#xE700;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                             <TextBlock x:Name="NavHeaderLabel" Text="NAVIGATION" Visibility="Collapsed" FontFamily="{StaticResource Font.Display}" FontSize="11" FontWeight="Bold" CharacterSpacing="90" Foreground="{ThemeResource Text.Tertiary}" VerticalAlignment="Center" />
@@ -135,7 +134,6 @@
                                 <Button x:Name="NavDashboard" Click="NavButton_Click" Tag="Dashboard"
                                         Style="{StaticResource SidebarNavButtonStyle}"
                                         AutomationProperties.Name="Dashboard"
-                                        ToolTipService.ToolTip="Dashboard"
                                         Background="{ThemeResource Brush.Raised.Pressed}" BorderBrush="{ThemeResource Border.InnerPressedShadow}">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE80F;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center" />
@@ -146,8 +144,7 @@
                                 <!-- 2. System Cleanups -->
                                 <Button x:Name="NavCleanups" Click="NavButton_Click" Tag="Cleanups"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="System Cleanups"
-                                        ToolTipService.ToolTip="System Cleanups">
+                                        AutomationProperties.Name="System Cleanups">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelClean" Text="System Cleanups" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -157,8 +154,7 @@
                                 <!-- 3. Performance Tweaks -->
                                 <Button x:Name="NavPerformance" Click="NavButton_Click" Tag="Performance"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Performance Tweaks"
-                                        ToolTipService.ToolTip="Performance Tweaks">
+                                        AutomationProperties.Name="Performance Tweaks">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE950;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelPerf" Text="Performance Tweaks" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -168,8 +164,7 @@
                                 <!-- 4. Gaming Mode -->
                                 <Button x:Name="NavGamingMode" Click="NavButton_Click" Tag="GamingMode"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Gaming Mode"
-                                        ToolTipService.ToolTip="Gaming Mode">
+                                        AutomationProperties.Name="Gaming Mode">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelGame" Text="Gaming Mode" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -179,8 +174,7 @@
                                 <!-- 5. Startup Apps -->
                                 <Button x:Name="NavStartup" Click="NavButton_Click" Tag="Startup"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Startup Apps"
-                                        ToolTipService.ToolTip="Startup Apps">
+                                        AutomationProperties.Name="Startup Apps">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelStartup" Text="Startup Apps" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -190,8 +184,7 @@
                                 <!-- 6. Services -->
                                 <Button x:Name="NavServices" Click="NavButton_Click" Tag="Services"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Services"
-                                        ToolTipService.ToolTip="Services">
+                                        AutomationProperties.Name="Services">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelServices" Text="Services" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -204,8 +197,7 @@
                                 <!-- 7. Network Boost -->
                                 <Button x:Name="NavNetwork" Click="NavButton_Click" Tag="Network"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Network Boost"
-                                        ToolTipService.ToolTip="Network Boost">
+                                        AutomationProperties.Name="Network Boost">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE774;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelNet" Text="Network Boost" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -215,8 +207,7 @@
                                 <!-- 8. Storage -->
                                 <Button x:Name="NavStorage" Click="NavButton_Click" Tag="Storage"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Storage"
-                                        ToolTipService.ToolTip="Storage">
+                                        AutomationProperties.Name="Storage">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelStorage" Text="Storage" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -226,8 +217,7 @@
                                 <!-- 9. Toolbox -->
                                 <Button x:Name="NavToolbox" Click="NavButton_Click" Tag="Toolbox"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Toolbox"
-                                        ToolTipService.ToolTip="Toolbox">
+                                        AutomationProperties.Name="Toolbox">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE825;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelToolbox" Text="Toolbox" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -237,8 +227,7 @@
                                 <!-- 10. Diagnostics -->
                                 <Button x:Name="NavDiagnostics" Click="NavButton_Click" Tag="Diagnostics"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Diagnostics"
-                                        ToolTipService.ToolTip="Diagnostics">
+                                        AutomationProperties.Name="Diagnostics">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelDiag" Text="Diagnostics" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
@@ -248,8 +237,7 @@
                                 <!-- 11. Settings -->
                                 <Button x:Name="NavSettings" Click="NavButton_Click" Tag="Settings"
                                         Style="{StaticResource SidebarNavButtonStyle}"
-                                        AutomationProperties.Name="Settings"
-                                        ToolTipService.ToolTip="Settings">
+                                        AutomationProperties.Name="Settings">
                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="&#xE713;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                         <TextBlock x:Name="NavLabelSettings" Text="Settings" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
