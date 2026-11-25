@@ -7,6 +7,7 @@ using System.Management;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using JamesOptimizer.Core;
 
 namespace JamesOptimizer.WinUI.Services;
 
@@ -312,84 +313,9 @@ public sealed class SystemMetricsService : ISystemMetricsService
         return 4.0f;
     }
 
-    private DateTime _lastTempCheck = DateTime.MinValue;
-    private string _cachedGpuTemp = "";
-    private bool _nvidiaSmiMissing;
-    private bool _acpiThermalUnsupported;
+    private readonly GpuThermalProbe _gpuThermalProbe = new();
 
-    private string ReadGpuTempLabel()
-    {
-        if ((DateTime.UtcNow - _lastTempCheck).TotalSeconds < 6)
-            return _cachedGpuTemp;
-
-        _lastTempCheck = DateTime.UtcNow;
-        if (!_nvidiaSmiMissing)
-        {
-            try
-            {
-                using var proc = Process.Start(new ProcessStartInfo
-                {
-                    FileName = "nvidia-smi",
-                    Arguments = "--query-gpu=temperature.gpu --format=csv,noheader,nounits",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-                if (proc != null)
-                {
-                    if (!proc.WaitForExit(500))
-                    {
-                        try { proc.Kill(true); } catch { }
-                    }
-                    else
-                    {
-                        string line = proc.StandardOutput.ReadLine()?.Trim() ?? "";
-                        if (int.TryParse(line, out int temp) && temp > 0 && temp < 130)
-                        {
-                            _cachedGpuTemp = $"{temp}°C · Temp";
-                            return _cachedGpuTemp;
-                        }
-                    }
-                }
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                _nvidiaSmiMissing = true;
-            }
-            catch { }
-        }
-
-        if (!_acpiThermalUnsupported)
-        {
-            try
-            {
-                using var searcher = new ManagementObjectSearcher(@"root\WMI", "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
-                using var results = searcher.Get();
-                foreach (ManagementObject obj in results)
-                using (obj)
-                {
-                    if (double.TryParse(obj["CurrentTemperature"]?.ToString(), out double raw))
-                    {
-                        double c = (raw - 2732.0) / 10.0;
-                        if (c > 10 && c < 120)
-                        {
-                            _cachedGpuTemp = $"{c:0}°C · Thermal";
-                            return _cachedGpuTemp;
-                        }
-                    }
-                    break;
-                }
-            }
-            catch (ManagementException)
-            {
-                _acpiThermalUnsupported = true;
-            }
-            catch { }
-        }
-
-        _cachedGpuTemp = "3D Engine";
-        return _cachedGpuTemp;
-    }
+    private string ReadGpuTempLabel() => _gpuThermalProbe.ReadLabel();
 
     private float ReadGpuPercent(float cpuUsage)
     {

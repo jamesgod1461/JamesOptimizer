@@ -118,22 +118,27 @@ namespace JamesOptimizer
             await Task.Run(() =>
             {
                 ReportProgress(0, "Scanning Temp Folders...");
-                DeepCleanupService.CleanPathSafe(Path.GetTempPath(), cancellationToken);
+                var total = DeepCleanupService.CleanPathDetailed(Path.GetTempPath(), cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 ReportProgress(40, "Cleaning Windows Temp...");
-                DeepCleanupService.CleanPathSafe(@"C:\Windows\Temp", cancellationToken);
+                total += DeepCleanupService.CleanPathDetailed(@"C:\Windows\Temp", cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 ReportProgress(75, "Cleaning Browser Caches...");
                 string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 if (!string.IsNullOrEmpty(localAppData))
                 {
-                    DeepCleanupService.CleanPathSafe(Path.Combine(localAppData, @"Google\Chrome\User Data\Default\Cache"), cancellationToken);
-                    DeepCleanupService.CleanPathSafe(Path.Combine(localAppData, @"Microsoft\Edge\User Data\Default\Cache"), cancellationToken);
-                    DeepCleanupService.CleanPathSafe(Path.Combine(localAppData, @"BraveSoftware\Brave-Browser\User Data\Default\Cache"), cancellationToken);
+                    total += DeepCleanupService.CleanPathDetailed(Path.Combine(localAppData, @"Google\Chrome\User Data\Default\Cache"), cancellationToken);
+                    total += DeepCleanupService.CleanPathDetailed(Path.Combine(localAppData, @"Microsoft\Edge\User Data\Default\Cache"), cancellationToken);
+                    total += DeepCleanupService.CleanPathDetailed(Path.Combine(localAppData, @"BraveSoftware\Brave-Browser\User Data\Default\Cache"), cancellationToken);
                 }
-                ReportProgress(100, "Junk Files Removed!");
+                int locked = total.FilesFailed + total.DirsFailed;
+                if (locked > 0)
+                    SharedLogger.Debug("CLEANUP", $"FastClean removed {total.FilesDeleted} file(s); skipped {locked} locked item(s).");
+                ReportProgress(100, locked > 0
+                    ? $"Junk Files Removed ({locked} locked skipped)."
+                    : "Junk Files Removed!");
             }, cancellationToken);
         }
 
@@ -151,14 +156,18 @@ namespace JamesOptimizer
                     Path.Combine(localAppData, @"AMD\DxCache")
                 };
 
-                long freed = 0;
+                var total = new DeepCleanupService.CleanResult(0, 0, 0, 0);
                 foreach (string p in paths)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    freed += DeepCleanupService.CleanPathSafe(p, cancellationToken);
+                    total += DeepCleanupService.CleanPathDetailed(p, cancellationToken);
                 }
+                int locked = total.FilesFailed + total.DirsFailed;
+                if (locked > 0)
+                    SharedLogger.Debug("CLEANUP", $"ShaderClear removed {total.FilesDeleted} file(s); skipped {locked} locked item(s).");
                 ReportProgress(100, "Shader Cache Cleared!");
-                return (freed, $"Cleared {FormatBytes(freed)} of shader caches. First game launch may briefly stutter while shaders rebuild.");
+                string lockedSuffix = locked > 0 ? $" ({locked} locked item(s) skipped)" : "";
+                return (total.BytesFreed, $"Cleared {FormatBytes(total.BytesFreed)} of shader caches{lockedSuffix}. First game launch may briefly stutter while shaders rebuild.");
             }, cancellationToken);
         }
 

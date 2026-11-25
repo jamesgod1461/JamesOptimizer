@@ -116,10 +116,7 @@ public class Worker : BackgroundService
                 if (entry.Operation == "GAME_PROFILE" && entry.Snapshot != null)
                 {
                     SharedLogger.Warn("SERVICE", $"Recovering interrupted game profile '{entry.TweakId}' after service restart.");
-                    foreach (var step in entry.Snapshot.Steps)
-                    {
-                        try { TweakBackupService.RevertStep(step); } catch { }
-                    }
+                    TweakBackupService.RevertStepsLifo(entry.Snapshot.Steps);
                     WriteAheadJournal.MarkRolledBack(entry.Id);
                 }
             }
@@ -747,8 +744,12 @@ public class Worker : BackgroundService
     private static async Task RunFastCleanAsync(CancellationToken cancellationToken)
     {
         // Note: C:\Windows\Prefetch is intentionally excluded so cold-launch caching is preserved.
-        await Task.Run(() => DeepCleanupService.CleanPathSafe(Path.GetTempPath(), cancellationToken), cancellationToken);
-        await Task.Run(() => DeepCleanupService.CleanPathSafe(@"C:\Windows\Temp", cancellationToken), cancellationToken);
+        var r1 = await Task.Run(() => DeepCleanupService.CleanPathDetailed(Path.GetTempPath(), cancellationToken), cancellationToken);
+        var r2 = await Task.Run(() => DeepCleanupService.CleanPathDetailed(@"C:\Windows\Temp", cancellationToken), cancellationToken);
+        int failedFiles = r1.FilesFailed + r2.FilesFailed;
+        int failedDirs = r1.DirsFailed + r2.DirsFailed;
+        if (failedFiles > 0 || failedDirs > 0)
+            SharedLogger.Debug("CLEANUP", $"Auto fast-clean skipped locked items: files={failedFiles}, dirs={failedDirs}.");
     }
 
     private static bool IsUserInFullscreenOrPresentation()

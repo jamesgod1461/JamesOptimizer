@@ -137,22 +137,45 @@ public static class DeepCleanupService
     }
 
     /// <summary>
+    public readonly record struct CleanResult(long BytesFreed, int FilesDeleted, int FilesFailed, int DirsFailed)
+    {
+        public static CleanResult operator +(CleanResult a, CleanResult b) =>
+            new(a.BytesFreed + b.BytesFreed, a.FilesDeleted + b.FilesDeleted, a.FilesFailed + b.FilesFailed, a.DirsFailed + b.DirsFailed);
+    }
+
+    public readonly record struct MeasureResult(long TotalBytes, int FilesCounted, int FilesFailed, int DirsFailed)
+    {
+        public static MeasureResult operator +(MeasureResult a, MeasureResult b) =>
+            new(a.TotalBytes + b.TotalBytes, a.FilesCounted + b.FilesCounted, a.FilesFailed + b.FilesFailed, a.DirsFailed + b.DirsFailed);
+    }
+
+    /// <summary>
     /// Measures total file bytes at <paramref name="path"/> without traversing directory or file reparse points.
+    /// Logs failure counts (without file paths) at Debug level when items are inaccessible.
     /// </summary>
-    public static long MeasurePathBytesSafe(string path, CancellationToken ct = default)
+    public static MeasureResult MeasurePathDetailed(string path, CancellationToken ct = default)
     {
         if (File.Exists(path))
         {
             try
             {
                 var fi = new FileInfo(path);
-                return (fi.Attributes & FileAttributes.ReparsePoint) != 0 ? 0 : fi.Length;
+                return (fi.Attributes & FileAttributes.ReparsePoint) != 0
+                    ? new MeasureResult(0, 0, 0, 0)
+                    : new MeasureResult(fi.Length, 1, 0, 0);
             }
-            catch { return 0; }
+            catch
+            {
+                SharedLogger.Debug("DeepCleanup", "Measure partial failures: filesFailed=1, dirsFailed=0.");
+                return new MeasureResult(0, 0, 1, 0);
+            }
         }
-        if (!Directory.Exists(path)) return 0;
+        if (!Directory.Exists(path)) return new MeasureResult(0, 0, 0, 0);
 
         long size = 0;
+        int filesCounted = 0;
+        int filesFailed = 0;
+        int dirsFailed = 0;
         try
         {
             var opts = new EnumerationOptions
@@ -164,33 +187,63 @@ public static class DeepCleanupService
             foreach (string file in Directory.EnumerateFiles(path, "*", opts))
             {
                 ct.ThrowIfCancellationRequested();
-                try { size += new FileInfo(file).Length; } catch { }
+                try
+                {
+                    size += new FileInfo(file).Length;
+                    filesCounted++;
+                }
+                catch
+                {
+                    filesFailed++;
+                }
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
-        return size;
+        catch
+        {
+            dirsFailed++;
+        }
+
+        if (filesFailed > 0 || dirsFailed > 0)
+            SharedLogger.Debug("DeepCleanup", $"Measure partial failures: filesFailed={filesFailed}, dirsFailed={dirsFailed}.");
+        return new MeasureResult(size, filesCounted, filesFailed, dirsFailed);
     }
 
     /// <summary>
-    /// Deletes files and non-reparse subdirectories under <paramref name="path"/> without following junctions or symlinks.
+    /// Measures total file bytes at <paramref name="path"/> without traversing directory or file reparse points.
     /// </summary>
-    public static long CleanPathSafe(string path, CancellationToken ct = default)
+    public static long MeasurePathBytesSafe(string path, CancellationToken ct = default) =>
+        MeasurePathDetailed(path, ct).TotalBytes;
+
+    /// <summary>
+    /// Deletes files and non-reparse subdirectories under <paramref name="path"/> without following junctions or symlinks.
+    /// Logs failure counts (without file paths) at Debug level when locked or inaccessible items remain.
+    /// </summary>
+    public static CleanResult CleanPathDetailed(string path, CancellationToken ct = default)
     {
         long freed = 0;
+        int filesDeleted = 0;
+        int filesFailed = 0;
+        int dirsFailed = 0;
+
         if (File.Exists(path))
         {
             try
             {
                 var fi = new FileInfo(path);
-                if ((fi.Attributes & FileAttributes.ReparsePoint) != 0) return 0;
+                if ((fi.Attributes & FileAttributes.ReparsePoint) != 0)
+                    return new CleanResult(0, 0, 0, 0);
                 long len = fi.Length;
                 fi.Delete();
-                return len;
+                return new CleanResult(len, 1, 0, 0);
             }
-            catch { return 0; }
+            catch
+            {
+                SharedLogger.Debug("DeepCleanup", "Clean partial failures: filesFailed=1, dirsFailed=0.");
+                return new CleanResult(0, 0, 1, 0);
+            }
         }
-        if (!Directory.Exists(path)) return 0;
+        if (!Directory.Exists(path)) return new CleanResult(0, 0, 0, 0);
 
         try
         {
@@ -208,8 +261,12 @@ public static class DeepCleanupService
                     long len = new FileInfo(file).Length;
                     File.Delete(file);
                     freed += len;
+                    filesDeleted++;
                 }
-                catch { }
+                catch
+                {
+                    filesFailed++;
+                }
             }
 
             // Delete empty non-reparse subdirectories bottom-up so nested junctions are never traversed.
@@ -231,13 +288,28 @@ public static class DeepCleanupService
                     if ((di.Attributes & FileAttributes.ReparsePoint) != 0) continue;
                     di.Delete(false);
                 }
-                catch { }
+                catch
+                {
+                    dirsFailed++;
+                }
             }
         }
         catch (OperationCanceledException) { throw; }
-        catch { }
-        return freed;
+        catch
+        {
+            dirsFailed++;
+        }
+
+        if (filesFailed > 0 || dirsFailed > 0)
+            SharedLogger.Debug("DeepCleanup", $"Clean partial failures: filesFailed={filesFailed}, dirsFailed={dirsFailed}.");
+        return new CleanResult(freed, filesDeleted, filesFailed, dirsFailed);
     }
+
+    /// <summary>
+    /// Deletes files and non-reparse subdirectories under <paramref name="path"/> without following junctions or symlinks.
+    /// </summary>
+    public static long CleanPathSafe(string path, CancellationToken ct = default) =>
+        CleanPathDetailed(path, ct).BytesFreed;
 
     private static List<StaleDriverPackage> ParsePnputilDrivers(string output)
     {

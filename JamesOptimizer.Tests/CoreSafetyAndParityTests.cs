@@ -609,16 +609,12 @@ public class CoreSafetyAndParityTests : IDisposable
             };
             var entry = WriteAheadJournal.Begin("APPLY_TWEAK", "ut_wal_lifo", snap);
 
-            // Simulate crash recovery in LIFO order (matching MainWindow.CheckCrashRecoveryJournal fix)
+            // Simulate crash recovery using shared TweakBackupService.RevertStepsLifo helper
             var pending = WriteAheadJournal.GetIncompleteEntries();
             Assert.Contains(pending, e => e.Id == entry.Id);
             foreach (var p in pending)
             {
-                if (p.Snapshot != null)
-                {
-                    for (int i = p.Snapshot.Steps.Count - 1; i >= 0; i--)
-                        TweakBackupService.RevertStep(p.Snapshot.Steps[i]);
-                }
+                TweakBackupService.RevertStepsLifo(p.Snapshot?.Steps);
                 WriteAheadJournal.MarkRolledBack(p.Id);
             }
 
@@ -641,5 +637,98 @@ public class CoreSafetyAndParityTests : IDisposable
         var (ok, msg) = HostsManagerService.SetEntryEnabled(0, false, missing);
         Assert.False(ok);
         Assert.Contains("not found", msg, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void TweakBackupService_RevertStepsLifo_RevertsParentChildKeysInReverseOrder()
+    {
+        string parentSubKey = $@"Software\JamesOptimizer_LifoHelper_{Guid.NewGuid():N}";
+        string childSubKey = $@"{parentSubKey}\command";
+        string fullParent = $@"HKEY_CURRENT_USER\{parentSubKey}";
+        string fullChild = $@"HKEY_CURRENT_USER\{childSubKey}";
+
+        try
+        {
+            var stepParent = TweakBackupService.CaptureRegistryStep(fullParent, "Icon", "x.exe", RegistryValueKind.String);
+            Registry.SetValue(fullParent, "Icon", "x.exe", RegistryValueKind.String);
+            var stepChild = TweakBackupService.CaptureRegistryStep(fullChild, "", "\"x.exe\"", RegistryValueKind.String);
+            Registry.SetValue(fullChild, "", "\"x.exe\"", RegistryValueKind.String);
+
+            int reverted = TweakBackupService.RevertStepsLifo(new[] { stepParent, stepChild });
+            Assert.Equal(2, reverted);
+
+            using var checkChild = Registry.CurrentUser.OpenSubKey(childSubKey, false);
+            using var checkParent = Registry.CurrentUser.OpenSubKey(parentSubKey, false);
+            Assert.Null(checkChild);
+            Assert.Null(checkParent);
+        }
+        finally
+        {
+            try { Registry.CurrentUser.DeleteSubKeyTree(parentSubKey, false); } catch { }
+        }
+    }
+
+    [Fact]
+    public void DeepCleanupService_CleanPathDetailed_CountsLockedFileFailuresAndLogsCount()
+    {
+        string dir = Path.Combine(_tempDir, "locked_clean");
+        Directory.CreateDirectory(dir);
+        string unlocked = Path.Combine(dir, "unlocked.tmp");
+        string locked = Path.Combine(dir, "secret_locked.tmp");
+        File.WriteAllText(unlocked, "12345678");
+        File.WriteAllText(locked, "LOCKED");
+
+        var logs = new List<(LogLevel Level, string Category, string Message)>();
+        void OnLog(LogLevel level, string cat, string msg) => logs.Add((level, cat, msg));
+        SharedLogger.EntryWritten += OnLog;
+        try
+        {
+            using var lockHandle = new FileStream(locked, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            var res = DeepCleanupService.CleanPathDetailed(dir);
+
+            Assert.Equal(8, res.BytesFreed);
+            Assert.Equal(1, res.FilesDeleted);
+            Assert.Equal(1, res.FilesFailed);
+            Assert.Contains(logs, l => l.Level == LogLevel.Debug && l.Category == "DeepCleanup" && l.Message.Contains("filesFailed=1") && !l.Message.Contains("secret_locked.tmp"));
+        }
+        finally
+        {
+            SharedLogger.EntryWritten -= OnLog;
+        }
+    }
+
+    [Fact]
+    public void GpuThermalProbe_MissingNvidiaSmi_ProbesOnlyOnceAcrossCooldown()
+    {
+        DateTime now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        int nvidiaCalls = 0;
+        int acpiCalls = 0;
+
+        var probe = new GpuThermalProbe(
+            nvidiaSmiReader: () =>
+            {
+                nvidiaCalls++;
+                throw new System.ComponentModel.Win32Exception(2, "nvidia-smi not found");
+            },
+            acpiTempReader: () =>
+            {
+                acpiCalls++;
+                return null;
+            },
+            utcNow: () => now);
+
+        Assert.Equal("3D Engine", probe.ReadLabel());
+        Assert.True(probe.IsNvidiaSmiMissing);
+        Assert.Equal(1, nvidiaCalls);
+        Assert.Equal(1, acpiCalls);
+
+        // Advance well past 6-second cache window twice: nvidia-smi must NOT be re-probed
+        now = now.AddSeconds(10);
+        Assert.Equal("3D Engine", probe.ReadLabel());
+        now = now.AddSeconds(10);
+        Assert.Equal("3D Engine", probe.ReadLabel());
+
+        Assert.Equal(1, nvidiaCalls);
+        Assert.Equal(3, acpiCalls);
     }
 }

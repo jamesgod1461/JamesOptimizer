@@ -336,6 +336,30 @@ public static class TweakBackupService
         return (ok, fail, errors);
     }
 
+    /// <summary>
+    /// Reverts snapshot steps in LIFO order so child keys/values are restored before parent keys.
+    /// Best-effort: logs individual failures and continues reverting remaining steps.
+    /// </summary>
+    public static int RevertStepsLifo(IEnumerable<SnapshotStep>? steps)
+    {
+        if (steps == null) return 0;
+        var list = steps as IList<SnapshotStep> ?? steps.ToList();
+        int reverted = 0;
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            try
+            {
+                if (RevertStep(list[i]))
+                    reverted++;
+            }
+            catch (Exception ex)
+            {
+                SharedLogger.Debug("TweakBackup", $"RevertStepsLifo step {i + 1} ({list[i].Kind}) failed: {ex.Message}");
+            }
+        }
+        return reverted;
+    }
+
     public static bool RevertStep(SnapshotStep step)
     {
         switch (step.Kind)

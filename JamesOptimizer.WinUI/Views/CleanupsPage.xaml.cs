@@ -235,11 +235,16 @@ public sealed partial class CleanupsPage : Page
         TxtScanStatus.Text = "Scanning system directories & browser profiles...";
 
         long totalBytes = 0;
+        int scanFailures = 0;
         await Task.Run(() =>
         {
             foreach (var cat in Categories)
             {
-                long catSize = cat.TargetPaths.Sum(p => DeepCleanupService.MeasurePathBytesSafe(p));
+                var measured = new DeepCleanupService.MeasureResult(0, 0, 0, 0);
+                foreach (string p in cat.TargetPaths)
+                    measured += DeepCleanupService.MeasurePathDetailed(p);
+                long catSize = measured.TotalBytes;
+                scanFailures += measured.FilesFailed + measured.DirsFailed;
                 string display = OptimizationEngine.FormatBytes(catSize);
                 totalBytes += catSize;
                 var captured = cat;
@@ -252,7 +257,9 @@ public sealed partial class CleanupsPage : Page
         });
 
         TxtTotalReclaimable.Text = OptimizationEngine.FormatBytes(totalBytes);
-        TxtScanStatus.Text = $"Scan complete. {Categories.Count} categories inspected.";
+        TxtScanStatus.Text = scanFailures > 0
+            ? $"Scan complete. {Categories.Count} categories inspected ({scanFailures} inaccessible item(s) skipped)."
+            : $"Scan complete. {Categories.Count} categories inspected.";
         ScanProgressBar.Visibility = Visibility.Collapsed;
     }
 
@@ -272,16 +279,19 @@ public sealed partial class CleanupsPage : Page
         BtnCleanAll.IsEnabled = false;
         ScanProgressBar.Visibility = Visibility.Visible;
 
-        long cleanedBytes = 0;
+        var totalClean = new DeepCleanupService.CleanResult(0, 0, 0, 0);
         var remainingByCat = new Dictionary<CleanupCategoryItem, long>();
         await Task.Run(() =>
         {
             foreach (var cat in selected)
             {
                 foreach (string path in cat.TargetPaths)
-                    cleanedBytes += DeepCleanupService.CleanPathSafe(path);
+                    totalClean += DeepCleanupService.CleanPathDetailed(path);
 
-                remainingByCat[cat] = cat.TargetPaths.Sum(p => DeepCleanupService.MeasurePathBytesSafe(p));
+                long rem = 0;
+                foreach (string p in cat.TargetPaths)
+                    rem += DeepCleanupService.MeasurePathDetailed(p).TotalBytes;
+                remainingByCat[cat] = rem;
             }
         });
 
@@ -293,10 +303,15 @@ public sealed partial class CleanupsPage : Page
 
         ScanProgressBar.Visibility = Visibility.Collapsed;
         BtnCleanAll.IsEnabled = true;
+        int failedTotal = totalClean.FilesFailed + totalClean.DirsFailed;
         TxtTotalReclaimable.Text = OptimizationEngine.FormatBytes(Categories.Sum(c => c.SizeBytes));
-        TxtScanStatus.Text = $"Cleanup completed! Reclaimed {OptimizationEngine.FormatBytes(cleanedBytes)}.";
-        App.ViewModel?.AddLog("CLEANUP", $"Reclaimed {OptimizationEngine.FormatBytes(cleanedBytes)} from {selected.Count} categories.");
-        MainWindow.Current?.ShowToast($"Cleaned {OptimizationEngine.FormatBytes(cleanedBytes)}", $"Swept {selected.Count} categories cleanly.", "State.Good");
+        TxtScanStatus.Text = failedTotal > 0
+            ? $"Cleanup completed! Reclaimed {OptimizationEngine.FormatBytes(totalClean.BytesFreed)} ({totalClean.FilesDeleted} deleted, {failedTotal} locked/skipped)."
+            : $"Cleanup completed! Reclaimed {OptimizationEngine.FormatBytes(totalClean.BytesFreed)}.";
+        App.ViewModel?.AddLog("CLEANUP", $"Reclaimed {OptimizationEngine.FormatBytes(totalClean.BytesFreed)} from {selected.Count} categories ({totalClean.FilesDeleted} deleted, {failedTotal} skipped).");
+        MainWindow.Current?.ShowToast($"Cleaned {OptimizationEngine.FormatBytes(totalClean.BytesFreed)}",
+            failedTotal > 0 ? $"Swept {selected.Count} categories ({failedTotal} locked item(s) skipped)." : $"Swept {selected.Count} categories cleanly.",
+            failedTotal > 0 ? "State.Warn" : "State.Good");
     }
 
     private static bool IsAnyBrowserRunning(out string names)
@@ -320,19 +335,26 @@ public sealed partial class CleanupsPage : Page
         if (cat == null) return;
 
         btn.IsEnabled = false;
-        var (cleaned, remaining) = await Task.Run(() =>
+        var (cleanRes, remaining) = await Task.Run(() =>
         {
-            long freed = cat.TargetPaths.Sum(p => DeepCleanupService.CleanPathSafe(p));
-            long rem = cat.TargetPaths.Sum(p => DeepCleanupService.MeasurePathBytesSafe(p));
-            return (freed, rem);
+            var res = new DeepCleanupService.CleanResult(0, 0, 0, 0);
+            foreach (string p in cat.TargetPaths)
+                res += DeepCleanupService.CleanPathDetailed(p);
+            long rem = 0;
+            foreach (string p in cat.TargetPaths)
+                rem += DeepCleanupService.MeasurePathDetailed(p).TotalBytes;
+            return (res, rem);
         });
         cat.SizeBytes = remaining;
         cat.DisplaySize = OptimizationEngine.FormatBytes(remaining);
         TxtTotalReclaimable.Text = OptimizationEngine.FormatBytes(Categories.Sum(c => c.SizeBytes));
         btn.IsEnabled = true;
 
-        App.ViewModel?.AddLog("CLEANUP", $"Cleaned '{cat.Title}', freed {OptimizationEngine.FormatBytes(cleaned)}.");
-        MainWindow.Current?.ShowToast($"Cleaned {OptimizationEngine.FormatBytes(cleaned)}", $"{cat.Title} purged.", "State.Good");
+        int failed = cleanRes.FilesFailed + cleanRes.DirsFailed;
+        App.ViewModel?.AddLog("CLEANUP", $"Cleaned '{cat.Title}', freed {OptimizationEngine.FormatBytes(cleanRes.BytesFreed)} ({cleanRes.FilesDeleted} deleted, {failed} skipped).");
+        MainWindow.Current?.ShowToast($"Cleaned {OptimizationEngine.FormatBytes(cleanRes.BytesFreed)}",
+            failed > 0 ? $"{cat.Title} purged ({failed} locked item(s) skipped)." : $"{cat.Title} purged.",
+            failed > 0 ? "State.Warn" : "State.Good");
     }
 
     private void ChkSelectAll_Checked(object sender, RoutedEventArgs e)

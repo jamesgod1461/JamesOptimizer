@@ -135,10 +135,7 @@ public sealed partial class MainWindow : Window
             {
                 if (entry.Snapshot != null)
                 {
-                    for (int i = entry.Snapshot.Steps.Count - 1; i >= 0; i--)
-                    {
-                        try { TweakBackupService.RevertStep(entry.Snapshot.Steps[i]); } catch { }
-                    }
+                    TweakBackupService.RevertStepsLifo(entry.Snapshot.Steps);
                     rolled++;
                 }
                 WriteAheadJournal.MarkRolledBack(entry.Id);

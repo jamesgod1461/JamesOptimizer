@@ -80,6 +80,7 @@ public static class SharedLogger
         EntryWritten?.Invoke(level, category, ex == null ? message : $"{message}: {ex.Message}");
     }
 
+    public static void Debug(string category, string message) => Log(LogLevel.Debug, category, message);
     public static void Info(string category, string message) => Log(LogLevel.Info, category, message);
     public static void Warn(string category, string message) => Log(LogLevel.Warn, category, message);
     public static void Error(string category, string message, Exception? ex = null) => Log(LogLevel.Error, category, message, ex);
