@@ -241,133 +241,148 @@ public class Worker : BackgroundService
         }
     }
 
-    private async Task<string> ProcessIpcCommandAsync(string action, string arg, CancellationToken stoppingToken)
-    {
-        switch (action)
+    private Task<string> ProcessIpcCommandAsync(string action, string arg, CancellationToken stoppingToken) =>
+        action switch
         {
-            case "HELLO":
-                if (string.IsNullOrWhiteSpace(arg))
-                    return $"HELLO:ERROR:Missing version";
-                bool compatible = arg.StartsWith("3.", StringComparison.Ordinal);
-                return compatible
-                    ? $"HELLO:OK:{CoreConstants.ProtocolVersion}"
-                    : $"HELLO:MISMATCH:Service={CoreConstants.ProtocolVersion},UI={arg}";
+            "HELLO" => Task.FromResult(HandleHello(arg)),
+            "PING" => Task.FromResult($"PONG:JamesOptimizer.Service v{CoreConstants.ProtocolVersion} Active"),
+            "STATUS" => Task.FromResult(HandleStatus()),
+            "OPTIMIZE" => HandleOptimizeAsync(stoppingToken),
+            "SET_TIMER" => Task.FromResult(HandleSetTimer(arg)),
+            "SET_SMART_RAM" => Task.FromResult(HandleSetSmartRam(arg)),
+            "GET_SMART_RAM" => Task.FromResult("SMARTRAM:" + JsonSerializer.Serialize(LoadSmartRamSettings())),
+            "SET_GAME_WATCH" => Task.FromResult(HandleSetGameWatch(arg)),
+            "GET_GAME_WATCH" => Task.FromResult(HandleGetGameWatch()),
+            "SET_GAME_PROFILES" => Task.FromResult(HandleSetGameProfiles(arg)),
+            "GET_GAME_PROFILES" => Task.FromResult("GAMEPROFILES:" + JsonSerializer.Serialize(LoadGameAutomationConfig())),
+            _ => Task.FromResult("ERROR:Unknown command.")
+        };
 
-            case "PING":
-                return $"PONG:JamesOptimizer.Service v{CoreConstants.ProtocolVersion} Active";
+    private static string HandleHello(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+            return "HELLO:ERROR:Missing version";
+        bool compatible = arg.StartsWith("3.", StringComparison.Ordinal);
+        return compatible
+            ? $"HELLO:OK:{CoreConstants.ProtocolVersion}"
+            : $"HELLO:MISMATCH:Service={CoreConstants.ProtocolVersion},UI={arg}";
+    }
 
-            case "STATUS":
-                int timer = 0;
-                try
-                {
-                    var val = Registry.GetValue(CoreConstants.RegistryConfigRoot, "AutoTimer", 0);
-                    if (val != null) timer = Convert.ToInt32(val);
-                }
-                catch { }
-                return $"STATUS:Version={CoreConstants.ProtocolVersion}|AutoTimer={timer}|LastRun={_lastOptimizationTime:HH:mm:ss}|PID={Environment.ProcessId}|GameMode={_inAutoGameMode}";
-
-            case "OPTIMIZE":
-                try
-                {
-                    await RunRamFlushAsync(stoppingToken);
-                    await RunFastCleanAsync(stoppingToken);
-                    _lastOptimizationTime = DateTime.Now;
-                    return "SUCCESS:Optimization executed via Background Service.";
-                }
-                catch (Exception ex) { return $"ERROR:{ex.Message}"; }
-
-            case "SET_TIMER":
-                if (!IpcProtocol.TryValidateTimerMinutes(arg, out int minutes))
-                {
-                    SharedLogger.Warn("IPC", $"Rejected SET_TIMER with invalid argument '{arg}'.");
-                    return "ERROR:Invalid minutes argument (0-1440 allowed).";
-                }
-                try
-                {
-                    using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
-                    key?.SetValue("AutoTimer", minutes, RegistryValueKind.DWord);
-                    return $"SUCCESS:AutoTimer updated to {minutes}m.";
-                }
-                catch (Exception ex) { return $"ERROR:Registry write failed: {ex.Message}"; }
-
-            case "SET_SMART_RAM":
-                try
-                {
-                    var settings = JsonSerializer.Deserialize<SmartRamSettings>(arg);
-                    if (settings == null) return "ERROR:Invalid SmartRamSettings payload.";
-                    settings.FreeRamThresholdMb = Math.Clamp(settings.FreeRamThresholdMb, 256, 32768);
-                    settings.MinStandbyMb = Math.Clamp(settings.MinStandbyMb, 128, 32768);
-                    settings.CooldownSeconds = Math.Clamp(settings.CooldownSeconds, 30, 3600);
-                    settings.MaxPurgesPerHour = Math.Clamp(settings.MaxPurgesPerHour, 1, 30);
-
-                    using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
-                    key?.SetValue("SmartRamJson", JsonSerializer.Serialize(settings), RegistryValueKind.String);
-                    return "SUCCESS:SmartRam settings saved.";
-                }
-                catch (Exception ex) { return $"ERROR:{ex.Message}"; }
-
-            case "GET_SMART_RAM":
-                return "SMARTRAM:" + JsonSerializer.Serialize(LoadSmartRamSettings());
-
-            case "SET_GAME_WATCH":
-                try
-                {
-                    var cfg = arg.Split('|', 2);
-                    int enabled = cfg.Length > 0 && cfg[0] == "1" ? 1 : 0;
-                    string rawGames = cfg.Length > 1 ? cfg[1] : "";
-                    if (!IpcProtocol.TrySanitizeGameList(rawGames, out string cleanGames))
-                        return "ERROR:Invalid watched game list.";
-
-                    using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
-                    key?.SetValue("AutoGameWatch", enabled, RegistryValueKind.DWord);
-                    key?.SetValue("WatchedGames", cleanGames, RegistryValueKind.String);
-                    return $"SUCCESS:AutoGameWatch={enabled}";
-                }
-                catch (Exception ex) { return $"ERROR:{ex.Message}"; }
-
-            case "GET_GAME_WATCH":
-                try
-                {
-                    int en = Convert.ToInt32(Registry.GetValue(CoreConstants.RegistryConfigRoot, "AutoGameWatch", 0) ?? 0);
-                    string gms = Registry.GetValue(CoreConstants.RegistryConfigRoot, "WatchedGames", "cs2;valorant;fortnite")?.ToString() ?? "";
-                    return $"GAMEWATCH:{en}|{gms}|Active={_inAutoGameMode}|Game={_activeGameProcess}";
-                }
-                catch (Exception ex) { return $"ERROR:{ex.Message}"; }
-
-            case "SET_GAME_PROFILES":
-                try
-                {
-                    var gcfg = JsonSerializer.Deserialize<GameAutomationConfig>(arg);
-                    if (gcfg == null) return "ERROR:Invalid GameAutomationConfig JSON.";
-                    // BUG FIX: gcfg.Rules may be null from JSON (missing field); guard prevents NullReferenceException.
-                    if (gcfg.Rules == null) return "ERROR:GameAutomationConfig.Rules must not be null.";
-                    foreach (var r in gcfg.Rules)
-                    {
-                        r.TemporarilySuspendServices.RemoveAll(CoreConstants.IsProtectedService);
-                        if (!string.Equals(r.ProcessPriority, "Normal", StringComparison.OrdinalIgnoreCase) &&
-                            !string.Equals(r.ProcessPriority, "AboveNormal", StringComparison.OrdinalIgnoreCase) &&
-                            !string.Equals(r.ProcessPriority, "High", StringComparison.OrdinalIgnoreCase))
-                        {
-                            r.ProcessPriority = "High";
-                        }
-                        if (!string.IsNullOrWhiteSpace(r.PowerPlanGuid) && !Guid.TryParse(r.PowerPlanGuid, out _))
-                        {
-                            r.PowerPlanGuid = CoreConstants.UltimatePerformanceGuid;
-                        }
-                    }
-                    using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
-                    key?.SetValue("GameAutomationJson", JsonSerializer.Serialize(gcfg), RegistryValueKind.String);
-                    key?.SetValue("AutoGameWatch", gcfg.Enabled ? 1 : 0, RegistryValueKind.DWord);
-                    return "SUCCESS:Game automation profiles updated.";
-                }
-                catch (Exception ex) { return $"ERROR:{ex.Message}"; }
-
-            case "GET_GAME_PROFILES":
-                return "GAMEPROFILES:" + JsonSerializer.Serialize(LoadGameAutomationConfig());
-
-            default:
-                return "ERROR:Unknown command.";
+    private string HandleStatus()
+    {
+        int timer = 0;
+        try
+        {
+            var val = Registry.GetValue(CoreConstants.RegistryConfigRoot, "AutoTimer", 0);
+            if (val != null) timer = Convert.ToInt32(val);
         }
+        catch { }
+        return $"STATUS:Version={CoreConstants.ProtocolVersion}|AutoTimer={timer}|LastRun={_lastOptimizationTime:HH:mm:ss}|PID={Environment.ProcessId}|GameMode={_inAutoGameMode}";
+    }
+
+    private async Task<string> HandleOptimizeAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await RunRamFlushAsync(stoppingToken);
+            await RunFastCleanAsync(stoppingToken);
+            _lastOptimizationTime = DateTime.Now;
+            return "SUCCESS:Optimization executed via Background Service.";
+        }
+        catch (Exception ex) { return $"ERROR:{ex.Message}"; }
+    }
+
+    private static string HandleSetTimer(string arg)
+    {
+        if (!IpcProtocol.TryValidateTimerMinutes(arg, out int minutes))
+        {
+            SharedLogger.Warn("IPC", $"Rejected SET_TIMER with invalid argument '{arg}'.");
+            return "ERROR:Invalid minutes argument (0-1440 allowed).";
+        }
+        try
+        {
+            using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
+            key?.SetValue("AutoTimer", minutes, RegistryValueKind.DWord);
+            return $"SUCCESS:AutoTimer updated to {minutes}m.";
+        }
+        catch (Exception ex) { return $"ERROR:Registry write failed: {ex.Message}"; }
+    }
+
+    private static string HandleSetSmartRam(string arg)
+    {
+        try
+        {
+            var settings = JsonSerializer.Deserialize<SmartRamSettings>(arg);
+            if (settings == null) return "ERROR:Invalid SmartRamSettings payload.";
+            settings.FreeRamThresholdMb = Math.Clamp(settings.FreeRamThresholdMb, 256, 32768);
+            settings.MinStandbyMb = Math.Clamp(settings.MinStandbyMb, 128, 32768);
+            settings.CooldownSeconds = Math.Clamp(settings.CooldownSeconds, 30, 3600);
+            settings.MaxPurgesPerHour = Math.Clamp(settings.MaxPurgesPerHour, 1, 30);
+
+            using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
+            key?.SetValue("SmartRamJson", JsonSerializer.Serialize(settings), RegistryValueKind.String);
+            return "SUCCESS:SmartRam settings saved.";
+        }
+        catch (Exception ex) { return $"ERROR:{ex.Message}"; }
+    }
+
+    private static string HandleSetGameWatch(string arg)
+    {
+        try
+        {
+            var cfg = arg.Split('|', 2);
+            int enabled = cfg.Length > 0 && cfg[0] == "1" ? 1 : 0;
+            string rawGames = cfg.Length > 1 ? cfg[1] : "";
+            if (!IpcProtocol.TrySanitizeGameList(rawGames, out string cleanGames))
+                return "ERROR:Invalid watched game list.";
+
+            using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
+            key?.SetValue("AutoGameWatch", enabled, RegistryValueKind.DWord);
+            key?.SetValue("WatchedGames", cleanGames, RegistryValueKind.String);
+            return $"SUCCESS:AutoGameWatch={enabled}";
+        }
+        catch (Exception ex) { return $"ERROR:{ex.Message}"; }
+    }
+
+    private string HandleGetGameWatch()
+    {
+        try
+        {
+            int en = Convert.ToInt32(Registry.GetValue(CoreConstants.RegistryConfigRoot, "AutoGameWatch", 0) ?? 0);
+            string gms = Registry.GetValue(CoreConstants.RegistryConfigRoot, "WatchedGames", "cs2;valorant;fortnite")?.ToString() ?? "";
+            return $"GAMEWATCH:{en}|{gms}|Active={_inAutoGameMode}|Game={_activeGameProcess}";
+        }
+        catch (Exception ex) { return $"ERROR:{ex.Message}"; }
+    }
+
+    private static string HandleSetGameProfiles(string arg)
+    {
+        try
+        {
+            var gcfg = JsonSerializer.Deserialize<GameAutomationConfig>(arg);
+            if (gcfg == null) return "ERROR:Invalid GameAutomationConfig JSON.";
+            // BUG FIX: gcfg.Rules may be null from JSON (missing field); guard prevents NullReferenceException.
+            if (gcfg.Rules == null) return "ERROR:GameAutomationConfig.Rules must not be null.";
+            foreach (var r in gcfg.Rules)
+            {
+                r.TemporarilySuspendServices.RemoveAll(CoreConstants.IsProtectedService);
+                if (!string.Equals(r.ProcessPriority, "Normal", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(r.ProcessPriority, "AboveNormal", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(r.ProcessPriority, "High", StringComparison.OrdinalIgnoreCase))
+                {
+                    r.ProcessPriority = "High";
+                }
+                if (!string.IsNullOrWhiteSpace(r.PowerPlanGuid) && !Guid.TryParse(r.PowerPlanGuid, out _))
+                {
+                    r.PowerPlanGuid = CoreConstants.UltimatePerformanceGuid;
+                }
+            }
+            using var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\JamesOptimizer", true);
+            key?.SetValue("GameAutomationJson", JsonSerializer.Serialize(gcfg), RegistryValueKind.String);
+            key?.SetValue("AutoGameWatch", gcfg.Enabled ? 1 : 0, RegistryValueKind.DWord);
+            return "SUCCESS:Game automation profiles updated.";
+        }
+        catch (Exception ex) { return $"ERROR:{ex.Message}"; }
     }
 
     private static SmartRamSettings LoadSmartRamSettings()
