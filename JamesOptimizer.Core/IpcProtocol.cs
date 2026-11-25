@@ -186,3 +186,43 @@ public static partial class IpcProtocol
     [GeneratedRegex(@"^[a-zA-Z0-9_\-\.\s]+$")]
     private static partial Regex SafeProcessNameRegex();
 }
+
+/// <summary>
+/// Fixed-window rate limiter protecting Named Pipe command handling from flooding.
+/// </summary>
+[SupportedOSPlatform("windows")]
+public sealed class IpcRateLimiter
+{
+    private readonly object _lock = new();
+    private readonly int _maxCommandsPerWindow;
+    private readonly TimeSpan _window;
+    private readonly Func<DateTime> _utcNow;
+    private DateTime _windowStart;
+    private int _count;
+
+    public IpcRateLimiter(
+        int maxCommandsPerWindow = IpcProtocol.MaxCommandsPerWindow,
+        TimeSpan? window = null,
+        Func<DateTime>? utcNow = null)
+    {
+        _maxCommandsPerWindow = maxCommandsPerWindow;
+        _window = window ?? IpcProtocol.RateLimitWindow;
+        _utcNow = utcNow ?? (() => DateTime.UtcNow);
+        _windowStart = _utcNow();
+    }
+
+    public bool TryAcquire()
+    {
+        lock (_lock)
+        {
+            var now = _utcNow();
+            if (now - _windowStart > _window)
+            {
+                _windowStart = now;
+                _count = 0;
+            }
+            _count++;
+            return _count <= _maxCommandsPerWindow;
+        }
+    }
+}

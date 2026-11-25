@@ -86,7 +86,8 @@ public sealed partial class GamingModePage : Page
         }
         else if (res.IsOffline)
         {
-            MainWindow.Current?.ShowToast("Service Offline", "Start JamesOptimizer.Service to enable automatic game switching.", "State.Warn");
+            string detail = string.IsNullOrWhiteSpace(res.Error) ? "Pipe unavailable." : res.Error;
+            MainWindow.Current?.ShowToast("Service Offline", $"{detail} Start JamesOptimizer.Service to enable automatic game switching.", "State.Warn");
         }
         else
         {

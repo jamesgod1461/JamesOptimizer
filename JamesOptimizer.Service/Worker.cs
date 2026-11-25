@@ -24,10 +24,8 @@ namespace JamesOptimizer.Service;
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
-    private readonly object _rateLock = new();
+    private readonly IpcRateLimiter _rateLimiter = new();
     private readonly object _gameWatchLock = new();
-    private DateTime _rateWindowStart = DateTime.UtcNow;
-    private int _rateWindowCount = 0;
 
     private DateTime _lastOptimizationTime = DateTime.MinValue;
     private DateTime _lastSmartPurgeTime = DateTime.MinValue;
@@ -226,20 +224,7 @@ public class Worker : BackgroundService
         return sb.Length > maxChars ? sb.ToString(0, maxChars + 1) : sb.ToString();
     }
 
-    private bool CheckRateLimit()
-    {
-        lock (_rateLock)
-        {
-            var now = DateTime.UtcNow;
-            if (now - _rateWindowStart > IpcProtocol.RateLimitWindow)
-            {
-                _rateWindowStart = now;
-                _rateWindowCount = 0;
-            }
-            _rateWindowCount++;
-            return _rateWindowCount <= IpcProtocol.MaxCommandsPerWindow;
-        }
-    }
+    private bool CheckRateLimit() => _rateLimiter.TryAcquire();
 
     private Task<string> ProcessIpcCommandAsync(string action, string arg, CancellationToken stoppingToken) =>
         action switch

@@ -899,4 +899,25 @@ public class CoreSafetyAndParityTests : IDisposable
         Assert.Equal(30, idx);
         Assert.Equal("0092E8F40D42C4A325B435475B0A34DAE4FEFA4BF0B52BF1F768918196492BD3", actualSha);
     }
+
+    [Fact]
+    public void IpcProtocol_RateLimiter_BlocksOverQuotaAndRecoversAfterWindow()
+    {
+        DateTime now = new DateTime(2026, 11, 25, 12, 0, 0, DateTimeKind.Utc);
+        var limiter = new IpcRateLimiter(IpcProtocol.MaxCommandsPerWindow, IpcProtocol.RateLimitWindow, () => now);
+
+        for (int i = 0; i < IpcProtocol.MaxCommandsPerWindow; i++)
+            Assert.True(limiter.TryAcquire());
+
+        // 31st command in the same 10s window must be rate-limited
+        Assert.False(limiter.TryAcquire());
+
+        // Advance past window expiry -> allowed again
+        now = now.Add(IpcProtocol.RateLimitWindow).AddMilliseconds(10);
+        Assert.True(limiter.TryAcquire());
+
+        // Unknown command check also returns explicit allow-list rejection error
+        Assert.False(IpcProtocol.TryParseCommand("UNLISTED_CMD:foo", out _, out _, out string parseErr));
+        Assert.Contains("allow-list", parseErr, StringComparison.OrdinalIgnoreCase);
+    }
 }
