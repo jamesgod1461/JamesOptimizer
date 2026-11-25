@@ -232,7 +232,10 @@ public sealed partial class SettingsPage : Page
         var profile = ProfileConfigService.ExportCurrentProfile(gameCfg, ramCfg);
         ProfileConfigService.SaveProfileToFile(path, profile);
 
-        TxtProfileStatus.Text = $"Exported {profile.EnabledTweakIds.Count} active tweak(s) with SHA-256 digest to '{path}'.";
+        ProfileTrustBanner.Visibility = Visibility.Collapsed;
+        ChkConfirmUnverifiedProfile.IsChecked = false;
+        ChkConfirmUnverifiedProfile.Visibility = Visibility.Collapsed;
+        TxtProfileStatus.Text = $"Exported v{profile.SchemaVersion} profile ({profile.EnabledTweakIds.Count} active tweak(s), HMAC-SHA256) to '{path}'.";
         MainWindow.Current?.ShowToast("Profile Exported", $"{profile.EnabledTweakIds.Count} tweaks saved.", "State.Good");
     }
 
@@ -244,9 +247,12 @@ public sealed partial class SettingsPage : Page
         var preview = ProfileConfigService.PreviewImport(File.ReadAllText(path));
         if (!preview.IsValid)
         {
+            ProfileTrustBanner.Visibility = Visibility.Collapsed;
             TxtProfileStatus.Text = $"Invalid profile: {preview.ErrorMessage}";
             return;
         }
+
+        UpdateProfileTrustUi(preview);
         TxtProfileStatus.Text = $"[DRY-RUN] {preview.ToApply.Count} tweak(s) will be applied ({string.Join(", ", preview.ToApply)}), {preview.AlreadyApplied.Count} already active, {preview.SkippedUnknownOrIncompatible.Count} skipped.";
     }
 
@@ -256,12 +262,82 @@ public sealed partial class SettingsPage : Page
         if (!File.Exists(path)) { TxtProfileStatus.Text = "Profile JSON file not found."; return; }
 
         var preview = ProfileConfigService.PreviewImport(File.ReadAllText(path));
-        if (!preview.IsValid) { TxtProfileStatus.Text = preview.ErrorMessage; return; }
+        if (!preview.IsValid)
+        {
+            ProfileTrustBanner.Visibility = Visibility.Collapsed;
+            TxtProfileStatus.Text = preview.ErrorMessage;
+            return;
+        }
 
-        var (applied, failed, _) = await Task.Run(() => ProfileConfigService.ApplyPreviewedProfile(preview));
+        UpdateProfileTrustUi(preview);
+
+        bool confirmed = !preview.RequiresConfirmation;
+        if (preview.RequiresConfirmation)
+        {
+            if (ChkConfirmUnverifiedProfile.IsChecked == true)
+            {
+                confirmed = true;
+            }
+            else
+            {
+                var dlg = new ContentDialog
+                {
+                    Title = preview.TrustState == ProfileTrustState.LegacyV1 ? "Confirm Legacy v1 Profile" : "Confirm Unverified External Profile",
+                    Content = $"{preview.LegacyUnauthenticatedWarning}\n\nTweaks to apply ({preview.ToApply.Count}): {(preview.ToApply.Count > 0 ? string.Join(", ", preview.ToApply) : "none")}.",
+                    PrimaryButtonText = "Apply Profile",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+                if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+                    confirmed = true;
+            }
+        }
+
+        if (!confirmed)
+        {
+            TxtProfileStatus.Text = "Profile import cancelled — confirmation required for unverified/legacy profile.";
+            return;
+        }
+
+        var (applied, failed, _) = await Task.Run(() => ProfileConfigService.ApplyPreviewedProfile(preview, userConfirmed: confirmed));
         TxtProfileStatus.Text = $"Imported profile: {applied} tweak(s) applied, {failed} failed/need admin.";
         MainWindow.Current?.ShowToast("Profile Applied", $"{applied} tweak(s) applied cleanly.", failed == 0 ? "State.Good" : "State.Warn");
     }
+
+    private void UpdateProfileTrustUi(ProfileImportPreview preview)
+    {
+        ProfileTrustBanner.Visibility = Visibility.Visible;
+        switch (preview.TrustState)
+        {
+            case ProfileTrustState.LocalHmacVerified:
+                TxtProfileTrustBadge.Text = "VERIFIED";
+                TxtProfileTrustBadge.Foreground = ResolveThemeBrush("State.Good");
+                TxtProfileTrustSummary.Text = "HMAC-SHA256 verified against your local user key.";
+                ChkConfirmUnverifiedProfile.IsChecked = false;
+                ChkConfirmUnverifiedProfile.Visibility = Visibility.Collapsed;
+                break;
+            case ProfileTrustState.LegacyV1:
+                TxtProfileTrustBadge.Text = "LEGACY V1";
+                TxtProfileTrustBadge.Foreground = ResolveThemeBrush("State.Warn");
+                TxtProfileTrustSummary.Text = preview.LegacyUnauthenticatedWarning ?? "Legacy unauthenticated v1 profile.";
+                ChkConfirmUnverifiedProfile.IsChecked = false;
+                ChkConfirmUnverifiedProfile.Visibility = Visibility.Visible;
+                break;
+            default:
+                TxtProfileTrustBadge.Text = "UNVERIFIED EXTERNAL";
+                TxtProfileTrustBadge.Foreground = ResolveThemeBrush("State.Bad");
+                TxtProfileTrustSummary.Text = preview.LegacyUnauthenticatedWarning ?? "Profile integrity could not be verified.";
+                ChkConfirmUnverifiedProfile.IsChecked = false;
+                ChkConfirmUnverifiedProfile.Visibility = Visibility.Visible;
+                break;
+        }
+    }
+
+    private Microsoft.UI.Xaml.Media.Brush ResolveThemeBrush(string key) =>
+        Application.Current.Resources.TryGetValue(key, out object? res) && res is Microsoft.UI.Xaml.Media.Brush b
+            ? b
+            : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White);
 
     private async void BtnPanicRevert_Click(object sender, RoutedEventArgs e)
     {

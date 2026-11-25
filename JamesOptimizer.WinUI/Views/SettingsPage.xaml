@@ -113,7 +113,19 @@
             <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
                 <StackPanel Spacing="12">
                     <TextBlock Text="JSON Profile Provisioning &amp; Panic Revert" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
-                    <TextBlock x:Name="TxtProfileStatus" Text="Export active catalog tweaks to portable JSON (with SHA-256 digest) or preview before importing. Safe-Mode CLI: JamesOptimizer.WinUI.exe --revert-all" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="TxtProfileStatus" Text="Export active catalog tweaks to signed v2 JSON (DPAPI-protected HMAC-SHA256) or preview before importing. Safe-Mode CLI: JamesOptimizer.WinUI.exe --revert-all" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+
+                    <Border x:Name="ProfileTrustBanner" Visibility="Collapsed" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="12,8">
+                        <StackPanel Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border x:Name="BadgeProfileTrust" Style="{StaticResource Badge.Sm}">
+                                    <TextBlock x:Name="TxtProfileTrustBadge" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold"/>
+                                </Border>
+                                <TextBlock x:Name="TxtProfileTrustSummary" Style="{StaticResource Type.Caption}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox x:Name="ChkConfirmUnverifiedProfile" Visibility="Collapsed" Content="I reviewed this profile and confirm applying unverified or legacy settings." IsChecked="False"/>
+                        </StackPanel>
+                    </Border>
 
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>

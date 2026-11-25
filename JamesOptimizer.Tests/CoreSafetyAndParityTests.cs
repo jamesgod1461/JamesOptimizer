@@ -112,11 +112,144 @@ public class CoreSafetyAndParityTests : IDisposable
         string json = File.ReadAllText(path);
         var preview = ProfileConfigService.PreviewImport(json);
         Assert.True(preview.IsValid);
+        Assert.Equal(ProfileTrustState.LegacyV1, preview.TrustState);
+        Assert.True(preview.RequiresConfirmation);
+        Assert.False(string.IsNullOrWhiteSpace(preview.LegacyUnauthenticatedWarning));
         Assert.Contains(preview.SkippedUnknownOrIncompatible, s => s.Contains("nonexistent_evil_tweak"));
+
+        // Unconfirmed legacy import must fail closed
+        var (appliedUnconfirmed, failedUnconfirmed, _) = ProfileConfigService.ApplyPreviewedProfile(preview);
+        Assert.Equal(0, appliedUnconfirmed);
+        Assert.Equal(1, failedUnconfirmed);
 
         string tampered = json.Replace("mouse_fix", "keyboard_fix");
         var tamperedPreview = ProfileConfigService.PreviewImport(tampered);
         Assert.False(tamperedPreview.IsValid);
+    }
+
+    [Fact]
+    public void ProfileConfig_V2CanonicalBytes_StableAcrossPropertyOrderAndWhitespace()
+    {
+        string compactA = """
+{"SchemaVersion":2,"AppVersion":"3.1","ExportedAt":"2026-11-25T10:00:00+02:00","EnabledTweakIds":["keyboard_fix","mouse_fix"],"SmartRam":{"Enabled":true,"FreeRamThresholdMb":2048,"MinStandbyMb":1024,"CooldownSeconds":300,"MaxPurgesPerHour":6,"PauseDuringFullscreen":true},"GameAutomation":{"Enabled":true,"Rules":[{"ProcessName":"cs2","DisplayName":"CS2","TemporarilySuspendServices":["Spooler","SysMain"]}]}}
+""";
+        string reorderedB = """
+{
+  "GameAutomation": {
+    "Rules": [
+      {
+        "DisplayName": "CS2",
+        "TemporarilySuspendServices": [ "SysMain", "Spooler" ],
+        "ProcessName": "cs2"
+      }
+    ],
+    "Enabled": true
+  },
+  "SmartRam": {
+    "PauseDuringFullscreen": true,
+    "MaxPurgesPerHour": 6,
+    "CooldownSeconds": 300,
+    "MinStandbyMb": 1024,
+    "FreeRamThresholdMb": 2048,
+    "Enabled": true
+  },
+  "EnabledTweakIds": [ "mouse_fix", "keyboard_fix" ],
+  "ExportedAt": "2026-11-25T08:00:00Z",
+  "AppVersion": "3.1",
+  "SchemaVersion": 2
+}
+""";
+        var pA = System.Text.Json.JsonSerializer.Deserialize<ExportedOptimizerProfile>(compactA)!;
+        var pB = System.Text.Json.JsonSerializer.Deserialize<ExportedOptimizerProfile>(reorderedB)!;
+
+        byte[] bytesA = ProfileConfigService.ComputeCanonicalPayloadBytes(pA);
+        byte[] bytesB = ProfileConfigService.ComputeCanonicalPayloadBytes(pB);
+        Assert.Equal(bytesA, bytesB);
+    }
+
+    [Fact]
+    public void ProfileConfig_V2Hmac_VerifiesValid_FlagsTamperedMissingKeyAndSanitizesRules()
+    {
+        string keyPath = Path.Combine(_tempDir, "profile_hmac_test.bin");
+        ProfileConfigService.ConfigureKeyPath(keyPath);
+
+        var profile = new ExportedOptimizerProfile
+        {
+            SchemaVersion = 2,
+            EnabledTweakIds = new() { "mouse_fix", "bogus_tweak_id" },
+            GameAutomation = new GameAutomationConfig
+            {
+                Enabled = true,
+                Rules = new()
+                {
+                    new GameAutomationRule
+                    {
+                        ProcessName = "cs2",
+                        DisplayName = "CS2",
+                        ProcessPriority = "RealTime", // disallowed -> sanitized to High
+                        PowerPlanGuid = "not-a-guid",
+                        TemporarilySuspendServices = new() { "WinDefend", "wuauserv", "Spooler" }
+                    },
+                    new GameAutomationRule
+                    {
+                        ProcessName = "bad|cmd&exec;calc", // invalid process name -> dropped
+                        DisplayName = "Evil"
+                    }
+                }
+            }
+        };
+
+        string profPath = Path.Combine(_tempDir, "v2_prof.json");
+        ProfileConfigService.SaveProfileToFile(profPath, profile);
+        Assert.True(File.Exists(keyPath));
+        Assert.False(string.IsNullOrWhiteSpace(profile.HmacSha256));
+        Assert.Null(profile.Sha256Digest);
+
+        string json = File.ReadAllText(profPath);
+
+        // 1. Valid v2 + local key -> LocalHmacVerified + strict rule sanitization applied
+        var validPreview = ProfileConfigService.PreviewImport(json);
+        Assert.True(validPreview.IsValid);
+        Assert.Equal(ProfileTrustState.LocalHmacVerified, validPreview.TrustState);
+        Assert.False(validPreview.RequiresConfirmation);
+        Assert.Contains(validPreview.SkippedUnknownOrIncompatible, s => s.Contains("bogus_tweak_id"));
+        var onlyRule = Assert.Single(validPreview.Profile!.GameAutomation!.Rules);
+        Assert.Equal("cs2", onlyRule.ProcessName);
+        Assert.Equal("High", onlyRule.ProcessPriority);
+        Assert.Equal(CoreConstants.UltimatePerformanceGuid, onlyRule.PowerPlanGuid);
+        Assert.DoesNotContain("WinDefend", onlyRule.TemporarilySuspendServices);
+        Assert.DoesNotContain("wuauserv", onlyRule.TemporarilySuspendServices);
+        Assert.Contains("Spooler", onlyRule.TemporarilySuspendServices);
+
+        // 2. Tampered v2 -> UnverifiedExternal + RequiresConfirmation + Apply fails without confirmation
+        string tamperedJson = json.Replace("\"Spooler\"", "\"PrintNotify\"");
+        var tamperedPreview = ProfileConfigService.PreviewImport(tamperedJson);
+        Assert.True(tamperedPreview.IsValid);
+        Assert.Equal(ProfileTrustState.UnverifiedExternal, tamperedPreview.TrustState);
+        Assert.True(tamperedPreview.RequiresConfirmation);
+        Assert.Equal((0, 1), (ProfileConfigService.ApplyPreviewedProfile(tamperedPreview).Applied, ProfileConfigService.ApplyPreviewedProfile(tamperedPreview).Failed));
+
+        // 3. Missing HmacSha256 in v2 -> UnverifiedExternal + RequiresConfirmation
+        var missingMacDoc = System.Text.Json.JsonSerializer.Deserialize<ExportedOptimizerProfile>(json)!;
+        missingMacDoc.HmacSha256 = null;
+        string noMacJson = System.Text.Json.JsonSerializer.Serialize(missingMacDoc);
+        var noMacPreview = ProfileConfigService.PreviewImport(noMacJson);
+        Assert.True(noMacPreview.IsValid);
+        Assert.Equal(ProfileTrustState.UnverifiedExternal, noMacPreview.TrustState);
+        Assert.True(noMacPreview.RequiresConfirmation);
+
+        // 4. Corrupt or missing key file -> UnverifiedExternal without crashing
+        File.WriteAllBytes(keyPath, new byte[] { 1, 2, 3, 4 });
+        var corruptKeyPreview = ProfileConfigService.PreviewImport(json);
+        Assert.True(corruptKeyPreview.IsValid);
+        Assert.Equal(ProfileTrustState.UnverifiedExternal, corruptKeyPreview.TrustState);
+        Assert.True(corruptKeyPreview.RequiresConfirmation);
+
+        File.Delete(keyPath);
+        var missingKeyPreview = ProfileConfigService.PreviewImport(json);
+        Assert.True(missingKeyPreview.IsValid);
+        Assert.Equal(ProfileTrustState.UnverifiedExternal, missingKeyPreview.TrustState);
+        Assert.True(missingKeyPreview.RequiresConfirmation);
     }
 
     [Fact]
