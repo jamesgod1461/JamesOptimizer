@@ -4,11 +4,71 @@
 
 [CmdletBinding()]
 param (
-    [switch]$SkipCompileInstaller
+    [switch]$SkipCompileInstaller,
+    [string]$CertThumbprint = $env:JO_CERT_THUMBPRINT,
+    [string]$TimestampUrl = "http://timestamp.digicert.com",
+    [switch]$AllowUnsigned,
+    [switch]$TestCert,
+    [switch]$UseMachineStore
 )
 
 $ErrorActionPreference = "Stop"
 $root = Resolve-Path "$PSScriptRoot\.."
+
+function Find-SignTool {
+    $cmd = Get-Command signtool.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1
+    if ($cmd) { return $cmd }
+    $kitsRoot = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
+    if (Test-Path $kitsRoot) {
+        return Get-ChildItem -Path $kitsRoot -Filter signtool.exe -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+    }
+    return $null
+}
+
+function Invoke-CodeSign {
+    param(
+        [string]$SignToolPath,
+        [string]$Thumbprint,
+        [string]$TsUrl,
+        [string]$TargetFile,
+        [switch]$MachineStore,
+        [switch]$AllowTestStatus
+    )
+    if (-not (Test-Path $TargetFile)) { throw "Sign target missing: $TargetFile" }
+    $signArgs = @("sign", "/sha1", $Thumbprint)
+    if ($MachineStore) { $signArgs += "/sm" }
+    $signArgs += @("/fd", "sha256")
+    if (-not [string]::IsNullOrWhiteSpace($TsUrl)) {
+        $signArgs += @("/tr", $TsUrl, "/td", "sha256")
+    }
+    $signArgs += $TargetFile
+
+    & $SignToolPath @signArgs
+    if ($LASTEXITCODE -ne 0) { throw "signtool failed ($LASTEXITCODE) on $TargetFile" }
+
+    $sig = Get-AuthenticodeSignature -FilePath $TargetFile
+    $subjectOk = $null -ne $sig.SignerCertificate -and $sig.SignerCertificate.Subject -like '*James God*'
+    if ($AllowTestStatus) {
+        if (($sig.Status -notin @('Valid', 'UnknownError', 'NotTrusted')) -or -not $subjectOk) {
+            throw "Test-cert signature check failed on '$TargetFile': Status=$($sig.Status), Subject=$($sig.SignerCertificate.Subject)"
+        }
+    } else {
+        if ($sig.Status -ne 'Valid' -or -not $subjectOk) {
+            throw "Authenticode signature check failed on '$TargetFile': Status=$($sig.Status), Subject=$($sig.SignerCertificate.Subject)"
+        }
+    }
+    Write-Host "  Signed: $TargetFile (Status=$($sig.Status), Subject=$($sig.SignerCertificate.Subject))" -ForegroundColor Green
+}
+
+if ($TestCert) {
+    Write-Warning "===================================================================="
+    Write-Warning " TEST-CERT MODE ACTIVE: THIS BUILD IS FOR LOCAL TESTING ONLY!       "
+    Write-Warning " Untrusted/self-signed signatures are accepted in this run.         "
+    Write-Warning "===================================================================="
+}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  BUILDING JAMESOPTIMIZER V3 (Full Production Pipeline)   " -ForegroundColor Cyan
@@ -57,6 +117,19 @@ Get-ChildItem -Path $winuiPublish -Directory | Where-Object {
 $uiStats = Get-ChildItem -Path $winuiPublish -Recurse -File
 Write-Host ("✅ JamesOptimizer.WinUI published: {0} file(s), {1:N1} MB" -f $uiStats.Count, (($uiStats | Measure-Object Length -Sum).Sum / 1MB)) -ForegroundColor Green
 
+$signTool = $null
+if (-not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
+    $signTool = Find-SignTool
+    if (-not $signTool) { throw "signtool.exe not found in PATH or Windows Kits 10 SDK." }
+    Write-Host "`n[2.5/3] Signing application executables with thumbprint $CertThumbprint..." -ForegroundColor Yellow
+    Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile (Join-Path $servicePublish "JamesOptimizer.Service.exe") -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
+    Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile (Join-Path $winuiPublish "JamesOptimizer.WinUI.exe") -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
+} elseif (-not $AllowUnsigned) {
+    throw "Release IPC requires Authenticode-signed JamesOptimizer.WinUI.exe ('James God'). Pass -CertThumbprint <sha1> or -AllowUnsigned."
+} else {
+    Write-Warning "Building unsigned binaries (-AllowUnsigned). Release pipe IPC client verification will reject unsigned JamesOptimizer.WinUI.exe."
+}
+
 # 3. Compile Inno Setup Script
 Write-Host "`n[3/3] Compiling Installer..." -ForegroundColor Yellow
 $issPath = Join-Path $PSScriptRoot "JamesOptimizerSetup.iss"
@@ -71,7 +144,11 @@ if ($iscc -and -not $SkipCompileInstaller) {
     Write-Host "Found Inno Setup Compiler at: $iscc" -ForegroundColor Cyan
     & $iscc $issPath
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "`n🎉 Setup installer generated at: $PSScriptRoot\Output\JamesOptimizer_V3_Setup.exe" -ForegroundColor Green
+        $setupExe = Join-Path $PSScriptRoot "Output\JamesOptimizer_V3_Setup.exe"
+        if ($signTool -and -not [string]::IsNullOrWhiteSpace($CertThumbprint)) {
+            Invoke-CodeSign -SignToolPath $signTool -Thumbprint $CertThumbprint -TsUrl $TimestampUrl -TargetFile $setupExe -MachineStore:$UseMachineStore -AllowTestStatus:$TestCert
+        }
+        Write-Host "`n🎉 Setup installer generated at: $setupExe" -ForegroundColor Green
     } else {
         Write-Warning "Inno Setup compilation exited with error code $LASTEXITCODE"
     }
