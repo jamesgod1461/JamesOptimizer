@@ -428,6 +428,16 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Local agent tooling
+.agents/
+
+# Local planning & internal docs
+goal.md
+plan3.md
+plan5.md
+features.md
+THIRD_PARTY.md
+
 # Custom application outputs
 PublishOutput/
 Installer/Output/

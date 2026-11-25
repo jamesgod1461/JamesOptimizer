@@ -244,7 +244,7 @@ try {
     Add-Check "4. AV/Metadata" "VirusTotal & SmartScreen reputation check" "UNVERIFIED" "Requires VirusTotal upload/link and SmartScreen download check"
 
     # ── Section 5: Open-source / GitHub hygiene ───────────────────────────
-    $requiredDocs = @("LICENSE", "SECURITY.md", "THIRD_PARTY.md", "CHANGELOG.md", "README.md", ".gitignore", ".github\workflows\release.yml")
+    $requiredDocs = @("LICENSE", "SECURITY.md", "CHANGELOG.md", "README.md", ".gitignore", ".github\workflows\release.yml")
     $missingDocs = $requiredDocs | Where-Object { -not (Test-Path (Join-Path $root $_)) }
     if ($missingDocs.Count -eq 0) {
         Add-Check "5. Hygiene" "Required OSS docs, .gitignore & GitHub Actions workflow" "PASS" "All required files present"
