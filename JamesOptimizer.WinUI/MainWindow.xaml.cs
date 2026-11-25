@@ -287,6 +287,21 @@ public sealed partial class MainWindow : Window
         });
     }
 
+    private static readonly Dictionary<string, (Type PageType, int Index)> NavRoutes = new(StringComparer.Ordinal)
+    {
+        ["Dashboard"] = (typeof(DashboardPage), 0),
+        ["Cleanups"] = (typeof(Views.CleanupsPage), 1),
+        ["Performance"] = (typeof(Views.PerformancePage), 2),
+        ["GamingMode"] = (typeof(Views.GamingModePage), 3),
+        ["Startup"] = (typeof(Views.StartupPage), 4),
+        ["Services"] = (typeof(Views.ServicesPage), 5),
+        ["Network"] = (typeof(Views.NetworkPage), 6),
+        ["Storage"] = (typeof(Views.StoragePage), 7),
+        ["Toolbox"] = (typeof(Views.ToolboxPage), 8),
+        ["Diagnostics"] = (typeof(Views.DiagnosticsPage), 9),
+        ["Settings"] = (typeof(Views.SettingsPage), 10)
+    };
+
     public void NavigateTo(string tag)
     {
         var allButtons = GetNavButtons();
@@ -317,56 +332,9 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        Type targetPageType = typeof(DashboardPage);
-        int selectedIndex = 0;
-
-        switch (tag)
-        {
-            case "Dashboard":
-                targetPageType = typeof(DashboardPage);
-                selectedIndex = 0;
-                break;
-            case "Cleanups":
-                targetPageType = typeof(Views.CleanupsPage);
-                selectedIndex = 1;
-                break;
-            case "Performance":
-                targetPageType = typeof(Views.PerformancePage);
-                selectedIndex = 2;
-                break;
-            case "GamingMode":
-                targetPageType = typeof(Views.GamingModePage);
-                selectedIndex = 3;
-                break;
-            case "Startup":
-                targetPageType = typeof(Views.StartupPage);
-                selectedIndex = 4;
-                break;
-            case "Services":
-                targetPageType = typeof(Views.ServicesPage);
-                selectedIndex = 5;
-                break;
-            case "Network":
-                targetPageType = typeof(Views.NetworkPage);
-                selectedIndex = 6;
-                break;
-            case "Storage":
-                targetPageType = typeof(Views.StoragePage);
-                selectedIndex = 7;
-                break;
-            case "Toolbox":
-                targetPageType = typeof(Views.ToolboxPage);
-                selectedIndex = 8;
-                break;
-            case "Diagnostics":
-                targetPageType = typeof(Views.DiagnosticsPage);
-                selectedIndex = 9;
-                break;
-            case "Settings":
-                targetPageType = typeof(Views.SettingsPage);
-                selectedIndex = 10;
-                break;
-        }
+        (Type targetPageType, int selectedIndex) = NavRoutes.TryGetValue(tag, out var route)
+            ? route
+            : (typeof(DashboardPage), 0);
 
         var selectedBtn = allButtons[selectedIndex];
         selectedBtn.Background = activeSurface;
