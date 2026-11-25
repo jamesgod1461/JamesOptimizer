@@ -96,8 +96,8 @@ Filename: "{sys}\sc.exe"; Parameters: "failure ""{#MyServiceName}"" reset= 86400
 Filename: "{sys}\sc.exe"; Parameters: "sdset ""{#MyServiceName}"" D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)"; Flags: runhidden
 Filename: "{sys}\sc.exe"; Parameters: "start ""{#MyServiceName}"""; Flags: runhidden
 
-; Launch App upon finish
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Launch App upon finish (inherit installer's admin token since app manifest requiresAdministrator)
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
 [UninstallRun]
 ; Offer clean revert of tweaks before stopping/removing service
