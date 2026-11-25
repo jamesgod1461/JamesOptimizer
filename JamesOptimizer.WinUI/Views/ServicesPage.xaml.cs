@@ -132,23 +132,24 @@ namespace JamesOptimizer.WinUI.Views
             if (sender is Button btn && btn.Tag is ServiceDisplayItem item)
             {
                 btn.IsEnabled = false;
+                bool wantStart = item.Status != "Running";
 
-                await Task.Run(() =>
+                bool succeeded = await Task.Run(() =>
+                    wantStart
+                        ? ServiceManagerLogic.StartService(item.ServiceName)
+                        : ServiceManagerLogic.StopService(item.ServiceName));
+
+                if (succeeded)
                 {
-                    if (item.Status == "Running")
-                    {
-                        ServiceManagerLogic.StopService(item.ServiceName);
-                        item.Status = "Stopped";
-                    }
-                    else
-                    {
-                        ServiceManagerLogic.StartService(item.ServiceName);
-                        item.Status = "Running";
-                    }
-                });
+                    item.Status = wantStart ? "Running" : "Stopped";
+                    App.ViewModel?.AddLog("SERVICE", $"Service '{item.ServiceName}' transitioned to {item.Status}.");
+                }
+                else
+                {
+                    App.ViewModel?.AddLog("ERROR", $"Failed to {(wantStart ? "start" : "stop")} service '{item.ServiceName}' (access denied or non-stoppable).", true);
+                }
 
                 btn.IsEnabled = true;
-                App.ViewModel?.AddLog("SERVICE", $"Service '{item.ServiceName}' transitioned to {item.Status}.");
             }
         }
 

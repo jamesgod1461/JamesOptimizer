@@ -1,14 +1,14 @@
-# JamesOptimizer ⚡
+# JamesOptimizer V3 ⚡
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6?logo=windows&logoColor=white)](https://github.com/jamesgod1461/JamesOptimizer)
 [![Framework](https://img.shields.io/badge/.NET-Desktop%20WPF%20%2F%20C%23-512BD4?logo=dotnet&logoColor=white)](https://github.com/jamesgod1461/JamesOptimizer)
 [![Companion Web](https://img.shields.io/badge/Web-Lovable%20App-FF4F81)](https://jamesoptimizer.lovable.app/)
-[![Last Updated](https://img.shields.io/badge/Last%20Updated-October%2030%2C%202026-brightgreen)](https://github.com/jamesgod1461/JamesOptimizer)
+[![Version](https://img.shields.io/badge/Version-V3%20(3.0.0)-brightgreen)](https://github.com/jamesgod1461/JamesOptimizer)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Last Updated:** October 30, 2026
+> **Version:** V3 (3.0.0)
 
-**JamesOptimizer** is an advanced, high-performance Windows system optimization suite designed to eliminate latency, reclaim system resources, remove bloatware, and unlock maximum gaming and productivity throughput on Windows 10 and Windows 11.
+**JamesOptimizer V3** is an advanced, high-performance Windows system optimization suite designed to eliminate latency, reclaim system resources, remove bloatware, and unlock maximum gaming and productivity throughput on Windows 10 and Windows 11.
 
 ---
 
@@ -55,7 +55,8 @@ graph TD
     Service --> Worker[Background RAM & Maintenance Service]
 ```
 
-- **`OptimizerUI`**: Modern desktop user interface styled with fluent dark, light, and G-HUB themes, smooth spring animations, and Mica/Acrylic backdrop blur integration.
+- **`OptimizerUI`**: Primary WPF desktop client featuring Dark/Light themes, live accent switching, smooth animations, and Mica/Acrylic backdrop blur integration (`\\.\pipe\JamesOptimizerUIPipe`).
+- **`JamesOptimizer.WinUI`**: Modern WinUI 3 + Win2D desktop client sharing the core optimization engine (`Core\OptimizationEngine.cs`).
 - **`JamesOptimizer.Service`**: Lightweight Windows background service communicating via `\\.\pipe\JamesOptimizerPipe` to perform scheduled RAM working set trims and background health maintenance.
 - **`OptimizationEngine`**: Central engine orchestrating low-level system calls, privilege adjustments (`TokenAdjustPrivileges`), process execution, and registry modifications.
 
@@ -65,7 +66,7 @@ graph TD
 
 ### Prerequisites
 - **Operating System**: Windows 10 (Version 2004 or later) / Windows 11 (64-bit)
-- **Runtime**: [.NET 8.0 / .NET Framework Desktop Runtime](https://dotnet.microsoft.com/)
+- **Runtime**: [.NET 10.0 Desktop Runtime / SDK](https://dotnet.microsoft.com/) (plus Windows App SDK for `JamesOptimizer.WinUI`)
 - **Permissions**: Administrator privileges required for registry and service configurations
 
 ### Installation

@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>JamesOptimizer.WinUI</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en;en-US</SatelliteResourceLanguages>
     <Platforms>x86;x64;ARM64;AnyCPU</Platforms>
     <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' or '$(Platform)' == 'AnyCPU'">win-x64</RuntimeIdentifier>
@@ -40,6 +42,9 @@
     <Content Include="Assets\logo-512.png" />
     <Content Include="Assets\logo-64.png" />
     <Content Include="Assets\logo.png" />
+    <Content Include="Assets\Fonts\SpaceGrotesk.ttf" />
+    <Content Include="Assets\Fonts\PlusJakartaSans.ttf" />
+    <Content Include="Assets\Fonts\JetBrainsMono.ttf" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +69,10 @@
     <PropertyGroup> above to opt out.
   -->
   <ItemGroup>
+    <ProjectReference Include="..\JamesOptimizer.Core\JamesOptimizer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
@@ -86,7 +95,13 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <PublishTrimmed>False</PublishTrimmed>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 </Project>

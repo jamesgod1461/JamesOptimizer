@@ -12,6 +12,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media;
 using JamesOptimizer.WinUI.Models;
 using JamesOptimizer.WinUI.Services;
+using JamesOptimizer.WinUI.Theme;
 
 namespace JamesOptimizer.WinUI.ViewModels;
 
@@ -50,11 +51,11 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     private bool _isOptimizing = false;
     private string _lastOptimizationStatus = "PRO SUITE · 100% HEALTHY";
 
-    private readonly SolidColorBrush _cyanBrush = new(ColorHelper.FromArgb(255, 0, 245, 255));
-    private readonly SolidColorBrush _violetBrush = new(ColorHelper.FromArgb(255, 123, 92, 240));
-    private readonly SolidColorBrush _greenBrush = new(ColorHelper.FromArgb(255, 0, 230, 118));
-    private readonly SolidColorBrush _amberBrush = new(ColorHelper.FromArgb(255, 255, 179, 0));
-    private readonly SolidColorBrush _redBrush = new(ColorHelper.FromArgb(255, 255, 61, 87));
+    private readonly SolidColorBrush _cyanBrush = ThemeEffects.GetSolidBrush("Accent.Cyan");
+    private readonly SolidColorBrush _violetBrush = ThemeEffects.GetSolidBrush("Accent.Purple");
+    private readonly SolidColorBrush _greenBrush = ThemeEffects.GetSolidBrush("Accent.Green");
+    private readonly SolidColorBrush _amberBrush = ThemeEffects.GetSolidBrush("Accent.Yellow");
+    private readonly SolidColorBrush _redBrush = ThemeEffects.GetSolidBrush("State.Bad");
 
     public MetricItem CpuMetric { get; }
     public MetricItem GpuMetric { get; }
@@ -92,8 +93,6 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             }
         }
     }
-
-    private readonly BackgroundServiceClient _serviceClient = new();
 
     public bool AutoRunEnabled
     {
@@ -143,7 +142,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     public ICommand ClearConsoleLogsCommand { get; }
     public ICommand ToggleSidebarCommand { get; }
 
-    public DashboardViewModel() : this(new SystemMetricsService(), DispatcherQueue.GetForCurrentThread() ?? DispatcherQueue.GetForCurrentThread())
+    public DashboardViewModel() : this(new SystemMetricsService(), DispatcherQueue.GetForCurrentThread())
     {
     }
 
@@ -228,7 +227,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Flush Working Sets",
             Subtitle = "Purge standby list & cache heaps",
             AccentBrush = _cyanBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 0, 245, 255))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
         QuickActions.Add(new QuickActionItem
         {
@@ -237,7 +236,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Ultra Game Priority",
             Subtitle = "Lock core timer resolution to 0.5ms",
             AccentBrush = _violetBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 123, 92, 240))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
         QuickActions.Add(new QuickActionItem
         {
@@ -246,7 +245,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Zero-Waste Storage",
             Subtitle = "Scrub %TEMP% & shader buffers",
             AccentBrush = _amberBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 255, 179, 0))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
         QuickActions.Add(new QuickActionItem
         {
@@ -255,7 +254,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Low-Jitter DNS",
             Subtitle = "Route gaming sockets & flush DNS",
             AccentBrush = _greenBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 0, 230, 118))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
         QuickActions.Add(new QuickActionItem
         {
@@ -264,7 +263,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Startup Shield",
             Subtitle = "Suppress rogue background loaders",
             AccentBrush = _cyanBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 0, 245, 255))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
         QuickActions.Add(new QuickActionItem
         {
@@ -273,7 +272,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             Title = "Telemetry Kill",
             Subtitle = "Terminate silent diagnostic spikes",
             AccentBrush = _redBrush,
-            TintBrush = new SolidColorBrush(ColorHelper.FromArgb(26, 255, 61, 87))
+            TintBrush = ThemeEffects.GetSolidBrush("Bg.Surface2")
         });
     }
 
@@ -325,6 +324,7 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
             // Update Metrics
             CpuMetric.Value = e.CpuPercent;
             GpuMetric.Value = e.GpuPercent;
+            if (!string.IsNullOrEmpty(e.GpuSubLabel)) GpuMetric.SubLabel = e.GpuSubLabel;
             RamMetric.Value = e.RamPercent;
             RamMetric.SubLabel = $"{e.RamUsedGb:F1} / {e.RamTotalGb:F1} GB";
             DiskMetric.Value = e.DiskPercent;

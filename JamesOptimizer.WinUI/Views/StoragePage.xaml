@@ -4,13 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
-    Loaded="Page_Loaded">
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,92 +20,204 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE756;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="STORAGE ANALYZER &amp; DRIVES" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE756;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="STORAGE VISUALIZER, DUPLICATES &amp; SWEEPER" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Monitor drive health and find heavy files consuming storage." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Win2D Treemap visualizer, SHA-256 duplicate finder (with OneDrive safety), and Recycle Bin downloads sweeper." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <Button x:Name="BtnLaunchCleanmgr" Grid.Column="1" Click="BtnLaunchCleanmgr_Click" Style="{StaticResource ModernPrimaryButtonStyle}" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="WINDOWS DISK CLEANUP" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="TabVisualizer" Click="StorageTab_Click" Tag="VIS" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="Treemap &amp; Large" />
+                    <Button x:Name="TabDuplicates" Click="StorageTab_Click" Tag="DUP" Style="{StaticResource SegmentedPillButtonStyle}" Content="Duplicate Finder" />
+                    <Button x:Name="TabDownloads" Click="StorageTab_Click" Tag="DL" Style="{StaticResource SegmentedPillButtonStyle}" Content="Downloads Sweeper" />
+                    <Button x:Name="BtnLaunchCleanmgr" Click="BtnLaunchCleanmgr_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="cleanmgr.exe" />
+                </StackPanel>
             </Grid>
 
             <!-- Drives Display -->
             <ItemsControl x:Name="DrivesList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="20" Margin="0,0,0,12">
+                        <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}" Margin="0,0,0,12">
                             <StackPanel Spacing="12">
-                                <Grid>
+                                <Grid ColumnSpacing="16">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Border Width="36" Height="36" CornerRadius="8" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" VerticalAlignment="Center">
-                                            <TextBlock Text="💾" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border Width="36" Height="36" CornerRadius="{StaticResource Radius.Sm}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xEDA2;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
-                                        <StackPanel VerticalAlignment="Center" Spacing="2">
-                                            <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding Format}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Format}" Style="{StaticResource Type.Label}"/>
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="2">
-                                        <TextBlock Text="{Binding Summary}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
-                                        <TextBlock Text="{Binding FreeText}" FontSize="11" Foreground="{StaticResource SuccessGreenBrush}" HorizontalAlignment="Right"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="3">
+                                        <TextBlock Text="{Binding Summary}" Style="{StaticResource Type.Numeric}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding FreeText}" Style="{StaticResource Type.Numeric}" FontSize="12" Foreground="{ThemeResource State.Good}" HorizontalAlignment="Right"/>
                                     </StackPanel>
                                 </Grid>
 
-                                <ProgressBar Value="{Binding UsedPercent}" Maximum="100" Height="8" CornerRadius="4" Foreground="{StaticResource AccentCyanBrush}"/>
+                                <ProgressBar Value="{Binding AnimatedPercent}" Maximum="100" Height="6" CornerRadius="{StaticResource Radius.Bar}"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Large Files Finder Section -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="14">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="Large File Scanner (&gt; 500 MB)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Detect heavy video files, game packages, and archives occupying your drive." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+            <!-- TAB 1: WIN2D TREEMAP VISUALIZER & LARGEST/OLDEST FILES -->
+            <StackPanel x:Name="PanelVisualizer" Spacing="16">
+                <Border x:Name="CardLargeFiles" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Win2D Space Treemap &amp; Heavy File Analyzer" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtVisualizerStatus" Text="Visualize top folders and largest/oldest files under your User Profile or selected drive." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ComboBox x:Name="ComboScanRoot" Grid.Column="1" Width="210" VerticalAlignment="Center"/>
+                            <Button x:Name="BtnScanTreemap" Grid.Column="2" Click="BtnScanTreemap_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Scan Space"/>
+                        </Grid>
+
+                        <ProgressBar x:Name="LargeFilesProgress" Visibility="Collapsed" IsIndeterminate="True" Height="4"/>
+
+                        <Border Background="{ThemeResource Bg.Input}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Height="220" Padding="4">
+                            <canvas:CanvasControl x:Name="TreemapCanvas" Draw="TreemapCanvas_Draw" />
+                        </Border>
+
+                        <ItemsControl x:Name="LargeFilesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding FileName}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding FullPath}" Style="{StaticResource Type.Caption}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding DisplaySize}" Style="{StaticResource Type.Numeric}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="2" Click="BtnRecycleLargeFile_Click" Tag="{Binding FullPath}" Style="{StaticResource GhostButtonStyle}" Content="Recycle"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- TAB 2: DUPLICATE FILE FINDER -->
+            <StackPanel x:Name="PanelDuplicates" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="SHA-256 Duplicate File Finder" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtDupStatus" Text="Size -> 64KB partial hash -> full SHA-256. Automatically skips OneDrive cloud placeholders and symlinks." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBox x:Name="TxtDupExclusions" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Exclude folders (; separated)" VerticalAlignment="Center" />
+                            <Button x:Name="BtnScanDuplicates" Grid.Column="2" Click="BtnScanDuplicates_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Scan Duplicates" VerticalAlignment="Center"/>
+                            <Button x:Name="BtnDeleteDuplicates" Grid.Column="3" Click="BtnDeleteDuplicates_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Recycle Selected" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Click="BtnKeepNewest_Click" Style="{StaticResource GhostButtonStyle}" Content="Auto-Select Older Copies (Keep Newest)"/>
+                            <Button Click="BtnKeepOldest_Click" Style="{StaticResource GhostButtonStyle}" Content="Auto-Select Newer Copies (Keep Oldest)"/>
+                            <CheckBox x:Name="ChkPermanentDeleteDup" Content="Permanent Delete (bypass Recycle Bin)" VerticalAlignment="Center" />
                         </StackPanel>
-                        <Button x:Name="BtnScanLargeFiles" Grid.Column="1" Click="BtnScanLargeFiles_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan Heavy Files"/>
-                    </Grid>
 
-                    <ProgressBar x:Name="LargeFilesProgress" Visibility="Collapsed" IsIndeterminate="True" Height="4" Foreground="{StaticResource AccentCyanBrush}"/>
+                        <ProgressBar x:Name="DupProgressBar" Visibility="Collapsed" Value="0" Maximum="100" Height="4"/>
 
-                    <ItemsControl x:Name="LargeFilesList">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,6">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding FileName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding FullPath}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="600"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding DisplaySize}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
+                        <ItemsControl x:Name="DuplicatesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" MinWidth="0" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding FileName}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding FilePath}" Style="{StaticResource Type.Caption}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding DisplaySize}" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- TAB 3: DOWNLOADS SWEEPER -->
+            <StackPanel x:Name="PanelDownloads" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Downloads Age &amp; Size Sweeper" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtDownloadsStatus" Text="Inspect stale installers and archives in your Downloads folder." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ComboBox x:Name="ComboDownloadAge" Grid.Column="1" SelectedIndex="1" Width="176" VerticalAlignment="Center">
+                                <ComboBoxItem Content="All Ages" Tag="0" />
+                                <ComboBoxItem Content="Older than 30 days" Tag="30" />
+                                <ComboBoxItem Content="Older than 90 days" Tag="90" />
+                            </ComboBox>
+                            <Button x:Name="BtnScanDownloads" Grid.Column="2" Click="BtnScanDownloads_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Scan Downloads"/>
+                            <Button x:Name="BtnRecycleDownloads" Grid.Column="3" Click="BtnRecycleDownloads_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Recycle Selected"/>
+                        </Grid>
+
+                        <ItemsControl x:Name="DownloadsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" MinWidth="0" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding FileName}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding FilePath}" Style="{StaticResource Type.Caption}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding DisplaySize}" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

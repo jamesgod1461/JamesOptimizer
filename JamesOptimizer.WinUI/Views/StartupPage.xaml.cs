@@ -1,85 +1,129 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using JamesOptimizer;
 
-namespace JamesOptimizer.WinUI.Views
+namespace JamesOptimizer.WinUI.Views;
+
+public sealed partial class StartupPage : Page
 {
-    public sealed partial class StartupPage : Page
+    private List<StartupItem> _allItems = new();
+    public ObservableCollection<StartupItem> StartupItems { get; } = new();
+    private string _activeScope = "App";
+
+    public StartupPage()
     {
-        public ObservableCollection<StartupItem> StartupItems { get; } = new();
+        InitializeComponent();
+        StartupItemsList.ItemsSource = StartupItems;
+    }
 
-        public StartupPage()
+    private void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_allItems.Count == 0)
+            _ = LoadStartupItemsAsync();
+    }
+
+    private async Task LoadStartupItemsAsync()
+    {
+        StartupItems.Clear();
+        TxtSummary.Text = "Scanning Startup Apps, Scheduled Tasks, Registry Autoruns & 3rd-party services...";
+
+        var combined = await Task.Run(() =>
         {
-            InitializeComponent();
-            StartupItemsList.ItemsSource = StartupItems;
+            var list = new List<StartupItem>();
+            list.AddRange(StartupManagerService.GetStartupApps());
+            list.AddRange(StartupManagerService.GetScheduledTasks());
+            list.AddRange(StartupManagerService.GetRegistryAutoruns());
+            list.AddRange(StartupManagerService.GetThirdPartyServices());
+            return list;
+        });
+
+        _allItems = combined;
+        ApplyStartupFilter();
+    }
+
+    private void ScopeTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string scope) return;
+        _activeScope = scope;
+
+        var active = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
+        var normal = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
+        TabApps.Style = scope == "App" ? active : normal;
+        TabTasks.Style = scope == "ScheduledTask" ? active : normal;
+        TabAutoruns.Style = scope == "Autorun" ? active : normal;
+        TabServices.Style = scope == "Service" ? active : normal;
+        TabAll.Style = scope == "ALL" ? active : normal;
+
+        ApplyStartupFilter();
+    }
+
+    private void ApplyStartupFilter()
+    {
+        string query = (TxtStartupSearch?.Text ?? "").Trim();
+        StartupItems.Clear();
+        foreach (var it in _allItems)
+        {
+            bool scopeMatch = _activeScope == "ALL" || it.Type.Equals(_activeScope, StringComparison.OrdinalIgnoreCase);
+            bool textMatch = string.IsNullOrEmpty(query) ||
+                             it.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                             it.Publisher.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                             it.Source.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+            if (scopeMatch && textMatch)
+                StartupItems.Add(it);
         }
+        UpdateCounters();
+    }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+    private void UpdateCounters()
+    {
+        int activeCount = _allItems.Count(i => i.IsEnabled);
+        double savedSec = _allItems.Where(i => !i.IsEnabled).Sum(i => i.EstimatedBootSeconds);
+        TxtActiveCount.Text = $"{activeCount} Active";
+        TxtBootSavings.Text = $"Est. Saved: {savedSec:F1}s";
+        TxtSummary.Text = $"Showing {StartupItems.Count} of {_allItems.Count} total autorun & service entries.";
+    }
+
+    private void TxtStartupSearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyStartupFilter();
+
+    private void StartupToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleSwitch toggle && toggle.Tag is StartupItem item)
         {
-            if (StartupItems.Count == 0)
+            if (!toggle.IsLoaded || item.IsEnabled == toggle.IsOn) return;
+
+            bool desired = toggle.IsOn;
+            if (!StartupManagerService.SetStartupState(item, desired))
             {
-                _ = LoadStartupItemsAsync();
+                toggle.IsOn = item.IsEnabled;
+                MainWindow.Current?.ShowToast("Startup Update Failed", $"Could not update '{item.Name}' (protected or access denied).", "State.Bad");
+                return;
             }
-        }
+            UpdateCounters();
 
-        private async Task LoadStartupItemsAsync()
-        {
-            StartupItems.Clear();
-            TxtSummary.Text = "Scanning startup autorun registries and folders...";
-
-            await Task.Run(() =>
-            {
-                var items = StartupManagerService.GetStartupApps();
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    foreach (var it in items)
-                    {
-                        StartupItems.Add(it);
-                    }
-
-                    int activeCount = StartupItems.Count(i => i.IsEnabled);
-                    TxtActiveCount.Text = $"{activeCount} Active";
-                    TxtSummary.Text = $"Detected {StartupItems.Count} total startup applications.";
-                });
-            });
-        }
-
-        private void StartupToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleSwitch toggle && toggle.Tag is StartupItem item)
-            {
-                StartupManagerService.SetStartupState(item, toggle.IsOn);
-                item.IsEnabled = toggle.IsOn;
-
-                int activeCount = StartupItems.Count(i => i.IsEnabled);
-                TxtActiveCount.Text = $"{activeCount} Active";
-
-                App.ViewModel?.AddLog("STARTUP", $"Startup item '{item.Name}' set to {(toggle.IsOn ? "ENABLED" : "DISABLED")}");
-            }
-        }
-
-        private void BtnDelete_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is StartupItem item)
-            {
-                StartupManagerService.DeleteStartupItem(item);
-                StartupItems.Remove(item);
-
-                int activeCount = StartupItems.Count(i => i.IsEnabled);
-                TxtActiveCount.Text = $"{activeCount} Active";
-                TxtSummary.Text = $"Detected {StartupItems.Count} total startup applications.";
-
-                App.ViewModel?.AddLog("STARTUP", $"Deleted autorun item '{item.Name}'.");
-            }
-        }
-
-        private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            await LoadStartupItemsAsync();
+            App.ViewModel?.AddLog("STARTUP", $"{item.Type} '{item.Name}' set to {(desired ? "ENABLED" : "DISABLED")}");
+            MainWindow.Current?.ShowToast("Startup Updated", $"{item.Name} {(desired ? "enabled" : "disabled")}.", desired ? "Accent.Cyan" : "State.Good");
         }
     }
+
+    private void BtnDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is StartupItem item)
+        {
+            StartupManagerService.DeleteStartupItem(item);
+            _allItems.Remove(item);
+            StartupItems.Remove(item);
+            UpdateCounters();
+
+            App.ViewModel?.AddLog("STARTUP", $"Removed startup item '{item.Name}'.");
+            MainWindow.Current?.ShowToast("Autorun Removed", $"{item.Name} removed.", "State.Good");
+        }
+    }
+
+    private async void BtnRefresh_Click(object sender, RoutedEventArgs e) =>
+        await LoadStartupItemsAsync();
 }

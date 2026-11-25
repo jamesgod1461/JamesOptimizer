@@ -1,204 +1,340 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
+using JamesOptimizer.Core;
+using JamesOptimizer.WinUI.Theme;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using JamesOptimizer;
+using Microsoft.UI.Xaml.Media;
 
-namespace JamesOptimizer.WinUI.Views
+namespace JamesOptimizer.WinUI.Views;
+
+public class PerformanceTweakItem : INotifyPropertyChanged
 {
-    public class PerformanceTweakItem : INotifyPropertyChanged
+    private bool _isEnabled;
+    private bool _isApplicable = true;
+    private bool _isDrifted;
+    private string? _notApplicableReason;
+
+    public TweakDefinition Definition { get; set; } = null!;
+    public string Id => Definition.Id;
+    public string Title => Definition.Title;
+    public string Description => IsApplicable ? Definition.Description : $"{Definition.Description} [Unavailable: {_notApplicableReason}]";
+    public string IconGlyph => Definition.IconGlyph;
+    public string Category => Definition.Category;
+    public string CategoryLabel => Definition.CategoryLabel;
+    public string RegistryTarget => Definition.TargetDisplay;
+    public string RiskText => Definition.RequiresAdmin ? $"{Definition.RiskLabel} · ADMIN" : Definition.RiskLabel;
+    public string EvidenceText => Definition.EvidenceLabel;
+
+    public bool IsApplicable
     {
-        private bool _isEnabled;
-
-        public string Id { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string IconGlyph { get; set; } = "\uE770";
-        public bool IsRecommended { get; set; } = true;
-        public Visibility IsRecommendedVisibility => IsRecommended ? Visibility.Visible : Visibility.Collapsed;
-
-        public bool IsEnabled
-        {
-            get => _isEnabled;
-            set { _isEnabled = value; OnPropertyChanged(); }
-        }
-
-        public Action<bool>? ApplyAction { get; set; }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? prop = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        get => _isApplicable;
+        set { _isApplicable = value; OnPropertyChanged(); OnPropertyChanged(nameof(CardOpacity)); OnPropertyChanged(nameof(Description)); OnPropertyChanged(nameof(StatusText)); }
     }
 
-    public sealed partial class PerformancePage : Page
+    public string? NotApplicableReason
     {
-        public ObservableCollection<PerformanceTweakItem> Tweaks { get; } = new();
+        get => _notApplicableReason;
+        set { _notApplicableReason = value; OnPropertyChanged(); OnPropertyChanged(nameof(Description)); }
+    }
 
-        public PerformancePage()
-        {
-            InitializeComponent();
-            TweaksList.ItemsSource = Tweaks;
-        }
+    public bool IsDrifted
+    {
+        get => _isDrifted;
+        set { _isDrifted = value; OnPropertyChanged(); OnPropertyChanged(nameof(DriftBadgeVisibility)); }
+    }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+    public Visibility DriftBadgeVisibility => _isDrifted ? Visibility.Visible : Visibility.Collapsed;
+    public double CardOpacity => _isApplicable ? 1.0 : 0.55;
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set
         {
-            if (Tweaks.Count == 0)
+            if (_isEnabled != value)
             {
-                InitTweaks();
+                _isEnabled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(StatusText));
+                OnPropertyChanged(nameof(StatusBrush));
+                OnPropertyChanged(nameof(StatusDotBrush));
+                OnPropertyChanged(nameof(CardBorderBrush));
             }
-        }
-
-        private void InitTweaks()
-        {
-            Tweaks.Clear();
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "power",
-                Title = "Ultimate Performance Power Plan",
-                Description = "Unlocks Windows highest power plan for maximum CPU boost clocks and zero core downthrottling.",
-                IconGlyph = "\uE7E8",
-                IsRecommended = true,
-                IsEnabled = false,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.EnableUltimatePowerPlanAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "telemetry",
-                Title = "Disable Windows Telemetry & Diagnostics",
-                Description = "Disables DiagTrack, dmwappushservice, CEIP, and background diagnostic logging.",
-                IconGlyph = "\uE72E",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.DisableTelemetryAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "visuals",
-                Title = "Optimize Visual Effects & Smoothness",
-                Description = "Adjusts Windows visual effects to eliminate UI latency and window rendering overhead.",
-                IconGlyph = "\uE790",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.OptimizeVisualEffectsAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "network_throttling",
-                Title = "Disable Network Throttling Index",
-                Description = "Sets NetworkThrottlingIndex to maximum (0xFFFFFFFF) to prevent packet delays while gaming.",
-                IconGlyph = "\uE839",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.DisableNetworkThrottlingAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "core_parking",
-                Title = "Disable CPU Core Parking",
-                Description = "Keeps CPU cores awake and eliminates thread migration stutter during heavy multitasking.",
-                IconGlyph = "\uE950",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.DisableCoreParkingAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "system_responsiveness",
-                Title = "Optimize System Responsiveness (Multimedia QoS)",
-                Description = "Sets SystemResponsiveness to 0 in Multimedia SystemProfile for raw gaming frame delivery.",
-                IconGlyph = "\uE9D9",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.OptimizeSystemResponsivenessAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "indexing",
-                Title = "Disable Windows Search Indexer",
-                Description = "Stops background disk indexing scans on SSD drives to reduce wear and background write spikes.",
-                IconGlyph = "\uE721",
-                IsRecommended = false,
-                IsEnabled = false,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.DisableSearchIndexingAsync();
-                }
-            });
-
-            Tweaks.Add(new PerformanceTweakItem
-            {
-                Id = "cortana",
-                Title = "Disable Background Cortana & Bing Search",
-                Description = "Removes web search queries and background assistants from Windows Explorer and Start menu.",
-                IconGlyph = "\uE71D",
-                IsRecommended = true,
-                IsEnabled = true,
-                ApplyAction = enabled =>
-                {
-                    if (enabled) _ = OptimizationEngine.DisableCortanaAndBingAsync();
-                }
-            });
-        }
-
-        private void TweakToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (sender is ToggleSwitch toggle && toggle.Tag is string id)
-            {
-                var tweak = Tweaks.FirstOrDefault(t => t.Id == id);
-                if (tweak != null)
-                {
-                    tweak.ApplyAction?.Invoke(toggle.IsOn);
-                    App.ViewModel?.AddLog("TWEAK", $"Tweak '{tweak.Title}' -> {(toggle.IsOn ? "ENABLED" : "DISABLED")}");
-                }
-            }
-        }
-
-        private async void BtnApplyAll_Click(object sender, RoutedEventArgs e)
-        {
-            BtnApplyAll.IsEnabled = false;
-            App.ViewModel?.AddLog("OPTIMIZER", "Applying all recommended performance tweaks...");
-
-            await Task.Run(async () =>
-            {
-                foreach (var tweak in Tweaks.Where(t => t.IsRecommended))
-                {
-                    tweak.ApplyAction?.Invoke(true);
-                    DispatcherQueue.TryEnqueue(() => tweak.IsEnabled = true);
-                    await Task.Delay(150);
-                }
-            });
-
-            BtnApplyAll.IsEnabled = true;
-            App.ViewModel?.AddLog("OPTIMIZER", "All recommended performance tweaks applied successfully!");
         }
     }
+
+    private static readonly SolidColorBrush ActiveTextBrush = ThemeEffects.GetSolidBrush("Accent.Cyan");
+    private static readonly SolidColorBrush ActiveDotBrush = ThemeEffects.GetSolidBrush("State.Good");
+    private static readonly SolidColorBrush MutedBrush = ThemeEffects.GetSolidBrush("Text.Secondary");
+    private static readonly SolidColorBrush ActiveBorderBrush = ThemeEffects.GetSolidBrush("Border.Strong");
+    private static readonly SolidColorBrush InactiveBorderBrush = ThemeEffects.GetSolidBrush("Border.Subtle");
+
+    public string StatusText => !IsApplicable ? "N/A" : _isEnabled ? "ACTIVE" : "STOCK";
+    public SolidColorBrush StatusBrush => _isEnabled ? ActiveTextBrush : MutedBrush;
+    public SolidColorBrush StatusDotBrush => _isEnabled ? ActiveDotBrush : MutedBrush;
+    public SolidColorBrush CardBorderBrush => _isEnabled ? ActiveBorderBrush : InactiveBorderBrush;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string? prop = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+}
+
+public sealed partial class PerformancePage : Page
+{
+    private readonly List<PerformanceTweakItem> _allTweaks = new();
+    public ObservableCollection<PerformanceTweakItem> DisplayedTweaks { get; } = new();
+
+    private string _currentCategory = "ALL";
+    private string _searchFilter = "";
+    private bool _suppressToggleEvents = false;
+
+    public PerformancePage()
+    {
+        InitializeComponent();
+        TweaksList.ItemsSource = DisplayedTweaks;
+    }
+
+    private async void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_allTweaks.Count == 0)
+        {
+            foreach (var def in TweakCatalog.All)
+                _allTweaks.Add(new PerformanceTweakItem { Definition = def });
+            TxtCatalogCount.Text = $"{_allTweaks.Count} TWEAKS";
+        }
+
+        await RefreshLiveStatesAsync();
+        ApplyFilter();
+    }
+
+    private async Task RefreshLiveStatesAsync()
+    {
+        _suppressToggleEvents = true;
+        try
+        {
+            var results = await Task.Run(() =>
+                _allTweaks.Select(t => (Item: t, State: t.Definition.Detect())).ToList());
+
+            foreach (var (item, state) in results)
+            {
+                item.IsApplicable = state.IsApplicable;
+                item.NotApplicableReason = state.NotApplicableReason;
+                item.IsEnabled = state.IsApplied;
+                item.IsDrifted = state.IsDrifted;
+            }
+            UpdateActiveCount();
+        }
+        finally
+        {
+            _suppressToggleEvents = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        DisplayedTweaks.Clear();
+        foreach (var tweak in _allTweaks)
+        {
+            bool matchesCategory = _currentCategory == "ALL" || tweak.Category.Equals(_currentCategory, StringComparison.OrdinalIgnoreCase);
+            bool matchesSearch = string.IsNullOrWhiteSpace(_searchFilter) ||
+                                 tweak.Title.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                                 tweak.Description.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                                 tweak.RegistryTarget.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                                 tweak.Definition.Tags.Any(tag => tag.Contains(_searchFilter, StringComparison.OrdinalIgnoreCase));
+
+            if (matchesCategory && matchesSearch)
+                DisplayedTweaks.Add(tweak);
+        }
+        UpdateActiveCount();
+    }
+
+    private void UpdateActiveCount()
+    {
+        int applicable = _allTweaks.Count(t => t.IsApplicable);
+        int active = _allTweaks.Count(t => t.IsApplicable && t.IsEnabled);
+        TxtActiveCount.Text = $"{active} / {applicable} Active";
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _searchFilter = SearchBox.Text?.Trim() ?? "";
+        ApplyFilter();
+    }
+
+    private void CategoryFilter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string cat) return;
+        _currentCategory = cat;
+
+        var activeStyle = (Style)Application.Current.Resources["SegmentedPillActiveButtonStyle"];
+        var normalStyle = (Style)Application.Current.Resources["SegmentedPillButtonStyle"];
+
+        FilterBtnAll.Style = _currentCategory == "ALL" ? activeStyle : normalStyle;
+        FilterBtnLatency.Style = _currentCategory == "LATENCY" ? activeStyle : normalStyle;
+        FilterBtnGaming.Style = _currentCategory == "GAMING" ? activeStyle : normalStyle;
+        FilterBtnDisplay.Style = _currentCategory == "DISPLAY" ? activeStyle : normalStyle;
+        FilterBtnPrivacy.Style = _currentCategory == "PRIVACY" ? activeStyle : normalStyle;
+        FilterBtnSystem.Style = _currentCategory == "SYSTEM" ? activeStyle : normalStyle;
+        FilterBtnNetwork.Style = _currentCategory == "NETWORK" ? activeStyle : normalStyle;
+
+        ApplyFilter();
+    }
+
+    private void BtnPreviewTweak_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string id) return;
+        var res = TweakCatalog.ExecuteDryRun(id);
+        if (res.Changes is { Count: > 0 })
+        {
+            string summary = string.Join("  |  ", res.Changes.Select(c => $"{c.Target}: {c.Before} -> {c.After}"));
+            ShowAlert($"[DRY-RUN] {id}: {summary}", "\uE890");
+        }
+        else
+        {
+            ShowAlert($"[DRY-RUN] {id}: {res.Message}", "\uE783");
+        }
+    }
+
+    private async void TweakToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressToggleEvents) return;
+        if (sender is not ToggleSwitch toggle || toggle.Tag is not string id || !toggle.IsLoaded) return;
+
+        var item = _allTweaks.FirstOrDefault(t => t.Id == id);
+        if (item == null || item.IsEnabled == toggle.IsOn) return;
+
+        bool desired = toggle.IsOn;
+        if (desired && ChkDryRun.IsChecked == true)
+        {
+            var preview = TweakCatalog.ExecuteDryRun(id);
+            string diff = preview.Changes != null
+                ? string.Join("\n", preview.Changes.Select(c => $"• {c.Target}: {c.Before} → {c.After}"))
+                : preview.Message;
+            ShowAlert($"[DRY-RUN ONLY] {item.Title}: {diff}", "\uE890");
+            _suppressToggleEvents = true;
+            toggle.IsOn = false;
+            _suppressToggleEvents = false;
+            return;
+        }
+
+        TweakExecutionResult result = await Task.Run(() =>
+            desired ? TweakCatalog.ApplyTweak(id) : TweakCatalog.RevertTweak(id));
+
+        await RefreshLiveStatesAsync();
+
+        if (result.Status is TweakStatus.Success or TweakStatus.AlreadyApplied or TweakStatus.NeedsReboot)
+        {
+            ShowAlert(result.Message, result.Status == TweakStatus.NeedsReboot ? "\uE777" : "\uE73E");
+            App.ViewModel?.AddLog("TWEAK", $"{item.Title}: {result.Message}");
+        }
+        else
+        {
+            ShowAlert(result.Message, "\uE783");
+            App.ViewModel?.AddLog("TWEAK", $"{item.Title}: {result.Message}", isError: true);
+        }
+    }
+
+    private async void BtnRefreshState_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshLiveStatesAsync();
+        ShowAlert("Live OS state re-scanned across all catalog tweaks.", "\uE72C");
+    }
+
+    private async void BtnCreateRestorePoint_Click(object sender, RoutedEventArgs e)
+    {
+        BtnCreateRestorePoint.IsEnabled = false;
+        ShowAlert("Creating Windows System Restore Point...", "\uE777");
+        try
+        {
+            string result = await OptimizationEngine.CreateRestorePointAsync(CancellationToken.None);
+            ShowAlert(result, "\uE73E");
+            App.ViewModel?.AddLog("SECURITY", result);
+        }
+        finally
+        {
+            BtnCreateRestorePoint.IsEnabled = true;
+        }
+    }
+
+    private async void BtnRevertAll_Click(object sender, RoutedEventArgs e)
+    {
+        var (ok, fail, errors) = await Task.Run(() => TweakBackupService.RevertAllSnapshots());
+        await RefreshLiveStatesAsync();
+        string msg = fail == 0
+            ? $"Reverted {ok} snapshot(s) to original OS values."
+            : $"Reverted {ok}, failed {fail}: {string.Join("; ", errors)}";
+        ShowAlert(msg, fail == 0 ? "\uE73E" : "\uE783");
+        App.ViewModel?.AddLog("REVERT", msg, fail > 0);
+    }
+
+    private Task ApplyPresetAsync(string presetName, string[] ids)
+    {
+        return RunPresetCoreAsync(presetName, ids);
+    }
+
+    private async Task RunPresetCoreAsync(string presetName, string[] ids)
+    {
+        if (ChkDryRun.IsChecked == true)
+        {
+            var previewLines = ids.Select(id =>
+            {
+                var r = TweakCatalog.ExecuteDryRun(id);
+                return r.Changes != null ? $"{id} ({r.Changes.Count} change(s))" : $"{id} ({r.Status})";
+            });
+            ShowAlert($"[DRY-RUN '{presetName}'] Would apply: {string.Join(", ", previewLines)}", "\uE890");
+            return;
+        }
+
+        int applied = 0, skipped = 0, failed = 0;
+        await Task.Run(() =>
+        {
+            foreach (string id in ids)
+            {
+                var res = TweakCatalog.ApplyTweak(id);
+                if (res.Status is TweakStatus.Success or TweakStatus.NeedsReboot) applied++;
+                else if (res.Status is TweakStatus.AlreadyApplied or TweakStatus.NotApplicable) skipped++;
+                else failed++;
+            }
+        });
+
+        await RefreshLiveStatesAsync();
+        string summary = $"Preset '{presetName}': {applied} applied, {skipped} already/N/A, {failed} failed/need admin.";
+        ShowAlert(summary, failed == 0 ? "\uE73E" : "\uE783");
+        App.ViewModel?.AddLog("PRESET", summary, failed > 0);
+    }
+
+    private async void PresetEsports_Click(object sender, RoutedEventArgs e) =>
+        await ApplyPresetAsync("Gaming / Esports", new[] { "power", "core_parking", "system_responsiveness", "network_throttling", "mouse_fix", "keyboard_fix", "game_mode", "game_dvr", "gpu_pipeline", "windowed_game_opt", "net_tcp_low_latency" });
+
+    private async void PresetPrivacy_Click(object sender, RoutedEventArgs e) =>
+        await ApplyPresetAsync("Privacy & AI Shield", new[] { "telemetry", "copilot_disable", "recall_disable", "office_telemetry", "cortana", "taskbar_clutter", "privacy_advertising", "privacy_clipboard" });
+
+    private async void PresetBalanced_Click(object sender, RoutedEventArgs e) =>
+        await ApplyPresetAsync("Balanced / Work", new[] { "visuals", "office_telemetry", "privacy_advertising", "taskbar_clutter" });
+
+    private async void PresetLaptop_Click(object sender, RoutedEventArgs e) =>
+        await ApplyPresetAsync("Laptop / Battery", new[] { "onedrive_disable", "telemetry", "taskbar_clutter", "visuals" });
+
+    private void PresetStock_Click(object sender, RoutedEventArgs e) => BtnRevertAll_Click(sender, e);
+
+    private void ShowAlert(string message, string iconGlyph)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            AlertBanner.Visibility = Visibility.Visible;
+            AlertText.Text = message;
+            AlertIcon.Text = iconGlyph;
+        });
+    }
+
+    private void AlertBannerClose_Click(object sender, RoutedEventArgs e) =>
+        AlertBanner.Visibility = Visibility.Collapsed;
 }

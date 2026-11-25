@@ -13,7 +13,7 @@ namespace JamesOptimizer.Service
             
             builder.Services.AddWindowsService(options =>
             {
-                options.ServiceName = "James Optimizer Background Service";
+                options.ServiceName = "JamesOptimizer Background Service";
             });
 
             builder.Services.AddHostedService<Worker>();

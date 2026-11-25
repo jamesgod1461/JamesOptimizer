@@ -7,10 +7,10 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,129 +18,204 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="PRO GAMING MODE" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="PRO GAMING MODE &amp; PER-GAME DAEMON" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Hardware-accelerated ultra-low latency tuning for esports and competitive gaming." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Low-latency scheduling, raw input, and automatic per-game/emulator daemon profiles." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <Border Grid.Column="1" Background="#1A00E676" BorderBrush="#3300E676" BorderThickness="1" CornerRadius="20" Padding="14,6" VerticalAlignment="Center">
+                <Border Grid.Column="1" Style="{StaticResource Badge.Sm}" Padding="12,6" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource SuccessGreenBrush}" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtStatus" Text="STANDBY READY" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}" VerticalAlignment="Center"/>
+                        <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{ThemeResource State.Good}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtStatus" Text="STANDBY READY" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <!-- Hero Turbo Card -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="24">
-                <Grid>
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.PaddingLg}">
+                <Grid ColumnSpacing="20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Spacing="8" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center"/>
-                            <TextBlock Text="GAME TURBO ENGINE" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                            <Border Background="#1F00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                                <TextBlock Text="0.5ms TIMER RES" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="&#xE945;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                            <TextBlock Text="GAME TURBO ENGINE" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center"/>
+                            <Border Style="{StaticResource Badge.Sm}" Padding="8,2">
+                                <TextBlock Text="REVERTABLE" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock x:Name="TxtTurboStatus" Text="Click below to engage extreme thread priority, purge RAM standby lists, and lock CPU clocks." FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" MaxWidth="600" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="TxtTurboStatus" Text="Engage Ultimate Performance power plan, multimedia QoS, and purge memory standby list." Style="{StaticResource Type.Body}" Foreground="{ThemeResource Text.Secondary}" MaxWidth="620" HorizontalAlignment="Left" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <Button x:Name="BtnActivateTurbo" Grid.Column="1" Click="BtnActivateTurbo_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="46" Padding="24,0" VerticalAlignment="Center">
+                    <Button x:Name="BtnActivateTurbo" Grid.Column="1" Click="BtnActivateTurbo_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="44" Padding="24,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtTurboBtn" Text="ACTIVATE GAME TURBO ⚡" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtTurboBtn" Text="ACTIVATE GAME TURBO" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
             </Border>
 
-            <!-- 2x2 Feature Grid -->
-            <Grid>
+            <!-- 2x3 Feature Grid -->
+            <Grid ColumnSpacing="16" RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="14"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- 1. GPU Scheduling -->
-                <Border Grid.Row="0" Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="&#xE7F4;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource AccentCyanBrush}"/>
-                            <TextBlock Text="Hardware GPU Scheduling (HAGS)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Hardware GPU Scheduling (HAGS)" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Offloads high-frequency graphics frame scheduling directly to GPU VRAM (reboot required)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Text="Offloads high-frequency graphics frame scheduling directly to GPU VRAM for reduced render lag." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,10,0,16"/>
-                        <Button Grid.Row="2" Click="BtnGpuOptimize_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Optimize GPU Pipeline"/>
+                        <Button Grid.Row="1" Click="BtnGpuOptimize_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Optimize GPU Pipeline"/>
                     </Grid>
                 </Border>
 
-                <!-- 2. Packet Latency -->
-                <Border Grid.Row="0" Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="&#xE839;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource AccentVioletBrush}"/>
-                            <TextBlock Text="Zero Packet Delay (Disable Nagle)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Zero Packet Delay (Disable Nagle)" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Sets TcpAckFrequency=1 &amp; TCPNoDelay=1 on active interfaces (with snapshot backup)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Text="Forces immediate delivery of gaming network packets without waiting for packet coalescing buffers." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,10,0,16"/>
-                        <Button Grid.Row="2" Click="BtnNetworkLatency_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Minimize Packet Jitter"/>
+                        <Button Grid.Row="1" Click="BtnNetworkLatency_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Minimize Packet Jitter"/>
                     </Grid>
                 </Border>
 
-                <!-- 3. Disable DVR -->
-                <Border Grid.Row="2" Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource WarningAmberBrush}"/>
-                            <TextBlock Text="Disable Game DVR &amp; Bar" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Disable Game DVR &amp; Bar" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Stops background recording capture hooks (backup saved)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Text="Terminates background recording telemetry, preventing frame drops in competitive FPS titles." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,10,0,16"/>
-                        <Button Grid.Row="2" Click="BtnDisableDvr_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Disable Game DVR"/>
+                        <Button Grid.Row="1" Click="BtnDisableDvr_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Disable Game DVR"/>
                     </Grid>
                 </Border>
 
-                <!-- 4. Mouse Precision -->
-                <Border Grid.Row="2" Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="&#xE962;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource SuccessGreenBrush}"/>
-                            <TextBlock Text="1:1 Raw Mouse Precision" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="1:1 Raw Mouse Precision" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Disables Enhanced Pointer Precision for true 1:1 linear aim (backup saved)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                         </StackPanel>
-                        <TextBlock Grid.Row="1" Text="Disables Windows Enhanced Pointer Precision (mouse acceleration) for true 1:1 muscle memory aim." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,10,0,16"/>
-                        <Button Grid.Row="2" Click="BtnMousePrecision_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Set 1:1 Raw Mouse Aim"/>
+                        <Button Grid.Row="1" Click="BtnMousePrecision_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Set 1:1 Raw Mouse Aim"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Keyboard Input Latency &amp; Buffer" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Sets KeyboardDelay to 0 and repeat rate to 31 (backup saved)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Click="BtnKeyboardBuffer_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Tune Keyboard Input"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid RowSpacing="14">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Ultimate Performance Power Plan" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Locks maximum CPU boost responsiveness (backup saved)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" Click="BtnUltimatePower_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Engage Ultimate Power Plan"/>
                     </Grid>
                 </Border>
             </Grid>
+
+            <!-- Per-Game Automation Daemon Card -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="16">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                <TextBlock Text="Per-Game &amp; Emulator Automation Daemon" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="WMI process-trace daemon raises game priority (capped at High), switches power plan, purges standby RAM, and restores everything on exit (crash-safe journaled)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch x:Name="ToggleAutoGameWatch" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Toggled="ToggleAutoGameWatch_Toggled" OnContent="Daemon ON" OffContent="Manual Only"/>
+                    </Grid>
+
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TxtNewGameProc" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Process (e.g. cs2)"/>
+                        <TextBox x:Name="TxtNewGameDisplay" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Display Name (e.g. Counter-Strike 2)"/>
+                        <ComboBox x:Name="ComboNewGamePriority" Grid.Column="2" HorizontalAlignment="Stretch" SelectedIndex="2" VerticalAlignment="Center">
+                            <ComboBoxItem Content="Normal" Tag="Normal"/>
+                            <ComboBoxItem Content="AboveNormal" Tag="AboveNormal"/>
+                            <ComboBoxItem Content="High" Tag="High"/>
+                        </ComboBox>
+                        <CheckBox x:Name="ChkNewGamePurge" Grid.Column="3" Content="Purge Standby" IsChecked="True" VerticalAlignment="Center"/>
+                        <Button Grid.Column="4" Click="BtnAddGameRule_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Add Rule"/>
+                    </Grid>
+
+                    <ItemsControl x:Name="GameRulesList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding ProcessName}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource Type.Body}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding ProcessPriority}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="3" Click="BtnRemoveGameRule_Click" Tag="{Binding ProcessName}" Style="{StaticResource GhostButtonStyle}" Content="Remove"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Page>

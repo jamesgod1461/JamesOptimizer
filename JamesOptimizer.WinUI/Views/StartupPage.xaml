@@ -7,10 +7,10 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,68 +18,93 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE7B5;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="STARTUP APPS MANAGER" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE7B5;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="STARTUP &amp; AUTORUNS INSPECTOR" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Control background bloat, reduce Windows boot time, and disable unnecessary autoruns." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Reversible control over Startup Apps, Scheduled Tasks, Registry Autoruns, and 3rd-party boot services." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Button x:Name="BtnRefresh" Click="BtnRefresh_Click" Style="{StaticResource ModernGhostButtonStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="REFRESH" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource Font.Icon}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="REFRESH" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>
 
-            <!-- Status Banner -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="2">
-                        <TextBlock x:Name="TxtSummary" Text="Scanning Startup entries..." FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Disabling unneeded background apps speeds up your Windows startup noticeably." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+            <!-- Status & Filter Bar -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="240"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtSummary" Text="Scanning Startup entries..." Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                            <TextBlock Text="Toggle disable keeps entries reversible via StartupApproved / Task Scheduler state." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtStartupSearch" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Filter name or publisher..." TextChanged="TxtStartupSearch_TextChanged" VerticalAlignment="Center" />
+                        <Border Grid.Column="2" Style="{StaticResource Badge.Sm}" Padding="12,6">
+                            <TextBlock x:Name="TxtBootSavings" Text="Est. Saved: 0.0s" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}"/>
+                        </Border>
+                        <Border Grid.Column="3" Style="{StaticResource Badge.Sm}" Padding="12,6">
+                            <TextBlock x:Name="TxtActiveCount" Text="0 Active" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="TabApps" Click="ScopeTab_Click" Tag="App" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="Startup Apps" />
+                        <Button x:Name="TabTasks" Click="ScopeTab_Click" Tag="ScheduledTask" Style="{StaticResource SegmentedPillButtonStyle}" Content="Scheduled Tasks" />
+                        <Button x:Name="TabAutoruns" Click="ScopeTab_Click" Tag="Autorun" Style="{StaticResource SegmentedPillButtonStyle}" Content="Registry Autoruns" />
+                        <Button x:Name="TabServices" Click="ScopeTab_Click" Tag="Service" Style="{StaticResource SegmentedPillButtonStyle}" Content="3rd-Party Services" />
+                        <Button x:Name="TabAll" Click="ScopeTab_Click" Tag="ALL" Style="{StaticResource SegmentedPillButtonStyle}" Content="All Sources" />
                     </StackPanel>
-                    <Border Grid.Column="1" Background="#1F00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtActiveCount" Text="0 Active" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                    </Border>
-                </Grid>
+                </StackPanel>
             </Border>
 
             <!-- Startup Items List -->
             <ItemsControl x:Name="StartupItemsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,10">
-                            <Grid>
+                        <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}" Margin="0,0,0,12">
+                            <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <Border Width="38" Height="38" CornerRadius="8" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                                    <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource AccentCyanBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="{StaticResource Radius.Sm}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE71D;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding Publisher}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Publisher}" FontSize="12" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                        <Border Style="{StaticResource Badge.Sm}" Background="{ThemeResource Bg.Input}" Padding="6,2">
+                                            <TextBlock Text="{Binding Type}" FontFamily="{StaticResource Font.Mono}" FontSize="10" Foreground="{ThemeResource Text.Secondary}"/>
+                                        </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Path}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                                    <TextBlock Text="{Binding Path}" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Source}" Style="{StaticResource Type.Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 
-                                <ToggleSwitch Grid.Column="2" IsOn="{Binding IsEnabled, Mode=TwoWay}" Toggled="StartupToggle_Toggled" Tag="{Binding}" VerticalAlignment="Center" Margin="14,0,14,0" OnContent="Enabled" OffContent="Disabled"/>
+                                <Border Grid.Column="2" Style="{StaticResource Badge.Sm}" Background="{ThemeResource Bg.Input}" Padding="10,4">
+                                    <TextBlock Text="{Binding ImpactLabel}" Style="{StaticResource Type.Numeric}" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource State.Warn}" />
+                                </Border>
 
-                                <Button Grid.Column="3" Click="BtnDelete_Click" Tag="{Binding}" Style="{StaticResource ModernGhostButtonStyle}" Width="34" Height="34" Padding="0" VerticalAlignment="Center" ToolTipService.ToolTip="Delete Autorun">
-                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="13" Foreground="{StaticResource DangerRedBrush}"/>
+                                <ToggleSwitch Grid.Column="3" IsOn="{Binding IsEnabled, Mode=OneWay}" Toggled="StartupToggle_Toggled" Tag="{Binding}" MinWidth="106" VerticalAlignment="Center" OnContent="Enabled" OffContent="Disabled"/>
+
+                                <Button Grid.Column="4" Click="BtnDelete_Click" Tag="{Binding}" Style="{StaticResource IconRaisedButtonStyle}" Width="36" Height="36" VerticalAlignment="Center" AutomationProperties.Name="Delete Startup Item">
+                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Font.Icon}" FontSize="14" Foreground="{ThemeResource State.Bad}"/>
                                 </Button>
                             </Grid>
                         </Border>

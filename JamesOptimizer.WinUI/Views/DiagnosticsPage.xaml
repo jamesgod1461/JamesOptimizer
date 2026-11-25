@@ -7,10 +7,10 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,129 +18,168 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="SYSTEM DIAGNOSTICS &amp; HARDWARE" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="SYSTEM DIAGNOSTICS &amp; HARDWARE" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Comprehensive hardware specifications, firmware checks, and security diagnostics." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Live WMI/NVMe SMART health, battery wear telemetry, firmware checks, and support bundle export." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <Button x:Name="BtnExportReport" Grid.Column="1" Click="BtnExportReport_Click" Style="{StaticResource ModernPrimaryButtonStyle}" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="&#xEDE1;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="EXPORT REPORT" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Button x:Name="BtnExportBundle" Click="BtnExportBundle_Click" Style="{StaticResource ModernGhostButtonStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource Font.Icon}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="DIAGNOSTIC BUNDLE" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnOpenAudit" Click="BtnOpenAudit_Click" Style="{StaticResource ModernGhostButtonStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xE756;" FontFamily="{StaticResource Font.Icon}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="AUDIT &amp; REVERT LOG" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnExportReport" Click="BtnExportReport_Click" Style="{StaticResource ModernPrimaryButtonStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="&#xEDE1;" FontFamily="{StaticResource Font.Icon}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="EXPORT REPORT" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
 
             <!-- Hardware Specs 2x2 Grid -->
-            <Grid>
+            <Grid x:Name="GridSpecCards" ColumnSpacing="16" RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="14"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Processor -->
-                <Border Grid.Row="0" Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="40" Height="40" CornerRadius="10" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                            <TextBlock Text="💻" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="40" Height="40" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE950;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Processor (CPU)" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock x:Name="TxtCpuName" Text="Loading CPU..." FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Processor (CPU)" Style="{StaticResource Type.Label}"/>
+                            <TextBlock x:Name="TxtCpuName" Text="Loading CPU..." Style="{StaticResource Type.Body}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- Graphics -->
-                <Border Grid.Row="0" Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="40" Height="40" CornerRadius="10" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                            <TextBlock Text="🎮" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="40" Height="40" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Purple}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Graphics Card (GPU)" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock x:Name="TxtGpuName" Text="Loading GPU..." FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Graphics Card (GPU)" Style="{StaticResource Type.Label}"/>
+                            <TextBlock x:Name="TxtGpuName" Text="Loading GPU..." Style="{StaticResource Type.Body}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- Installed Memory -->
-                <Border Grid.Row="2" Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="40" Height="40" CornerRadius="10" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                            <TextBlock Text="🧠" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="40" Height="40" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE964;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Green}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Installed RAM" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock x:Name="TxtRamTotal" Text="Loading RAM..." FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Installed RAM" Style="{StaticResource Type.Label}"/>
+                            <TextBlock x:Name="TxtRamTotal" Text="Loading RAM..." Style="{StaticResource Type.Numeric}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- Motherboard / OS -->
-                <Border Grid.Row="2" Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="40" Height="40" CornerRadius="10" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,14,0" VerticalAlignment="Center">
-                            <TextBlock Text="⚙️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="40" Height="40" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE770;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Blue}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="Operating System" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock x:Name="TxtOsInfo" Text="Windows 11 64-bit" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Operating System &amp; Build" Style="{StaticResource Type.Label}"/>
+                            <TextBlock x:Name="TxtOsInfo" Text="Detecting..." Style="{StaticResource Type.Body}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Grid>
                 </Border>
             </Grid>
 
             <!-- Health & Security Checklist -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
+            <Border x:Name="CardBaselineChecklist" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
                 <StackPanel Spacing="14">
-                    <TextBlock Text="System Health &amp; Security Baseline" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="System Health, Storage SMART, Battery &amp; Security Baseline" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
 
-                    <StackPanel Spacing="10">
-                        <!-- UAC -->
-                        <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                            <Grid>
-                                <TextBlock Text="User Account Control (UAC)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="TxtUacStatus" Text="Pass" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <StackPanel Spacing="8">
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="User Account Control (UAC)" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtUacStatus" Grid.Column="1" Text="Checking..." Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
-                        <!-- Defender -->
-                        <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                            <Grid>
-                                <TextBlock Text="Windows Defender Real-time Protection" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="TxtDefenderStatus" Text="Active" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Windows Defender Real-time Protection" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtDefenderStatus" Grid.Column="1" Text="Checking..." Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
-                        <!-- SMART Disk Status -->
-                        <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10">
-                            <Grid>
-                                <TextBlock Text="Primary Physical Drive S.M.A.R.T. Health" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="TxtSmartStatus" Text="OK · Healthy" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Physical Drive S.M.A.R.T. &amp; NVMe Health" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtSmartStatus" Grid.Column="1" Text="Querying..." Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Battery Health &amp; Wear Capacity" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtBatteryStatus" Grid.Column="1" Text="Checking..." Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Pending Windows Reboot &amp; Sleep Capabilities" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtFirmwareStatus" Grid.Column="1" Text="Checking..." Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Text.Secondary}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                     </StackPanel>

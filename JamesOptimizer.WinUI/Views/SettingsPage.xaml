@@ -7,64 +7,83 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="SETTINGS &amp; ABOUT" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock Text="Background automation, autostart, window styling, and developer info." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="&#xE713;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                    <TextBlock Text="SETTINGS, PROFILES &amp; SMART RAM" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
-            </Grid>
+                <TextBlock Text="Service automation, threshold-based standby RAM purger, JSON profile export/import, panic revert, and release settings." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+            </StackPanel>
 
-            <!-- Card 1: Background Service & Automation -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="16">
+            <!-- Card 1: Background Service & Smart Standby RAM Purger -->
+            <Border x:Name="CardService" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="⚡" FontSize="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="Background Optimization Service" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE945;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                        <TextBlock Text="Background Service &amp; Smart Standby RAM Purger" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Service Status Row -->
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Windows Service Status" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock x:Name="TxtServiceStatus" Text="Detecting \\.\pipe\JamesOptimizerPipe..." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                <TextBlock Text="Windows Service Status &amp; Version Handshake" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="TxtServiceStatus" Text="Detecting \\.\pipe\JamesOptimizerPipe..." Style="{StaticResource Type.Label}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <Button x:Name="BtnPingService" Grid.Column="1" Click="BtnPingService_Click" Style="{StaticResource ModernGhostButtonStyle}" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFontFamily}" FontSize="12" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Ping Service" FontSize="11" FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </Button>
+                            <Button x:Name="BtnPingService" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnPingService_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Ping &amp; Handshake"/>
                         </Grid>
                     </Border>
 
-                    <!-- Auto-Run Interval -->
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
+                    <!-- Smart Threshold Standby RAM Purger -->
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="Threshold-Based Smart Standby RAM Purger [ADMIN]" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="TxtMemoryBreakdown" Text="Standby list is normally beneficial; purges only when Free RAM drops below threshold." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="ToggleSmartRam" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Toggled="SmartRam_Changed" OnContent="Enabled" OffContent="Off"/>
+                            </Grid>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Purge when Free &lt;" VerticalAlignment="Center" Style="{StaticResource Type.Caption}"/>
+                                <ComboBox x:Name="ComboSmartRamThreshold" Grid.Column="1" SelectionChanged="SmartRam_Changed" SelectedIndex="1" Width="170">
+                                    <ComboBoxItem Content="1024 MB (1 GB)" Tag="1024"/>
+                                    <ComboBoxItem Content="2048 MB (2 GB)" Tag="2048"/>
+                                    <ComboBoxItem Content="4096 MB (4 GB)" Tag="4096"/>
+                                </ComboBox>
+                                <CheckBox x:Name="ChkPauseFullscreen" Grid.Column="2" Content="Pause while fullscreen game/app is active" IsChecked="True" Checked="SmartRam_Changed" Unchecked="SmartRam_Changed" VerticalAlignment="Center"/>
+                                <Button Grid.Column="3" Click="BtnSaveSmartRam_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Apply to Service"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Scheduled Auto-Optimization Interval" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Automatically clean temp memory, flush standby caches, and optimize latency." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                <TextBlock Text="Scheduled Auto-Optimization Interval (Temp &amp; RAM)" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Prefetch is preserved during scheduled runs to protect application launch speeds." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <ComboBox x:Name="ComboAutoTimer" Grid.Column="1" SelectionChanged="ComboAutoTimer_SelectionChanged" Width="180" VerticalAlignment="Center">
+                            <ComboBox x:Name="ComboAutoTimer" Grid.Column="1" HorizontalAlignment="Right" SelectionChanged="ComboAutoTimer_SelectionChanged" Width="190" VerticalAlignment="Center">
                                 <ComboBoxItem Content="Disabled (Manual Only)" Tag="0"/>
                                 <ComboBoxItem Content="Every 15 Minutes" Tag="15"/>
                                 <ComboBoxItem Content="Every 30 Minutes" Tag="30"/>
@@ -74,143 +93,137 @@
                         </Grid>
                     </Border>
 
-                    <!-- Run at Windows Startup -->
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Launch on Windows Startup" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Automatically launch James Optimizer in the background when signing into Windows." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                <TextBlock Text="Launch on Windows Startup" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Start JamesOptimizer quietly in the tray on Windows sign-in." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <ToggleSwitch x:Name="ToggleStartup" Grid.Column="1" Toggled="ToggleStartup_Toggled" OnContent="Enabled" OffContent="Disabled" VerticalAlignment="Center"/>
+                            <ToggleSwitch x:Name="ToggleStartup" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Toggled="ToggleStartup_Toggled" OnContent="Enabled" OffContent="Disabled"/>
                         </Grid>
                     </Border>
                 </StackPanel>
             </Border>
 
-            <!-- Card 2: Appearance & Window Aesthetics -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="🎨" FontSize="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="Appearance &amp; Window Material" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                    </StackPanel>
+            <!-- Card 2: JSON Profile Export / Import & Panic Revert -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="JSON Profile Provisioning &amp; Panic Revert" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                    <TextBlock x:Name="TxtProfileStatus" Text="Export active catalog tweaks to portable JSON (with SHA-256 digest) or preview before importing. Safe-Mode CLI: JamesOptimizer.WinUI.exe --revert-all" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
 
-                    <!-- Theme Mode -->
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TxtProfilePath" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Path to profile JSON (defaults to Desktop on Export)"/>
+                        <Button Grid.Column="1" Click="BtnExportProfile_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Export Profile"/>
+                        <Button Grid.Column="2" Click="BtnPreviewImportProfile_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Dry-Run Import"/>
+                        <Button Grid.Column="3" Click="BtnApplyImportProfile_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Apply Import"/>
+                        <Button Grid.Column="4" Click="BtnPanicRevert_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="PANIC REVERT ALL"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Card 3: Appearance & Release Preferences -->
+            <Border x:Name="CardAppearance" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Appearance, Updates &amp; Privacy" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Application Theme" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="Cyber Dark (recommended for OLED) or Clean Light mode." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                            </StackPanel>
-                            <ComboBox x:Name="ComboTheme" Grid.Column="1" SelectionChanged="ComboTheme_SelectionChanged" Width="180" VerticalAlignment="Center">
-                                <ComboBoxItem Content="Dark (Cyber)" Tag="Dark"/>
+                            <TextBlock Grid.Column="0" Text="Application Theme" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <ComboBox x:Name="ComboTheme" Grid.Column="1" HorizontalAlignment="Right" SelectionChanged="ComboTheme_SelectionChanged" Width="200">
+                                <ComboBoxItem Content="Dark (Neutral Chrome)" Tag="Dark"/>
                                 <ComboBoxItem Content="Light" Tag="Light"/>
                                 <ComboBoxItem Content="Windows Default" Tag="Default"/>
                             </ComboBox>
                         </Grid>
                     </Border>
 
-                    <!-- Zero Telemetry Assurance -->
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="100% Local &amp; Private" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="No remote telemetry, tracking, or cloud surveillance. Everything executes on your device." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Grid.Column="0" Text="Reduce Animations &amp; Glow Effects" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <ToggleSwitch x:Name="ToggleReduceAnimations" Grid.Column="1" HorizontalAlignment="Right" Toggled="ToggleReduceAnimations_Toggled" OnContent="Reduced" OffContent="Enabled (30fps)"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Minimize to System Tray on Close" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <ToggleSwitch x:Name="ToggleMinimizeToTray" Grid.Column="1" HorizontalAlignment="Right" Toggled="ToggleMinimizeToTray_Toggled" OnContent="Enabled" OffContent="Exit App"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                <TextBlock Text="Opt-In Update Checks (Zero Telemetry by Default)" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Disabled by default per goal.md. When enabled, checks signed GitHub release manifest over HTTPS." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <Border Grid.Column="1" Background="#1A00F5FF" BorderBrush="#4D00F5FF" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
-                                <TextBlock Text="✓ SECURE &amp; LOCAL" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                            </Border>
+                            <ComboBox x:Name="ComboReleaseChannel" Grid.Column="1" SelectedIndex="0" Width="120" VerticalAlignment="Center" SelectionChanged="UpdatePrefs_Changed">
+                                <ComboBoxItem Content="Stable" Tag="Stable"/>
+                                <ComboBoxItem Content="Beta" Tag="Beta"/>
+                            </ComboBox>
+                            <ToggleSwitch x:Name="ToggleOptInUpdates" Grid.Column="2" VerticalAlignment="Center" Toggled="UpdatePrefs_Changed" OnContent="Opted In" OffContent="Off"/>
                         </Grid>
                     </Border>
                 </StackPanel>
             </Border>
 
-            <!-- Card 2.5: Network Diagnostics & Latency Tester -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="🌐" FontSize="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="Network Latency &amp; DNS Benchmark" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <!-- Card 4: Network Quick Ping & About / Acknowledgements -->
+            <Border x:Name="CardNetworkBench" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock Text="Cloudflare DNS (1.1.1.1) Quick Ping" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="TxtPingResult" Text="Click 'Test Latency' to measure round-trip socket latency." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                     </StackPanel>
-
-                    <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Cloudflare DNS (1.1.1.1) Ping" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock x:Name="TxtPingResult" Text="Click 'Test Latency' to measure round-trip socket latency." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                            </StackPanel>
-                            <Button x:Name="BtnTestPing" Grid.Column="1" Click="BtnTestPing_Click" Style="{StaticResource ModernGhostButtonStyle}" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="&#xE774;" FontFamily="{StaticResource IconFontFamily}" FontSize="12" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Test Latency" FontSize="11" FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                    <Button x:Name="BtnTestPing" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnTestPing_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Test Latency"/>
+                </Grid>
             </Border>
 
-            <!-- Card 3: Developer Info & Suite Credentials -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Width="56" Height="56" CornerRadius="14" Background="#1A00F5FF" BorderBrush="#4D00F5FF" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Center">
-                            <Image Source="ms-appx:///Assets/logo-128.png" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border x:Name="CardAbout" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="JAMESOPTIMIZER V3" FontFamily="{StaticResource Font.Display}" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                        <Border Style="{StaticResource Badge.Sm}">
+                            <TextBlock Text="WINUI 3 · JAMES GOD" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
                         </Border>
-
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="JAMES OPTIMIZER" FontFamily="{StaticResource DisplayFontFamily}" FontSize="18" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <Border Background="#1A00F5FF" BorderBrush="#4D00F5FF" BorderThickness="1" CornerRadius="6" Padding="6,2">
-                                    <TextBlock Text="WINUI 3 · PRO v3.2" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                                </Border>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Lead Engineer: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                                <TextBlock Text="James God" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentCyanBrush}"/>
-                                <TextBlock Text="· WinUI 3 Native Desktop" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBlock Text="&quot;Dedicated to building the absolute fastest and most reliable Windows tweaking utility for gamers and power users.&quot;" FontSize="12" FontStyle="Italic" Foreground="{StaticResource TextMutedBrush}"/>
-
-                    <Border Height="1" Background="{StaticResource BorderSubtleBrush}"/>
-
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button Click="BtnOpenGithub_Click" Style="{StaticResource ModernGhostButtonStyle}">
-                            <TextBlock Text="GitHub Repository" FontSize="12" FontWeight="SemiBold"/>
-                        </Button>
-                        <Button Click="BtnReportIssue_Click" Style="{StaticResource ModernGhostButtonStyle}">
-                            <TextBlock Text="Report an Issue" FontSize="12" FontWeight="SemiBold"/>
-                        </Button>
-                        <Button Click="BtnOpenDiscord_Click" Style="{StaticResource ModernGhostButtonStyle}">
-                            <TextBlock Text="Discord Community" FontSize="12" FontWeight="SemiBold"/>
-                        </Button>
                     </StackPanel>
-
-                    <TextBlock Text="© 2025 James God — All Rights Reserved · Built with Windows App SDK &amp; WinUI 3" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Built on .NET 10, WinUI 3, Win2D, and a hardened Windows Worker Service. Acknowledgements: inspired in part by classic post-install utilities such as hellzerg/optimizer, re-implemented natively with full Apply -&gt; Revert snapshots." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button Click="BtnOpenGithub_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="GitHub Repository"/>
+                        <Button Click="BtnReportIssue_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Report an Issue"/>
+                        <Button Click="BtnOpenDiscussions_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="GitHub Discussions"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

@@ -7,10 +7,10 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,90 +18,187 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="SYSTEM CLEANUPS" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="SYSTEM CLEANUPS, UWP APPS &amp; DEEP CLEAN" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Deep sweep temporary junk, OS caches, delivery logs, and browser clutter." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Multi-profile browser caches, shader caches, native UWP/Appx debloater, WinSxS &amp; stale OEM driver store cleanup." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Button x:Name="BtnScanAll" Click="BtnScanAll_Click" Style="{StaticResource ModernGhostButtonStyle}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="SCAN ALL" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="BtnCleanAll" Click="BtnCleanAll_Click" Style="{StaticResource ModernPrimaryButtonStyle}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="CLEAN SELECTED" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="TabJunk" Click="ModeTab_Click" Tag="JUNK" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="Junk &amp; Browsers" />
+                    <Button x:Name="TabAppx" Click="ModeTab_Click" Tag="APPX" Style="{StaticResource SegmentedPillButtonStyle}" Content="UWP / Appx Apps" />
+                    <Button x:Name="TabDeep" Click="ModeTab_Click" Tag="DEEP" Style="{StaticResource SegmentedPillButtonStyle}" Content="WinSxS &amp; Drivers" />
                 </StackPanel>
             </Grid>
 
-            <!-- Hero Summary Card -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+            <!-- TAB 1: JUNK & MULTI-BROWSER CACHES -->
+            <StackPanel x:Name="PanelJunk" Spacing="16">
+                <Border x:Name="CardCleanupHero" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <Border Width="56" Height="56" CornerRadius="14" Background="#1A00F5FF" BorderBrush="#3300F5FF" BorderThickness="1" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="26" Foreground="{StaticResource AccentCyanBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock x:Name="TxtTotalReclaimable" Text="Calculating..." FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <Border Background="#1A00E676" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
-                                <TextBlock Text="RECLAIMABLE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}"/>
-                            </Border>
-                        </StackPanel>
-                        <TextBlock x:Name="TxtScanStatus" Text="Ready to scan system directories and caches." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <ProgressBar x:Name="ScanProgressBar" Visibility="Collapsed" Height="4" Margin="0,8,40,0" IsIndeterminate="True" Foreground="{StaticResource AccentCyanBrush}"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <CheckBox x:Name="ChkSelectAll" Content="Select All" IsChecked="True" Checked="ChkSelectAll_Checked" Unchecked="ChkSelectAll_Unchecked" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Cleanup Categories ItemsControl -->
-            <ItemsControl x:Name="CleanupCategoriesList">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,10">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                                </StackPanel>
-
-                                <Border Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="14,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding DisplaySize}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                                </Border>
-
-                                <Button Grid.Column="3" Click="BtnCleanSingle_Click" Tag="{Binding Id}" Style="{StaticResource ModernGhostButtonStyle}" Height="32" Padding="12,0" VerticalAlignment="Center">
-                                    <TextBlock Text="Clean" FontSize="11" FontWeight="SemiBold"/>
-                                </Button>
-                            </Grid>
+                        <Border Width="52" Height="52" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Font.Icon}" FontSize="24" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock x:Name="TxtTotalReclaimable" Text="Calculating..." Style="{StaticResource Type.Numeric}" FontSize="24" FontWeight="SemiBold"/>
+                                <Border Style="{StaticResource Badge.Sm}">
+                                    <TextBlock Text="RECLAIMABLE" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock x:Name="TxtScanStatus" Text="Scanning temp, multi-profile browsers, and shader caches..." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            <ProgressBar x:Name="ScanProgressBar" Visibility="Collapsed" Height="4" Margin="0,8,0,0" IsIndeterminate="True"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <CheckBox x:Name="ChkIncludeCookies" Content="Include Cookies/Sessions" IsChecked="False" Checked="ChkIncludeCookies_Changed" Unchecked="ChkIncludeCookies_Changed"/>
+                            <CheckBox x:Name="ChkSelectAll" Content="Select All" IsChecked="True" Checked="ChkSelectAll_Checked" Unchecked="ChkSelectAll_Unchecked"/>
+                            <Button x:Name="BtnScanAll" Click="BtnScanAll_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan"/>
+                            <Button x:Name="BtnCleanAll" Click="BtnCleanAll_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Clean Selected"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ItemsControl x:Name="CleanupCategoriesList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}" Margin="0,0,0,12">
+                                <Grid ColumnSpacing="14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" MinWidth="0" VerticalAlignment="Center"/>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Description}" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="2" Style="{StaticResource Badge.Sm}" Padding="10,4">
+                                        <TextBlock Text="{Binding DisplaySize}" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                                    </Border>
+
+                                    <Button Grid.Column="3" Click="BtnCleanSingle_Click" Tag="{Binding Id}" Style="{StaticResource ModernGhostButtonStyle}" Height="32" Padding="14,0" VerticalAlignment="Center" Content="Clean"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- TAB 2: NATIVE UWP / APPX MANAGER -->
+            <StackPanel x:Name="PanelAppx" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <Grid ColumnSpacing="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="240" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="Native UWP / Appx Bloatware Manager" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                            <TextBlock x:Name="TxtAppxStatus" Text="Enumerates Windows Store / Appx packages via native PackageManager. Protected dependencies cannot be removed." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtAppxSearch" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Filter Appx packages..." TextChanged="TxtAppxSearch_TextChanged" VerticalAlignment="Center" />
+                        <Button x:Name="BtnScanAppx" Grid.Column="2" Click="BtnScanAppx_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Refresh Packages" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnRemoveSelectedAppx" Grid.Column="3" Click="BtnRemoveSelectedAppx_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Remove Selected" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <ItemsControl x:Name="AppxList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="14,10" Margin="0,0,0,8">
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" IsEnabled="{Binding CanRemove}" MinWidth="0" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource Type.Body}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding PackageFullName}" Style="{StaticResource Type.Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" Style="{StaticResource Badge.Sm}" Background="{ThemeResource Bg.Input}" Padding="8,3">
+                                        <TextBlock Text="{Binding TierLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="3" Text="{Binding Version}" Style="{StaticResource Type.Numeric}" FontSize="12" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- TAB 3: DEEP SYSTEM & DRIVER STORE CLEANUP -->
+            <StackPanel x:Name="PanelDeep" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Deep System Component &amp; Windows Update Cleanup [ADMIN]" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                        <TextBlock x:Name="TxtDeepStatus" Text="Safe native DISM WinSxS cleanup and wuauserv-protected update cache sweep. Never runs automatically." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="BtnCleanWinSxS" Click="BtnCleanWinSxS_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Run WinSxS Component Cleanup (DISM)"/>
+                            <Button x:Name="BtnCleanWuCache" Click="BtnCleanWuCache_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Clean Windows Update Cache (Safe wuauserv Pause)"/>
+                            <Button x:Name="BtnScanDrivers" Click="BtnScanDrivers_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan Stale OEM Drivers"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtWindowsOldStatus" Text="Checking C:\Windows.old..." Style="{StaticResource Type.Label}" Foreground="{ThemeResource Text.Secondary}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="3" VerticalAlignment="Center">
+                                <TextBlock Text="Stale OEM Driver Store Packages" FontSize="15" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock Text="Always keeps the newest driver version per device/provider; only superseded packages are listed." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button x:Name="BtnRemoveSelectedDrivers" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnRemoveSelectedDrivers_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Delete Selected Stale Drivers"/>
+                        </Grid>
+
+                        <ItemsControl x:Name="StaleDriversList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" MinWidth="0" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding OriginalName}" Style="{StaticResource Type.Body}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Provider}" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding PublishedName}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Right"/>
+                                                <TextBlock Text="{Binding VersionText}" Style="{StaticResource Type.Label}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

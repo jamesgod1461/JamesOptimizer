@@ -1,115 +1,136 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using JamesOptimizer.Core;
+using JamesOptimizer.WinUI.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Win32;
-using JamesOptimizer;
 
-namespace JamesOptimizer.WinUI.Views
+namespace JamesOptimizer.WinUI.Views;
+
+public sealed partial class GamingModePage : Page
 {
-    public sealed partial class GamingModePage : Page
+    private bool _isBoosting = false;
+    private bool _isInitializing = true;
+    private GameAutomationConfig _gameConfig = new();
+    public ObservableCollection<GameAutomationRule> GameRules { get; } = new();
+
+    public GamingModePage()
     {
-        private bool _isBoosting = false;
+        InitializeComponent();
+        GameRulesList.ItemsSource = GameRules;
+    }
 
-        public GamingModePage()
+    private async void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        _isInitializing = true;
+        var remote = await BackgroundServiceClient.GetGameProfilesAsync();
+        _gameConfig = remote ?? new GameAutomationConfig();
+        ToggleAutoGameWatch.IsOn = _gameConfig.Enabled;
+        GameRules.Clear();
+        foreach (var r in _gameConfig.Rules) GameRules.Add(r);
+        _isInitializing = false;
+    }
+
+    private async void ToggleAutoGameWatch_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_isInitializing) return;
+        _gameConfig.Enabled = ToggleAutoGameWatch.IsOn;
+        await SyncGameProfilesAsync();
+    }
+
+    private async void BtnAddGameRule_Click(object sender, RoutedEventArgs e)
+    {
+        string proc = (TxtNewGameProc.Text ?? "").Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
+        if (string.IsNullOrWhiteSpace(proc)) return;
+
+        string disp = string.IsNullOrWhiteSpace(TxtNewGameDisplay.Text) ? proc : TxtNewGameDisplay.Text.Trim();
+        string prio = (ComboNewGamePriority.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "High";
+
+        var rule = new GameAutomationRule
         {
-            InitializeComponent();
-        }
+            ProcessName = proc,
+            DisplayName = disp,
+            ProcessPriority = prio,
+            PurgeStandbyOnLaunch = ChkNewGamePurge.IsChecked == true
+        };
+        _gameConfig.Rules.RemoveAll(r => r.ProcessName.Equals(proc, StringComparison.OrdinalIgnoreCase));
+        _gameConfig.Rules.Add(rule);
+        GameRules.Clear();
+        foreach (var r in _gameConfig.Rules) GameRules.Add(r);
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        TxtNewGameProc.Text = "";
+        TxtNewGameDisplay.Text = "";
+        await SyncGameProfilesAsync();
+    }
+
+    private async void BtnRemoveGameRule_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not string proc) return;
+        _gameConfig.Rules.RemoveAll(r => r.ProcessName.Equals(proc, StringComparison.OrdinalIgnoreCase));
+        var item = GameRules.FirstOrDefault(r => r.ProcessName.Equals(proc, StringComparison.OrdinalIgnoreCase));
+        if (item != null) GameRules.Remove(item);
+        await SyncGameProfilesAsync();
+    }
+
+    private async Task SyncGameProfilesAsync()
+    {
+        bool ok = await BackgroundServiceClient.SetGameProfilesAsync(_gameConfig);
+        MainWindow.Current?.ShowToast(
+            ok ? "Per-Game Daemon Synced" : "Service Offline",
+            ok ? $"{_gameConfig.Rules.Count} game rule(s) active on background service." : "Start JamesOptimizer.Service to enable automatic game switching.",
+            ok ? "Accent.Cyan" : "State.Warn");
+    }
+
+    private async void BtnActivateTurbo_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isBoosting) return;
+        _isBoosting = true;
+        BtnActivateTurbo.IsEnabled = false;
+        TxtTurboStatus.Text = "Engaging Game Turbo Engine...";
+
+        try
         {
-        }
+            await OptimizationEngine.RunGamingBoostAsync(CancellationToken.None);
+            await OptimizationEngine.RunRamFlushAsync(CancellationToken.None);
 
-        private async void BtnActivateTurbo_Click(object sender, RoutedEventArgs e)
+            TxtStatus.Text = "TURBO ACTIVE ✓";
+            var cyan = Theme.ThemeEffects.GetBrush("Accent.Cyan");
+            StatusDot.Fill = cyan;
+            TxtStatus.Foreground = cyan;
+            TxtTurboBtn.Text = "GAME TURBO ENGAGED ✓";
+            TxtTurboStatus.Text = "Low-latency gaming power & QoS engaged (revertable via Audit Drawer).";
+            App.ViewModel?.AddLog("GAMING", "Game Turbo Engine engaged!");
+        }
+        catch (Exception ex)
         {
-            if (_isBoosting) return;
-            _isBoosting = true;
-            BtnActivateTurbo.IsEnabled = false;
-            TxtTurboStatus.Text = "Engaging Extreme Game Turbo Engine...";
-
-            try
-            {
-                await OptimizationEngine.RunGamingBoostAsync(CancellationToken.None);
-                await OptimizationEngine.RunRamFlushAsync(CancellationToken.None);
-
-                TxtStatus.Text = "TURBO ACTIVE ✓";
-                StatusDot.Fill = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 245, 255));
-                TxtStatus.Foreground = new SolidColorBrush(ColorHelper.FromArgb(255, 0, 245, 255));
-
-                TxtTurboBtn.Text = "GAME TURBO ENGAGED ✓";
-                TxtTurboStatus.Text = "Ultra low-latency gaming engine running. Standby RAM cleared.";
-
-                App.ViewModel?.AddLog("GAMING", "Game Turbo Engine engaged! High resolution timer & gaming QoS active.");
-            }
-            catch (Exception ex)
-            {
-                BtnActivateTurbo.IsEnabled = true;
-                TxtTurboBtn.Text = "ACTIVATE GAME TURBO ⚡";
-                TxtTurboStatus.Text = $"Error: {ex.Message}";
-                App.ViewModel?.AddLog("ERROR", $"Failed to engage Game Turbo: {ex.Message}", true);
-            }
-            finally
-            {
-                _isBoosting = false;
-            }
+            BtnActivateTurbo.IsEnabled = true;
+            TxtTurboBtn.Text = "ACTIVATE GAME TURBO ⚡";
+            TxtTurboStatus.Text = $"Error: {ex.Message}";
+            App.ViewModel?.AddLog("ERROR", $"Failed to engage Game Turbo: {ex.Message}", true);
         }
-
-        private void BtnGpuOptimize_Click(object sender, RoutedEventArgs e)
+        finally
         {
-            try
-            {
-                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HwSchMode", 2, RegistryValueKind.DWord);
-                App.ViewModel?.AddLog("GAMING", "Hardware-accelerated GPU Scheduling (HAGS) set to Enabled (restart may be required).");
-            }
-            catch (Exception ex)
-            {
-                App.ViewModel?.AddLog("ERROR", $"GPU optimization error: {ex.Message}", true);
-            }
+            _isBoosting = false;
         }
+    }
 
-        private async void BtnNetworkLatency_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                await OptimizationEngine.DisableNetworkThrottlingAsync();
-                App.ViewModel?.AddLog("GAMING", "Zero Packet Delay applied. Nagle's TCP latency algorithm disabled.");
-            }
-            catch (Exception ex)
-            {
-                App.ViewModel?.AddLog("ERROR", $"Network optimization error: {ex.Message}", true);
-            }
-        }
+    private async void BtnGpuOptimize_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("gpu_pipeline", "HAGS GPU Scheduling");
+    private async void BtnNetworkLatency_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("net_tcp_low_latency", "TCP Low Latency");
+    private async void BtnDisableDvr_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("game_dvr", "Disable Game DVR");
+    private async void BtnMousePrecision_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("mouse_fix", "1:1 Raw Mouse");
+    private async void BtnKeyboardBuffer_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("keyboard_fix", "Keyboard Repeat");
+    private async void BtnUltimatePower_Click(object sender, RoutedEventArgs e) => await RunCatalogActionAsync("power", "Ultimate Performance Power Plan");
 
-        private void BtnDisableDvr_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Registry.SetValue(@"HKEY_CURRENT_USER\System\GameConfigStore", "GameDVR_Enabled", 0, RegistryValueKind.DWord);
-                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\GameDVR", "AllowGameDVR", 0, RegistryValueKind.DWord);
-                App.ViewModel?.AddLog("GAMING", "Game DVR and background recording telemetry completely disabled.");
-            }
-            catch (Exception ex)
-            {
-                App.ViewModel?.AddLog("ERROR", $"Game DVR error: {ex.Message}", true);
-            }
-        }
-
-        private void BtnMousePrecision_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSpeed", "0", RegistryValueKind.String);
-                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseThreshold1", "0", RegistryValueKind.String);
-                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseThreshold2", "0", RegistryValueKind.String);
-                App.ViewModel?.AddLog("GAMING", "Windows Mouse Acceleration disabled. 1:1 raw linear mouse input applied.");
-            }
-            catch (Exception ex)
-            {
-                App.ViewModel?.AddLog("ERROR", $"Mouse precision error: {ex.Message}", true);
-            }
-        }
+    private static async Task RunCatalogActionAsync(string tweakId, string label)
+    {
+        var res = await Task.Run(() => TweakCatalog.ApplyTweak(tweakId));
+        bool ok = res.Status is TweakStatus.Success or TweakStatus.AlreadyApplied or TweakStatus.NeedsReboot;
+        App.ViewModel?.AddLog(ok ? "GAMING" : "ERROR", $"{label}: {res.Message}", !ok);
+        MainWindow.Current?.ShowToast(label, res.Message, ok ? "State.Good" : "State.Bad");
     }
 }

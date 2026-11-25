@@ -5,101 +5,96 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="using:JamesOptimizer.WinUI"
-    xmlns:models="using:JamesOptimizer.WinUI.Models"
-    xmlns:vm="using:JamesOptimizer.WinUI.ViewModels"
     mc:Ignorable="d"
-    Title="JAMES OPTIMIZER PRO">
+    Title="JamesOptimizer V3">
 
     <Window.SystemBackdrop>
         <MicaBackdrop Kind="BaseAlt" />
     </Window.SystemBackdrop>
 
-    <Grid Background="{StaticResource BgBaseBrush}">
+    <Grid x:Name="RootShellGrid" Background="{ThemeResource Bg.App}">
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Modifiers="Control" Key="K" Invoked="OpenCommandPalette_Invoked" />
+            <KeyboardAccelerator Modifiers="Control" Key="L" Invoked="OpenAuditDrawer_Invoked" />
+        </Grid.KeyboardAccelerators>
+
         <Grid.RowDefinitions>
-            <!-- Custom Title Bar (Full Bleed) -->
-            <RowDefinition Height="48" />
-            <!-- Main Content Area with Sidebar & Page -->
+            <RowDefinition Height="52" />
             <RowDefinition Height="*" />
-            <!-- System Console Bar (Footer with Expandable Terminal Drawer) -->
-            <RowDefinition x:Name="ConsoleRowDef" Height="36" />
         </Grid.RowDefinitions>
 
-        <!-- Atmospheric Mesh Lighting Overlays (JamesGui Signature) -->
-        <Border Grid.RowSpan="3" Background="{StaticResource AtmosphereTopRadialBrush}" Height="340" VerticalAlignment="Top" IsHitTestVisible="False" Opacity="0.75" />
-        <Border Grid.RowSpan="3" Background="{StaticResource AtmosphereCyanWashBrush}" Width="450" HorizontalAlignment="Left" IsHitTestVisible="False" Opacity="0.45" />
-
         <!-- ========================================================================= -->
-        <!-- CUSTOM TITLE BAR (JAMESGUI BESPOKE BRANDING)                              -->
+        <!-- CUSTOM TITLE BAR (NEUTRAL CHROME)                                         -->
         <!-- ========================================================================= -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent" VerticalAlignment="Stretch">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource Bg.Sidebar}" VerticalAlignment="Stretch"
+              BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="0,0,0,1" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="144" />
             </Grid.ColumnDefinitions>
 
-            <!-- Drag region overlay -->
+            <!-- Drag region -->
             <Border x:Name="TitleBarDragArea" Grid.ColumnSpan="3" Background="Transparent" IsHitTestVisible="True" />
 
-            <!-- Left: App Brand & Icon -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="8" IsHitTestVisible="False">
-                <!-- Squircle Icon with Neon Coral Gradient -->
-                <Border Width="28" Height="28" CornerRadius="8" Background="{StaticResource HeroMissionGradientBrush}">
-                    <TextBlock Text="⚡" FontSize="15" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+            <!-- Left: Brand Emblem + JAMES OPTIMIZER V3 -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="12" IsHitTestVisible="False">
+                <Border Width="28" Height="28" CornerRadius="{StaticResource Radius.Sm}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1">
+                    <Image Source="ms-appx:///Assets/logo-128.png" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
-                <TextBlock Text="JamesOptimizer" FontFamily="{StaticResource DisplayFontFamily}" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center" />
-                <!-- Version Pill (v3.2) -->
-                <Border Background="{StaticResource AccentVioletTint10Brush}" BorderBrush="{StaticResource AccentVioletBrush}" BorderThickness="1" CornerRadius="8" Padding="6,2" VerticalAlignment="Center">
-                    <TextBlock Text="v3.2" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentVioletBrush}" />
-                </Border>
-                <!-- Pulsing Core Ready Pill -->
-                <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="10,4" VerticalAlignment="Center" Margin="4,0,0,0">
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <Ellipse x:Name="StatusPulseDot" Width="7" Height="7" Fill="{StaticResource AccentGreenBrush}">
-                            <Ellipse.Resources>
-                                <Storyboard x:Name="TitlePulseStoryboard" RepeatBehavior="Forever" AutoReverse="True">
-                                    <DoubleAnimation
-                                        Storyboard.TargetName="StatusPulseDot"
-                                        Storyboard.TargetProperty="Opacity"
-                                        From="1.0" To="0.25"
-                                        Duration="0:0:0.7">
-                                        <DoubleAnimation.EasingFunction>
-                                            <CubicEase EasingMode="EaseInOut" />
-                                        </DoubleAnimation.EasingFunction>
-                                    </DoubleAnimation>
-                                </Storyboard>
-                            </Ellipse.Resources>
-                        </Ellipse>
-                        <TextBlock Text="CORE READY" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentGreenBrush}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Border>
+
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="JAMES" FontFamily="{StaticResource Font.Display}" FontSize="15" FontWeight="Bold" CharacterSpacing="40" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center" />
+                    <TextBlock Text="OPTIMIZER" FontFamily="{StaticResource Font.Display}" FontSize="15" FontWeight="Medium" CharacterSpacing="40" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="8,2" Margin="4,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="V3" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="Bold" Foreground="{ThemeResource Text.Secondary}" />
+                    </Border>
+                </StackPanel>
             </StackPanel>
 
-            <!-- Center: Drag Area Spacer -->
-            <Grid Grid.Column="1" />
+            <!-- Center: Windows OS Status Pill + Quick Actions Ctrl+K Trigger -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <!-- Windows OS & System Ready Pill -->
+                <Border Background="{ThemeResource Bg.Surface}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="12,5" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Path Data="M0,0 H5.5 V5.5 H0 Z M7,0 H12.5 V5.5 H7 Z M0,7 H5.5 V12.5 H0 Z M7,7 H12.5 V12.5 H7 Z"
+                              Fill="{ThemeResource Text.Secondary}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TxtOsVersion" Text="Windows 11 · 64-bit" FontFamily="{StaticResource Font.Sans}" FontSize="12" FontWeight="Medium" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                        <Rectangle Width="1" Height="10" Fill="{ThemeResource Border.Subtle}" VerticalAlignment="Center" />
+                        <Ellipse x:Name="StatusPulseDot" Width="6" Height="6" Fill="{ThemeResource State.Good}" VerticalAlignment="Center" />
+                        <TextBlock Text="READY" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" CharacterSpacing="40" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
 
-            <!-- Right: Settings Gear (Positioned cleanly left of native Windows caption buttons) -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,145,0">
-                <Button Style="{StaticResource CircularIconButtonStyle}" Click="QuickSettings_Click" ToolTipService.ToolTip="Settings &amp; Configuration" AutomationProperties.Name="Settings">
-                    <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFontFamily}" FontSize="13" />
+                <!-- Quick Actions Ctrl+K Pill (Inset) -->
+                <Button x:Name="TitleBarSearchBtn" Click="OpenCommandPalette_Click"
+                        Style="{StaticResource InsetButtonStyle}"
+                        AutomationProperties.Name="Quick Actions">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE721;" FontFamily="{StaticResource Font.Icon}" FontSize="12" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                        <TextBlock Text="Quick Actions..." FontFamily="{StaticResource Font.Sans}" FontSize="12" Foreground="{ThemeResource Text.Tertiary}" VerticalAlignment="Center" />
+                        <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="6,1" VerticalAlignment="Center">
+                            <TextBlock Text="Ctrl+K" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Text.Secondary}" />
+                        </Border>
+                    </StackPanel>
                 </Button>
             </StackPanel>
         </Grid>
 
         <!-- ========================================================================= -->
-        <!-- MAIN WORKSPACE: COLLAPSIBLE SIDEBAR + PAGE CONTENT                         -->
+        <!-- MAIN WORKSPACE: SIDEBAR RAIL + PAGE FRAME                                 -->
         <!-- ========================================================================= -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="SidebarColDef" Width="200" />
+                <ColumnDefinition x:Name="SidebarColDef" Width="58" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- SIDEBAR NAVIGATION -->
+            <!-- SIDEBAR NAVIGATION RAIL -->
             <Border Grid.Column="0"
                     x:Name="SidebarContainer"
-                    Background="{StaticResource SidebarAcrylicBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    Background="{ThemeResource Bg.Sidebar}"
+                    BorderBrush="{ThemeResource Border.Subtle}"
                     BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -108,381 +103,345 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Collapse / Expand Toggle Button -->
+                    <!-- Hamburger Collapse/Expand Button -->
                     <Button x:Name="ToggleSidebarBtn"
                             Click="ToggleSidebarBtn_Click"
-                            HorizontalAlignment="Stretch"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="12,10"
-                            Margin="8,8,8,6"
-                            CornerRadius="8"
-                            AutomationProperties.Name="Toggle Navigation Rail">
-                        <Grid HorizontalAlignment="Stretch">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <TextBlock Text="&#xE700;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="4,0,0,0" />
-                                <TextBlock x:Name="NavHeaderLabel" Text="NAVIGATION" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Grid>
+                            Style="{StaticResource SidebarNavButtonStyle}"
+                            Margin="8,10,8,6"
+                            AutomationProperties.Name="Toggle Sidebar">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE700;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="NavHeaderLabel" Text="NAVIGATION" Visibility="Collapsed" FontFamily="{StaticResource Font.Display}" FontSize="11" FontWeight="Bold" CharacterSpacing="90" Foreground="{ThemeResource Text.Tertiary}" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
 
-                    <!-- Nav Items ScrollViewer -->
+                    <!-- Nav Items -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Spacing="3" Margin="6,2">
-                            <!-- 1. Dashboard -->
-                            <Button x:Name="NavDashboard" Click="NavButton_Click" Tag="Dashboard"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="{StaticResource BgElevatedBrush}" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavDashboardBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" CornerRadius="1" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE80F;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelDashboard" Text="Dashboard" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Grid x:Name="NavScrollGrid">
+                            <!-- Left Accent.Cyan Active Indicator -->
+                            <Border x:Name="SidebarActiveIndicator"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Width="3"
+                                    Height="18"
+                                    Margin="2,12,0,0"
+                                    CornerRadius="{StaticResource Radius.Bar}"
+                                    Background="{ThemeResource Accent.Cyan}"
+                                    IsHitTestVisible="False" />
+
+                            <StackPanel x:Name="NavItemsPanel" Spacing="4" Margin="8,2">
+                                <!-- 1. Dashboard -->
+                                <Button x:Name="NavDashboard" Click="NavButton_Click" Tag="Dashboard"
+                                        Style="{StaticResource SidebarNavButtonStyle}"
+                                        Background="{ThemeResource Brush.Raised.Pressed}" BorderBrush="{ThemeResource Border.InnerPressedShadow}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE80F;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelDashboard" Text="Dashboard" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 2. System Cleanups -->
-                            <Button x:Name="NavCleanups" Click="NavButton_Click" Tag="Cleanups"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavCleanBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelClean" Text="System Cleanups" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 2. System Cleanups -->
+                                <Button x:Name="NavCleanups" Click="NavButton_Click" Tag="Cleanups"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelClean" Text="System Cleanups" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 3. Performance Tweaks -->
-                            <Button x:Name="NavPerformance" Click="NavButton_Click" Tag="Performance"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavPerfBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE950;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelPerf" Text="Performance Tweaks" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 3. Performance Tweaks -->
+                                <Button x:Name="NavPerformance" Click="NavButton_Click" Tag="Performance"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE950;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelPerf" Text="Performance Tweaks" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 4. Gaming Mode -->
-                            <Button x:Name="NavGamingMode" Click="NavButton_Click" Tag="GamingMode"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavGameBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelGame" Text="Gaming Mode" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 4. Gaming Mode -->
+                                <Button x:Name="NavGamingMode" Click="NavButton_Click" Tag="GamingMode"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE7FC;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelGame" Text="Gaming Mode" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 5. Startup Apps -->
-                            <Button x:Name="NavStartup" Click="NavButton_Click" Tag="Startup"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavStartupBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelStartup" Text="Startup Apps" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 5. Startup Apps -->
+                                <Button x:Name="NavStartup" Click="NavButton_Click" Tag="Startup"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelStartup" Text="Startup Apps" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 6. Services -->
-                            <Button x:Name="NavServices" Click="NavButton_Click" Tag="Services"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavServicesBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelServices" Text="Services" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 6. Services -->
+                                <Button x:Name="NavServices" Click="NavButton_Click" Tag="Services"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelServices" Text="Services" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- Subtle Category Separator -->
-                            <Border Height="1" Background="{StaticResource BorderSubtleBrush}" Margin="10,4,10,4" />
+                                <!-- Category Separator -->
+                                <Border Height="1" Background="{ThemeResource Border.Subtle}" Margin="8,8,8,8" />
 
-                            <!-- 7. Network Boost -->
-                            <Button x:Name="NavNetwork" Click="NavButton_Click" Tag="Network"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavNetBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE774;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelNet" Text="Network Boost" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 7. Network Boost -->
+                                <Button x:Name="NavNetwork" Click="NavButton_Click" Tag="Network"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE774;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelNet" Text="Network Boost" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 8. Storage -->
-                            <Button x:Name="NavStorage" Click="NavButton_Click" Tag="Storage"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavStorageBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelStorage" Text="Storage" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 8. Storage -->
+                                <Button x:Name="NavStorage" Click="NavButton_Click" Tag="Storage"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE7B8;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelStorage" Text="Storage" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 9. Toolbox -->
-                            <Button x:Name="NavToolbox" Click="NavButton_Click" Tag="Toolbox"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavToolboxBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE825;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelToolbox" Text="Toolbox" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 9. Toolbox -->
+                                <Button x:Name="NavToolbox" Click="NavButton_Click" Tag="Toolbox"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE825;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelToolbox" Text="Toolbox" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 10. Diagnostics -->
-                            <Button x:Name="NavDiagnostics" Click="NavButton_Click" Tag="Diagnostics"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavDiagBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelDiag" Text="Diagnostics" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 10. Diagnostics -->
+                                <Button x:Name="NavDiagnostics" Click="NavButton_Click" Tag="Diagnostics"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelDiag" Text="Diagnostics" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
+                                </Button>
 
-                            <!-- 11. Settings -->
-                            <Button x:Name="NavSettings" Click="NavButton_Click" Tag="Settings"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                    Background="Transparent" BorderThickness="0" CornerRadius="10" Height="38" Padding="0">
-                                <Grid>
-                                    <Border x:Name="NavSettingsBar" HorizontalAlignment="Left" Width="3" Background="{StaticResource AccentCyanBrush}" Visibility="Collapsed" Margin="2,6,0,6" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="14,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFontFamily}" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="NavLabelSettings" Text="Settings" FontFamily="{StaticResource DisplayFontFamily}" FontSize="13" FontWeight="Normal" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <!-- 11. Settings -->
+                                <Button x:Name="NavSettings" Click="NavButton_Click" Tag="Settings"
+                                        Style="{StaticResource SidebarNavButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE713;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="NavLabelSettings" Text="Settings" Visibility="Collapsed" FontFamily="{StaticResource Font.Sans}" FontSize="14" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                </Grid>
-                            </Button>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Bottom User Card -->
-                    <Border Grid.Row="2"
-                            x:Name="UserCardBorder"
-                            Margin="8,6,8,10"
-                            Background="{StaticResource FrostedBadgeAcrylicBrush}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="10,8"
-                            PointerPressed="UserCard_PointerPressed">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#1A00F5FF" BorderBrush="#3300F5FF" BorderThickness="1" VerticalAlignment="Center">
-                                <Image Source="ms-appx:///Assets/logo-128.png" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-
-                            <StackPanel x:Name="UserInfoPanel" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="James God" FontFamily="{StaticResource DisplayFontFamily}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                    <TextBlock Text="&#xF78C;" FontFamily="{StaticResource IconFontFamily}" FontSize="11" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center" />
-                                </StackPanel>
-                                <TextBlock Text="PRO SUITE · ACTIVE" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" FontWeight="SemiBold" Foreground="{StaticResource AccentGreenBrush}" Margin="0,1,0,0" />
+                                </Button>
                             </StackPanel>
                         </Grid>
+                    </ScrollViewer>
+
+                    <!-- Bottom Emblem Badge -->
+                    <Border Grid.Row="2"
+                            Margin="8,8,8,12"
+                            Height="44"
+                            Padding="7,0"
+                            Background="{ThemeResource Bg.Surface}"
+                            BorderBrush="{ThemeResource Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource Radius.Md}"
+                            PointerPressed="UserCard_PointerPressed">
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Border Width="26" Height="26" CornerRadius="{StaticResource Radius.Sm}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1">
+                                <TextBlock Text="&#xE945;" FontFamily="{StaticResource Font.Icon}" FontSize="13" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel x:Name="UserInfoPanel" Visibility="Collapsed" VerticalAlignment="Center" Spacing="1">
+                                <TextBlock Text="JamesOptimizer" FontFamily="{StaticResource Font.Display}" FontSize="13" FontWeight="Bold" Foreground="{ThemeResource Text.Primary}" />
+                                <TextBlock Text="PRO SUITE V3" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" CharacterSpacing="60" Foreground="{ThemeResource Text.Tertiary}" />
+                            </StackPanel>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>
 
             <!-- Main Page Frame -->
             <Frame x:Name="ContentFrame" Grid.Column="1" Background="Transparent" />
+
+            <!-- Floating Toast Notification Host -->
+            <StackPanel x:Name="ToastHost" Grid.Column="1"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,12,24,0" Spacing="8" Width="320"
+                        IsHitTestVisible="False" />
         </Grid>
 
         <!-- ========================================================================= -->
-        <!-- SYSTEM CONSOLE BAR (EXPANDABLE LOG DRAWER + SLIDER + CLEAR BUTTON)        -->
-        <!-- Just the logs and the slider. When clicked, it expands. Just a clear btn.  -->
+        <!-- CTRL+K COMMAND PALETTE MODAL OVERLAY                                      -->
         <!-- ========================================================================= -->
-        <Border Grid.Row="2"
-                x:Name="ConsoleContainer"
-                Background="{StaticResource BgSurfaceBrush}"
-                BorderBrush="{StaticResource BorderSubtleBrush}"
-                BorderThickness="0,1,0,0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <!-- Compact Console Bar Header (Height=36, Always Visible) -->
-                    <RowDefinition Height="36" />
-                    <!-- Expanded Terminal View (Revealed when expanded) -->
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+        <Grid x:Name="CommandPaletteOverlay" Grid.RowSpan="2" Visibility="Collapsed"
+              Background="{ThemeResource Bg.Overlay}" PointerPressed="CommandPaletteBackdrop_PointerPressed">
+            <Grid.KeyboardAccelerators>
+                <KeyboardAccelerator Key="Escape" Invoked="CloseCommandPalette_Invoked" />
+            </Grid.KeyboardAccelerators>
 
-                <!-- ROW 0: CONSOLE BAR (LOGS + SLIDER + CLEAR + EXPAND BUTTON) -->
-                <Grid Grid.Row="0" Margin="14,0,12,0" VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <!-- Left: `>_ SYSTEM CONSOLE`, pulsing green dot, and monospace log stream -->
-                        <ColumnDefinition Width="*" />
-                        <!-- Right: Slider + Clear Button + Expand Button -->
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+            <Border x:Name="CommandPaletteCard" Width="540" MaxHeight="440" VerticalAlignment="Top" Margin="0,78,0,0"
+                    Background="{ThemeResource Bg.Surface}"
+                    BorderBrush="{ThemeResource Border.Strong}"
+                    BorderThickness="1" CornerRadius="{StaticResource Radius.Lg}"
+                    PointerPressed="CommandPaletteCard_PointerPressed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <!-- Left: Terminal Prompt + Pulsing Dot + Cascadia Code Log Stream -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <!-- Cyan Terminal Prompt Prefix -->
-                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                            <TextBlock Text="&gt;_"
-                                       FontFamily="{StaticResource ConsoleFontFamily}"
-                                       FontSize="12"
-                                       FontWeight="Black"
-                                       Foreground="{StaticResource AccentCyanBrush}"
-                                       VerticalAlignment="Center" />
-                            <TextBlock Text="SYSTEM CONSOLE"
-                                       FontFamily="{StaticResource ConsoleFontFamily}"
-                                       FontSize="11"
-                                       FontWeight="Bold"
-                                       Foreground="#FFFFFF"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-
-                        <!-- Glowing Green Pulsing Indicator -->
-                        <Border Width="16" Height="16" CornerRadius="8" Background="{StaticResource AccentGreenTint10Brush}" VerticalAlignment="Center">
-                            <Ellipse x:Name="ConsolePulseDot" Width="6" Height="6" Fill="{StaticResource AccentGreenBrush}" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Ellipse.Resources>
-                                    <Storyboard x:Name="ConsolePulseStoryboard" RepeatBehavior="Forever" AutoReverse="True">
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="ConsolePulseDot"
-                                            Storyboard.TargetProperty="Opacity"
-                                            From="1.0" To="0.25"
-                                            Duration="0:0:0.7">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CubicEase EasingMode="EaseInOut" />
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </Ellipse.Resources>
-                            </Ellipse>
+                    <!-- Search Input -->
+                    <Grid Grid.Row="0" Padding="16,12" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="{StaticResource Font.Icon}" FontSize="15" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                        <TextBox x:Name="PaletteSearchBox" Grid.Column="1"
+                                 PlaceholderText="Jump to page or execute optimizer command..."
+                                 BorderThickness="0" Background="Transparent"
+                                 MinHeight="32" Padding="4,4" VerticalContentAlignment="Center"
+                                 FontFamily="{StaticResource Font.Sans}" FontSize="14"
+                                 TextChanged="PaletteSearchBox_TextChanged"
+                                 PreviewKeyDown="PaletteSearchBox_PreviewKeyDown" />
+                        <Border Grid.Column="2" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="8,2" VerticalAlignment="Center">
+                            <TextBlock Text="ESC" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" />
                         </Border>
+                    </Grid>
 
-                        <!-- Live Cascadia Code Log Message -->
-                        <TextBlock x:Name="ConsoleMarqueeText"
-                                   Text="[SYSTEM] Kernel optimizations ready · 32GB RAM Ready · 0 bottlenecks detected."
-                                   FontFamily="{StaticResource ConsoleFontFamily}"
-                                   FontSize="11"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
+                    <Border Grid.Row="1" Background="{ThemeResource Border.Subtle}" />
 
-                    <!-- Right: The Slider + Clear Button + Expand Button (Nothing else!) -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                        <!-- Log History / Buffer Scrubber Slider -->
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="BUFFER"
-                                       FontFamily="{StaticResource ConsoleFontFamily}"
-                                       FontSize="9"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource TextMutedBrush}"
-                                       VerticalAlignment="Center" />
-                            <Slider x:Name="LogScrubberSlider"
-                                    Width="120"
-                                    Height="24"
-                                    Minimum="0"
-                                    Maximum="100"
-                                    Value="100"
-                                    ValueChanged="LogScrubberSlider_ValueChanged"
-                                    Style="{StaticResource ConsoleSliderStyle}"
-                                    ToolTipService.ToolTip="Scrub Log History (Drag left for past logs, right for live)"
-                                    AutomationProperties.Name="Log History Scrubber Slider" />
+                    <!-- Results List -->
+                    <ListView x:Name="PaletteResultsList" Grid.Row="2" Padding="8" SelectionMode="Single"
+                              IsItemClickEnabled="True" ItemClick="PaletteResultsList_ItemClick">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="local:CommandPaletteItem">
+                                <Grid Padding="10,9" ColumnSpacing="14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="{StaticResource Radius.Sm}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Glyph}" FontFamily="{StaticResource Font.Icon}" FontSize="13" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                        <TextBlock Text="{x:Bind Title}" FontFamily="{StaticResource Font.Sans}" FontSize="14" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Subtitle}" FontFamily="{StaticResource Font.Sans}" FontSize="12" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Border Grid.Column="2" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="8,2" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Badge}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- Footer Hints -->
+                    <Border Grid.Row="3" Background="{ThemeResource Bg.Sidebar}" CornerRadius="0,0,16,16" Padding="16,8" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <TextBlock Text="↑↓ Navigate" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Tertiary}" />
+                            <TextBlock Text="↵ Execute" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Tertiary}" />
+                            <TextBlock Text="Esc Close" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Tertiary}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ========================================================================= -->
+        <!-- CTRL+L ON-DEMAND AUDIT LOG & TWEAK REVERT MODAL                           -->
+        <!-- ========================================================================= -->
+        <Grid x:Name="AuditDrawerOverlay" Grid.RowSpan="2" Visibility="Collapsed"
+              Background="{ThemeResource Bg.Overlay}" PointerPressed="AuditBackdrop_PointerPressed">
+            <Grid.KeyboardAccelerators>
+                <KeyboardAccelerator Key="Escape" Invoked="CloseAuditDrawer_Invoked" />
+            </Grid.KeyboardAccelerators>
+
+            <Border Width="760" Height="520" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Background="{ThemeResource Bg.Surface}"
+                    BorderBrush="{ThemeResource Border.Strong}"
+                    BorderThickness="1" CornerRadius="{StaticResource Radius.Lg}"
+                    PointerPressed="CommandPaletteCard_PointerPressed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Header & Mode Tabs -->
+                    <Grid Grid.Row="0" Padding="20,14" ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE756;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" />
+                            <TextBlock Text="AUDIT LOG &amp; TWEAK REVERT HISTORY" FontFamily="{StaticResource Font.Sans}" FontSize="14" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
 
-                        <!-- CLEAR Button: Clean ghost button, clears logs -->
-                        <Button x:Name="ClearLogsBtn"
-                                Click="ClearLogsBtn_Click"
-                                Style="{StaticResource GhostButtonStyle}"
-                                Height="24"
-                                Padding="10,0"
-                                ToolTipService.ToolTip="Clear console messages"
-                                AutomationProperties.Name="Clear Console Logs">
-                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFontFamily}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                <TextBlock Text="CLEAR" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- Expand / Collapse Drawer Button -->
-                        <Button x:Name="ToggleConsoleExpandBtn"
-                                Click="ToggleConsoleExpandBtn_Click"
-                                Style="{StaticResource TitleBarButtonStyle}"
-                                Width="26"
-                                Height="24"
-                                ToolTipService.ToolTip="Expand Console Drawer"
-                                AutomationProperties.Name="Expand Console Drawer">
-                            <TextBlock x:Name="ConsoleExpandIcon" Text="&#xE70E;" FontFamily="{StaticResource IconFontFamily}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
-                <!-- ROW 1: EXPANDED TERMINAL VIEW (FULL MULTI-LINE LOG VIEWER) -->
-                <Border Grid.Row="1"
-                        x:Name="ExpandedTerminalPanel"
-                        Background="#080A0E"
-                        BorderBrush="{StaticResource BorderSubtleBrush}"
-                        BorderThickness="0,1,0,0"
-                        Visibility="Collapsed">
-                    <Grid Margin="14,8,14,8">
-                        <Grid.RowDefinitions>
-                            <!-- Mini Terminal Header -->
-                            <RowDefinition Height="Auto" />
-                            <!-- Scrollable Terminal Body -->
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!-- Terminal Subheader -->
-                        <Grid Grid.Row="0" Margin="0,0,0,6">
-                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <TextBlock Text="KERNEL STREAM · LIVE TELEMETRY" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}" />
-                                <TextBlock x:Name="LogCountText" Text="(0 entries)" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" />
-                            </StackPanel>
-                            <TextBlock HorizontalAlignment="Right" Text="AUTO-SCROLL: ENGAGED" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" Foreground="{StaticResource AccentGreenBrush}" VerticalAlignment="Center" />
-                        </Grid>
-
-                        <!-- Scrollable Log List -->
-                        <ScrollViewer x:Name="TerminalScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                            <ItemsControl x:Name="TerminalLogsItemsControl">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="models:LogEntry">
-                                        <Grid Margin="0,2" Padding="4,2">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="65" />
-                                                <ColumnDefinition Width="80" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{x:Bind TimestampText}" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
-                                            <Border Grid.Column="1" HorizontalAlignment="Left" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                                                <TextBlock Text="{x:Bind Category}" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}" />
-                                            </Border>
-                                            <TextBlock Grid.Column="2" Text="{x:Bind Message}" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button x:Name="BtnTabLogs" Click="BtnAuditTab_Click" Tag="LOGS" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="Live Logs" />
+                            <Button x:Name="BtnTabHistory" Click="BtnAuditTab_Click" Tag="HISTORY" Style="{StaticResource SegmentedPillButtonStyle}" Content="Revert History" />
+                            <Button Click="BtnCopyAuditLogs_Click" Style="{StaticResource GhostButtonStyle}" Height="32" Content="Copy" />
+                            <Button Click="BtnClearAuditLogs_Click" Style="{StaticResource GhostButtonStyle}" Height="32" Content="Clear" />
+                            <Button Click="BtnCloseAuditDrawer_Click" Style="{StaticResource IconRaisedButtonStyle}" Width="32" Height="32" CornerRadius="8" Content="✕" AutomationProperties.Name="Close Audit Drawer" />
+                        </StackPanel>
                     </Grid>
-                </Border>
-            </Grid>
-        </Border>
+
+                    <Border Grid.Row="1" Background="{ThemeResource Border.Subtle}" />
+
+                    <!-- Live Logs List -->
+                    <ListView x:Name="AuditLogsList" Grid.Row="2" Padding="14,12" SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="12" Padding="4,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="72" />
+                                        <ColumnDefinition Width="96" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding TimestampText}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Text.Tertiary}" VerticalAlignment="Center" />
+                                    <Border Grid.Column="1" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="8,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Category}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" />
+                                    </Border>
+                                    <TextBlock Grid.Column="2" Text="{Binding Message}" FontFamily="{StaticResource Font.Mono}" FontSize="12" LineHeight="18" Foreground="{ThemeResource Text.Primary}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- Tweak Revert History List -->
+                    <ListView x:Name="AuditHistoryList" Grid.Row="2" Padding="14,12" SelectionMode="None" Visibility="Collapsed">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="14,12" Margin="0,0,0,8">
+                                    <Grid ColumnSpacing="14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="68" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding TimeLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Text.Tertiary}" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                            <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding KeyPath}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Background="{ThemeResource Bg.Input}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding StatusLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" />
+                                        </Border>
+                                        <Button Grid.Column="3" Click="BtnRevertSnapshot_Click" Tag="{Binding Id}" Style="{StaticResource ModernGhostButtonStyle}" Height="32" Padding="12,0" Content="Revert" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -25,6 +25,7 @@ public class SystemSnapshotEventArgs : EventArgs
 {
     public float CpuPercent { get; init; }
     public float GpuPercent { get; init; }
+    public string GpuSubLabel { get; init; } = "";
     public float RamPercent { get; init; }
     public float DiskPercent { get; init; }
     public double RamUsedGb { get; init; }
@@ -100,9 +101,11 @@ public sealed class SystemMetricsService : ISystemMetricsService
     private PerformanceCounter? _cpuCounter;
     private PerformanceCounter? _diskCounter;
     private PerformanceCounter? _gpuCounter;
-    private bool _countersInitialized;
+    private volatile bool _countersInitialized;
+    private bool _disposed;
     public bool IsInitialized => _countersInitialized;
     private readonly object _lock = new();
+    private readonly object _counterLock = new();
 
     private ulong _prevIdleTime;
     private ulong _prevKernelTime;
@@ -120,24 +123,27 @@ public sealed class SystemMetricsService : ISystemMetricsService
     {
         Task.Run(() =>
         {
+            PerformanceCounter? cpu = null, disk = null, gpu = null;
             try
             {
-                _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total", readOnly: true);
-                _cpuCounter.NextValue(); // prime the counter
+                cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total", readOnly: true);
+                cpu.NextValue(); // prime the counter
             }
             catch
             {
-                _cpuCounter = null;
+                cpu?.Dispose();
+                cpu = null;
             }
 
             try
             {
-                _diskCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total", readOnly: true);
-                _diskCounter.NextValue();
+                disk = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total", readOnly: true);
+                disk.NextValue();
             }
             catch
             {
-                _diskCounter = null;
+                disk?.Dispose();
+                disk = null;
             }
 
             try
@@ -148,16 +154,30 @@ public sealed class SystemMetricsService : ISystemMetricsService
                 var engInstance = instanceNames.FirstOrDefault(i => i.Contains("engtype_3D", StringComparison.OrdinalIgnoreCase));
                 if (engInstance != null)
                 {
-                    _gpuCounter = new PerformanceCounter("GPU Engine", "Utilization Percentage", engInstance, readOnly: true);
-                    _gpuCounter.NextValue();
+                    gpu = new PerformanceCounter("GPU Engine", "Utilization Percentage", engInstance, readOnly: true);
+                    gpu.NextValue();
                 }
             }
             catch
             {
-                _gpuCounter = null;
+                gpu?.Dispose();
+                gpu = null;
             }
 
-            _countersInitialized = true;
+            lock (_counterLock)
+            {
+                if (_disposed)
+                {
+                    cpu?.Dispose();
+                    disk?.Dispose();
+                    gpu?.Dispose();
+                    return;
+                }
+                _cpuCounter = cpu;
+                _diskCounter = disk;
+                _gpuCounter = gpu;
+                _countersInitialized = true;
+            }
         });
     }
 
@@ -197,7 +217,6 @@ public sealed class SystemMetricsService : ISystemMetricsService
         float disk = ReadDiskPercent();
         float gpu = ReadGpuPercent(cpu);
         var (ramPercent, usedGb, totalGb) = ReadRamInfo();
-        var drives = GetDriveSnapshots();
 
         // Calculate dynamic scores based on live system metrics
         int healthScore = (int)Math.Clamp(100 - (ramPercent * 0.35f + disk * 0.25f), 70, 99);
@@ -211,11 +230,12 @@ public sealed class SystemMetricsService : ISystemMetricsService
         {
             CpuPercent = cpu,
             GpuPercent = gpu,
+            GpuSubLabel = ReadGpuTempLabel(),
             RamPercent = ramPercent,
             DiskPercent = disk,
             RamUsedGb = usedGb,
             RamTotalGb = totalGb,
-            Drives = drives,
+            Drives = Array.Empty<DriveSnapshot>(),
             CalculatedHealthScore = healthScore,
             CalculatedPerfScore = perfScore,
             CalculatedSecScore = secScore,
@@ -292,6 +312,85 @@ public sealed class SystemMetricsService : ISystemMetricsService
         return 4.0f;
     }
 
+    private DateTime _lastTempCheck = DateTime.MinValue;
+    private string _cachedGpuTemp = "";
+    private bool _nvidiaSmiMissing;
+    private bool _acpiThermalUnsupported;
+
+    private string ReadGpuTempLabel()
+    {
+        if ((DateTime.UtcNow - _lastTempCheck).TotalSeconds < 6)
+            return _cachedGpuTemp;
+
+        _lastTempCheck = DateTime.UtcNow;
+        if (!_nvidiaSmiMissing)
+        {
+            try
+            {
+                using var proc = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "nvidia-smi",
+                    Arguments = "--query-gpu=temperature.gpu --format=csv,noheader,nounits",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                if (proc != null)
+                {
+                    if (!proc.WaitForExit(500))
+                    {
+                        try { proc.Kill(true); } catch { }
+                    }
+                    else
+                    {
+                        string line = proc.StandardOutput.ReadLine()?.Trim() ?? "";
+                        if (int.TryParse(line, out int temp) && temp > 0 && temp < 130)
+                        {
+                            _cachedGpuTemp = $"{temp}°C · Temp";
+                            return _cachedGpuTemp;
+                        }
+                    }
+                }
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                _nvidiaSmiMissing = true;
+            }
+            catch { }
+        }
+
+        if (!_acpiThermalUnsupported)
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher(@"root\WMI", "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
+                using var results = searcher.Get();
+                foreach (ManagementObject obj in results)
+                using (obj)
+                {
+                    if (double.TryParse(obj["CurrentTemperature"]?.ToString(), out double raw))
+                    {
+                        double c = (raw - 2732.0) / 10.0;
+                        if (c > 10 && c < 120)
+                        {
+                            _cachedGpuTemp = $"{c:0}°C · Thermal";
+                            return _cachedGpuTemp;
+                        }
+                    }
+                    break;
+                }
+            }
+            catch (ManagementException)
+            {
+                _acpiThermalUnsupported = true;
+            }
+            catch { }
+        }
+
+        _cachedGpuTemp = "3D Engine";
+        return _cachedGpuTemp;
+    }
+
     private float ReadGpuPercent(float cpuUsage)
     {
         if (_gpuCounter != null)
@@ -304,9 +403,7 @@ public sealed class SystemMetricsService : ISystemMetricsService
             catch { }
         }
 
-        // Adaptive estimation correlating with active rendering
-        float estimated = Math.Clamp((cpuUsage * 0.45f) + 3.2f, 2.0f, 95.0f);
-        return estimated;
+        return 0f;
     }
 
     private (float percent, double usedGb, double totalGb) ReadRamInfo()
@@ -326,8 +423,7 @@ public sealed class SystemMetricsService : ISystemMetricsService
         }
         catch { }
 
-        // Sensible fallback matching prompt's 18.3 / 31.8 GB spec
-        return (57.5f, 18.3, 31.8);
+        return (0f, 0, 0);
     }
 
     public IReadOnlyList<DriveSnapshot> GetDriveSnapshots()
@@ -356,12 +452,6 @@ public sealed class SystemMetricsService : ISystemMetricsService
         }
         catch { }
 
-        if (list.Count == 0)
-        {
-            list.Add(new DriveSnapshot { Name = "C:", VolumeLabel = "System NVMe", TotalGb = 1000, UsedGb = 412, FreeGb = 588 });
-            list.Add(new DriveSnapshot { Name = "D:", VolumeLabel = "High-Speed SSD", TotalGb = 2000, UsedGb = 1420, FreeGb = 580 });
-        }
-
         return list;
     }
 
@@ -378,16 +468,16 @@ public sealed class SystemMetricsService : ISystemMetricsService
                     return CleanTemporaryFiles();
 
                 case "game_mode":
-                    return EnableUltraGameMode();
+                    return await EnableUltraGameModeAsync();
 
                 case "dns_boost":
                     return FlushAndBoostDns();
 
                 case "startup_shield":
-                    return OptimizeStartupEntries();
+                    return await OptimizeStartupEntriesAsync();
 
                 case "telemetry_kill":
-                    return SuppressTelemetryServices();
+                    return await SuppressTelemetryServicesAsync();
 
                 default:
                     return await RunFullOptimizationAsync();
@@ -416,7 +506,10 @@ public sealed class SystemMetricsService : ISystemMetricsService
 
     private OptimizationResult FlushWorkingSets()
     {
-        long initialMem = GC.GetTotalMemory(false);
+        ulong availBefore = 0;
+        var memBefore = new MEMORYSTATUSEX();
+        if (GlobalMemoryStatusEx(memBefore)) availBefore = memBefore.ullAvailPhys;
+
         int trimmedProcesses = 0;
 
         try
@@ -426,7 +519,9 @@ public sealed class SystemMetricsService : ISystemMetricsService
             {
                 try
                 {
-                    if (proc.Id > 4 && !proc.HasExited)
+                    // BUG FIX (HIGH/SAFETY): Guard against calling EmptyWorkingSet on protected OS processes
+                    // (lsass, csrss, System, etc.) — matches the protection in NativeSystemHelper.PurgeMemoryListsNative.
+                    if (proc.Id > 4 && !proc.HasExited && !JamesOptimizer.Core.CoreConstants.IsProtectedProcess(proc.ProcessName))
                     {
                         EmptyWorkingSet(proc.Handle);
                         trimmedProcesses++;
@@ -447,12 +542,19 @@ public sealed class SystemMetricsService : ISystemMetricsService
         }
         catch { }
 
-        long reclaimedBytes = 1024L * 1024L * 1420L; // approx 1.42 GB flushed
+        long reclaimedBytes = 0;
+        var memAfter = new MEMORYSTATUSEX();
+        if (GlobalMemoryStatusEx(memAfter) && memAfter.ullAvailPhys > availBefore)
+        {
+            reclaimedBytes = (long)(memAfter.ullAvailPhys - availBefore);
+        }
+
+        double mb = Math.Round(reclaimedBytes / (1024.0 * 1024.0), 1);
         return new OptimizationResult
         {
-            Success = true,
+            Success = trimmedProcesses > 0,
             Title = "RAM Standby Purge Complete",
-            Message = $"Trimmed working sets across {trimmedProcesses} processes. Memory cache cleared.",
+            Message = $"Trimmed working sets across {trimmedProcesses} processes. Reclaimed {mb} MB available RAM.",
             BytesReclaimed = reclaimedBytes
         };
     }
@@ -467,7 +569,7 @@ public sealed class SystemMetricsService : ISystemMetricsService
             Path.GetTempPath(),
             Environment.GetFolderPath(Environment.SpecialFolder.InternetCache),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp")
-        };
+        }.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
         foreach (var folder in targetFolders)
         {
@@ -495,42 +597,42 @@ public sealed class SystemMetricsService : ISystemMetricsService
         }
 
         double mb = Math.Round(bytesDeleted / (1024.0 * 1024.0), 1);
-        if (mb <= 0) mb = 384.2;
 
         return new OptimizationResult
         {
             Success = true,
             Title = "Disk Cleanup Finalized",
-            Message = $"Purged {filesDeleted} transient files. Reclaimed {mb} MB space.",
+            Message = filesDeleted > 0
+                ? $"Purged {filesDeleted} transient files. Reclaimed {mb} MB space."
+                : "No stale temporary files older than 1 hour needed removal.",
             BytesReclaimed = bytesDeleted
         };
     }
 
-    private OptimizationResult EnableUltraGameMode()
+    private async Task<OptimizationResult> EnableUltraGameModeAsync()
     {
+        bool ok = false;
         try
         {
-            // Set High Performance power plan via powercfg
-            var psi = new ProcessStartInfo("powercfg", "/s 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
-            {
-                CreateNoWindow = true,
-                UseShellExecute = false
-            };
-            Process.Start(psi)?.WaitForExit(1000);
+            await OptimizationProfileManager.ActivateUltimatePerformanceAsync();
+            ok = true;
         }
         catch { }
 
         return new OptimizationResult
         {
-            Success = true,
-            Title = "Ultra Game Mode Engaged",
-            Message = "CPU governor set to max frequency. Core parking and timer resolution locked to 0.5ms.",
+            Success = ok,
+            Title = ok ? "Ultra Game Mode Engaged" : "Game Mode Activation Failed",
+            Message = ok
+                ? "Ultimate Performance power plan active without duplicating schemes."
+                : "Could not switch power scheme (administrator rights may be required).",
             BytesReclaimed = 0
         };
     }
 
     private OptimizationResult FlushAndBoostDns()
     {
+        bool ok = false;
         try
         {
             var psi = new ProcessStartInfo("ipconfig", "/flushdns")
@@ -538,46 +640,91 @@ public sealed class SystemMetricsService : ISystemMetricsService
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
-            Process.Start(psi)?.WaitForExit(1000);
+            using var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                proc.WaitForExit(3000);
+                ok = proc.ExitCode == 0;
+            }
         }
         catch { }
 
         return new OptimizationResult
         {
-            Success = true,
-            Title = "DNS Cache Flushed",
-            Message = "Resolver cache flushed. Network socket priority aligned for sub-millisecond jitter.",
+            Success = ok,
+            Title = ok ? "DNS Cache Flushed" : "DNS Flush Failed",
+            Message = ok
+                ? "DNS resolver cache successfully flushed."
+                : "Failed to run ipconfig /flushdns.",
             BytesReclaimed = 0
         };
     }
 
-    private OptimizationResult OptimizeStartupEntries()
+    private async Task<OptimizationResult> OptimizeStartupEntriesAsync()
     {
-        return new OptimizationResult
+        try
         {
-            Success = true,
-            Title = "Startup Shield Active",
-            Message = "Diagnostic traces, telemetry hooks, and non-essential startup bloat restrained.",
-            BytesReclaimed = 0
-        };
+            var items = StartupManagerService.GetStartupApps();
+            int enabledCount = items.Count(i => i.IsEnabled);
+            await OptimizationEngine.RunRamFlushAsync();
+
+            return new OptimizationResult
+            {
+                Success = true,
+                Title = "Startup Audit Complete",
+                Message = $"Verified {enabledCount} active startup entries and flushed background working sets.",
+                BytesReclaimed = 0
+            };
+        }
+        catch (Exception ex)
+        {
+            return new OptimizationResult
+            {
+                Success = false,
+                Title = "Startup Shield Failed",
+                Message = ex.Message,
+                BytesReclaimed = 0
+            };
+        }
     }
 
-    private OptimizationResult SuppressTelemetryServices()
+    private async Task<OptimizationResult> SuppressTelemetryServicesAsync()
     {
-        return new OptimizationResult
+        try
         {
-            Success = true,
-            Title = "Telemetry Kill Verified",
-            Message = "Diagnostic telemetry, CEIP logging, and automated error feedback disabled.",
-            BytesReclaimed = 0
-        };
+            await OptimizationEngine.DisableTelemetryAsync();
+            return new OptimizationResult
+            {
+                Success = true,
+                Title = "Telemetry Shield Applied",
+                Message = "Windows telemetry policies and DiagTrack service disabled.",
+                BytesReclaimed = 0
+            };
+        }
+        catch (Exception ex)
+        {
+            return new OptimizationResult
+            {
+                Success = false,
+                Title = "Telemetry Shield Failed",
+                Message = ex.Message,
+                BytesReclaimed = 0
+            };
+        }
     }
 
     public void Dispose()
     {
         _pollingTimer?.Dispose();
-        _cpuCounter?.Dispose();
-        _diskCounter?.Dispose();
-        _gpuCounter?.Dispose();
+        lock (_counterLock)
+        {
+            _disposed = true;
+            _cpuCounter?.Dispose();
+            _diskCounter?.Dispose();
+            _gpuCounter?.Dispose();
+            _cpuCounter = null;
+            _diskCounter = null;
+            _gpuCounter = null;
+        }
     }
 }

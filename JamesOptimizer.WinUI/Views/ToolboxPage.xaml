@@ -7,190 +7,374 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <StackPanel Spacing="4">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="&#xE74C;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                    <TextBlock Text="SYSTEM TOOLBOX &amp; BENCHMARK" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="&#xE74C;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="TOOLBOX, BENCHMARK, UNLOCKER &amp; WINGET" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <TextBlock Text="Hardware benchmark with delta history, Restart Manager file unlocker, environment integrator, and winget essentials." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
-                <TextBlock Text="Stress benchmark your rig, clean bloated context menus, run debloaters, and repair system health." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
-            </StackPanel>
 
-            <!-- 1. HARDWARE BENCHMARK CARD (0-100 Score) -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="24">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="18"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="TabBenchmark" Click="ToolboxTab_Click" Tag="BENCH" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="Benchmark &amp; Tools" />
+                    <Button x:Name="TabFileLock" Click="ToolboxTab_Click" Tag="LOCK" Style="{StaticResource SegmentedPillButtonStyle}" Content="File Unlocker" />
+                    <Button x:Name="TabIntegrator" Click="ToolboxTab_Click" Tag="INTEG" Style="{StaticResource SegmentedPillButtonStyle}" Content="Integrator &amp; PATH" />
+                    <Button x:Name="TabWinget" Click="ToolboxTab_Click" Tag="WINGET" Style="{StaticResource SegmentedPillButtonStyle}" Content="winget Apps" />
+                </StackPanel>
+            </Grid>
 
-                    <StackPanel Spacing="4">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center"/>
-                            <TextBlock Text="Hardware Stress Benchmark (0–100 Index)" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                            <Border x:Name="TierBadge" Background="#1F00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                                <TextBlock x:Name="TxtTier" Text="TIER: UNTESTED" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                            </Border>
-                        </StackPanel>
-                        <TextBlock Text="Executes multi-threaded CPU stress, memory copy throughput, and unbuffered disk sector I/O." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
-
-                    <!-- Big Score Display -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtBenchmarkScore" Text="--" FontSize="48" FontWeight="Black" Foreground="{StaticResource AccentCyanBrush}"/>
-                        <TextBlock Text="/100" FontSize="18" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,10"/>
-                    </StackPanel>
-
-                    <!-- Subscores & Action -->
-                    <Grid Grid.Row="2" Grid.ColumnSpan="2">
+            <!-- TAB 1: BENCHMARK + CONTEXT MENU CLEANER + QUICK UTILS -->
+            <StackPanel x:Name="PanelBench" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.PaddingLg}">
+                    <Grid ColumnSpacing="16" RowSpacing="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- CPU Subscore -->
-                        <Border Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,10,0">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="CPU Multi-Core" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                                <TextBlock x:Name="TxtCpuScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Spacing="6" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="&#xE945;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                <TextBlock Text="Hardware Stress Benchmark (3-Run Median)" FontSize="18" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center"/>
+                                <Border Style="{StaticResource Badge.Sm}">
+                                    <TextBlock x:Name="TxtTier" Text="TIER: UNTESTED" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                                </Border>
+                                <Border x:Name="DeltaBadge" Visibility="Collapsed" Style="{StaticResource Badge.Sm}">
+                                    <TextBlock x:Name="TxtBenchDelta" Text="+0 vs Baseline" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}"/>
+                                </Border>
                             </StackPanel>
-                        </Border>
+                            <TextBlock x:Name="TxtBenchContext" Text="Discards warm-up run and records power plan + OS build context for honest comparisons." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                        </StackPanel>
 
-                        <!-- RAM Subscore -->
-                        <Border Grid.Column="1" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,10,0">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="RAM Bandwidth" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                                <TextBlock x:Name="TxtRamScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </StackPanel>
-                        </Border>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtBenchmarkScore" Text="--" Style="{StaticResource Type.Display}" Foreground="{ThemeResource Accent.Cyan}"/>
+                            <TextBlock Text="/100" Style="{StaticResource Type.Label}" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+                        </StackPanel>
 
-                        <!-- Disk Subscore -->
-                        <Border Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,14,0">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="Disk Direct I/O" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                                <TextBlock x:Name="TxtDiskScore" Text="-- / 100" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </StackPanel>
-                        </Border>
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                        <Button x:Name="BtnRunBenchmark" Grid.Column="3" Click="BtnRunBenchmark_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="46" Padding="20,0" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                                <TextBlock Text="RUN BENCHMARK" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
+                            <Border Grid.Column="0" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="CPU Multi-Core" Style="{StaticResource Type.Label}"/>
+                                    <TextBlock x:Name="TxtCpuScore" Text="-- / 100" Style="{StaticResource Type.Numeric}" FontSize="15" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="RAM Bandwidth" Style="{StaticResource Type.Label}"/>
+                                    <TextBlock x:Name="TxtRamScore" Text="-- / 100" Style="{StaticResource Type.Numeric}" FontSize="15" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="Disk Direct I/O" Style="{StaticResource Type.Label}"/>
+                                    <TextBlock x:Name="TxtDiskScore" Text="-- / 100" Style="{StaticResource Type.Numeric}" FontSize="15" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Button Grid.Column="3" Click="BtnExportBenchCsv_Click" Style="{StaticResource ModernGhostButtonStyle}" Height="46" Content="Export CSV"/>
+                            <Button x:Name="BtnRunBenchmark" Grid.Column="4" Click="BtnRunBenchmark_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Height="46" Padding="20,0" Content="RUN BENCHMARK"/>
+                        </Grid>
                     </Grid>
+                </Border>
+
+                <!-- Context Menu Cleaner -->
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Context Menu Shell Extensions" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                    <Border Style="{StaticResource Badge.Sm}">
+                                        <TextBlock x:Name="TxtContextMenuCount" Text="0 Extensions" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="Toggle third-party shell extensions bloating Explorer right-click menus." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="10">
+                                <Button Click="BtnRestartExplorer_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Restart Explorer"/>
+                                <Button Click="BtnScanContextMenu_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan Handlers"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <ItemsControl x:Name="ContextMenuList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding KeyPath}" Style="{StaticResource Type.Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1" IsOn="{Binding IsActive, Mode=OneWay}" Toggled="ContextMenuToggle_Toggled" Tag="{Binding}" MinWidth="104" VerticalAlignment="Center" OnContent="Active" OffContent="Disabled"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Utilities -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                        <Grid RowSpacing="14">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Enable God Mode" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Creates master Control Panel folder on Desktop." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Row="1" Click="BtnGodMode_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Create God Mode"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                        <Grid RowSpacing="14">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="DISM / SFC Health Repair" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Scans and repairs protected Windows system files." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Row="1" Click="BtnDismRepair_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Repair System Image"/>
+                        </Grid>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                        <Grid RowSpacing="14">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Native UWP App Debloater" Style="{StaticResource Type.Body}" FontWeight="SemiBold"/>
+                                <TextBlock Text="Opens native C# PackageManager UWP uninstaller (no PowerShell)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Row="1" Click="BtnDebloater_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Open UWP Manager"/>
+                        </Grid>
+                    </Border>
                 </Grid>
-            </Border>
+            </StackPanel>
 
-            <!-- 2. CONTEXT MENU CLEANER -->
-            <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="16" Padding="20">
-                <StackPanel Spacing="16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="2">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                                <TextBlock Text="Context Menu Cleaner" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <Border Background="#1F00E5FF" CornerRadius="6" Padding="8,2" VerticalAlignment="Center">
-                                    <TextBlock x:Name="TxtContextMenuCount" Text="0 Extensions" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                                </Border>
+            <!-- TAB 2: FILE LOCK FINDER & UNLOCKER (RESTART MANAGER) -->
+            <StackPanel x:Name="PanelFileLock" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="File Lock / Handle Finder &amp; Unlocker (Restart Manager)" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtLockStatus" Text="Inspect which process locks a file or folder. Critical OS processes are hard-protected from termination." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <TextBlock Text="Inspect and toggle third-party shell extensions bloating your right-click Explorer menu." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <Button Grid.Column="1" Click="BtnAddExplorerLockMenu_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource ModernGhostButtonStyle}" Content="Add Explorer Context Menu"/>
+                        </Grid>
+
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtLockTargetPath" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Paste file or folder path (e.g. C:\Temp\locked.dll)"/>
+                            <Button Grid.Column="1" Click="BtnFindLocks_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Inspect Locks"/>
+                            <Button Grid.Column="2" Click="BtnGracefulShutdownLocks_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Graceful Close"/>
+                            <Button Grid.Column="3" Click="BtnScheduleDeleteReboot_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Delete on Reboot"/>
+                        </Grid>
+
+                        <ItemsControl x:Name="LockProcessesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="80" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding ProcessId}" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding ExecutablePath}" Style="{StaticResource Type.Caption}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding ApplicationType}" Style="{StaticResource Type.Label}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="3" Click="BtnKillLockingProc_Click" Tag="{Binding ProcessId}" Style="{StaticResource GhostButtonStyle}" Content="Terminate"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- TAB 3: INTEGRATOR (WIN+R ALIASES, DESKTOP MENU, PATH CLEANER) -->
+            <StackPanel x:Name="PanelIntegrator" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Custom Win+R Run Aliases [ADMIN]" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                            <TextBlock x:Name="TxtAliasStatus" Text="Register quick Win+R shortcuts. System commands (cmd, powershell, regedit, etc.) cannot be shadowed." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                         </StackPanel>
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                            <Button Click="BtnRestartExplorer_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Restart Explorer"/>
-                            <Button Click="BtnScanContextMenu_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Scan Handlers"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Extensions List -->
-                    <ItemsControl x:Name="ContextMenuList">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,8">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel VerticalAlignment="Center" Spacing="1">
-                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding KeyPath}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1" IsOn="{Binding IsActive, Mode=TwoWay}" Toggled="ContextMenuToggle_Toggled" Tag="{Binding}" VerticalAlignment="Center" OnContent="Active" OffContent="Disabled"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
-
-            <!-- 3. QUICK UTILITIES GRID -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- God Mode -->
-                <Border Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Enable God Mode" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Grid.Row="1" Text="Creates master control panel shortcut on Desktop with all 200+ Windows settings." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button Grid.Row="2" Click="BtnGodMode_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Create God Mode"/>
-                    </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtAliasName" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Alias (e.g. mycode)"/>
+                            <TextBox x:Name="TxtAliasExePath" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Full path to .exe"/>
+                            <Button Grid.Column="2" Click="BtnAddAlias_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Register Alias"/>
+                        </Grid>
+                        <ItemsControl x:Name="AliasesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Alias}" FontFamily="{StaticResource Font.Mono}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ExecutablePath}" Style="{StaticResource Type.Caption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <Button Grid.Column="2" Click="BtnRemoveAlias_Click" Tag="{Binding Alias}" Style="{StaticResource GhostButtonStyle}" Content="Remove"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
 
-                <!-- DISM Health Check -->
-                <Border Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="DISM / SFC Health Repair" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Grid.Row="1" Text="Scans and restores corrupted Windows system image components and protected DLL files." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button Grid.Row="2" Click="BtnDismRepair_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Repair System Image"/>
-                    </Grid>
-                </Border>
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="System &amp; User PATH Inspector" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtPathStatus" Text="Detects missing directories and duplicates while preserving REG_EXPAND_SZ variables." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="8">
+                                <Button Click="BtnCleanUserPath_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Clean User PATH"/>
+                                <Button Click="BtnCleanSystemPath_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Clean System PATH"/>
+                                <Button Click="BtnRefreshPath_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Scan PATH"/>
+                            </StackPanel>
+                        </Grid>
 
-                <!-- Windows Debloater -->
-                <Border Grid.Column="4" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Windows Debloater" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Grid.Row="1" Text="Purges pre-installed consumer bloatware UWP apps and telemetry packages." FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
-                        <Button Grid.Row="2" Click="BtnDebloater_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Run Debloater Script"/>
-                    </Grid>
+                        <ItemsControl x:Name="PathEntriesList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,9" Margin="0,0,0,6">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="72" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Scope}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding RawEntry}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Exists}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
-            </Grid>
+            </StackPanel>
+
+            <!-- TAB 4: WINGET ESSENTIALS INSTALLER -->
+            <StackPanel x:Name="PanelWinget" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Curated winget Essentials Installer" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtWingetStatus" Text="Installs verified official packages from --source winget (zero third-party URL scraping)." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="8">
+                                <Button Click="BtnCheckWinget_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Check Installed"/>
+                                <Button x:Name="BtnUpgradeAllWinget" Click="BtnUpgradeAllWinget_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Upgrade All"/>
+                                <Button x:Name="BtnInstallSelectedWinget" Click="BtnInstallSelectedWinget_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Install Selected"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <ItemsControl x:Name="WingetList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" MinWidth="0" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource Type.Caption}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Id}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding IsInstalled}" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

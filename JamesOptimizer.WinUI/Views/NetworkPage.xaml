@@ -4,13 +4,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
-    Loaded="Page_Loaded">
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
             <!-- Header -->
-            <Grid>
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,131 +20,219 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE839;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="NETWORK BOOST &amp; DNS" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE839;" FontFamily="{StaticResource Font.Icon}" FontSize="22" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="NETWORK BOOST, DNS BENCHMARK &amp; HOSTS" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Text="Purge stale DNS resolvers, minimize latency, reset network stacks, and switch high-speed DNS." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Multi-provider UDP DNS benchmark, Windows 11 DoH, HOSTS file editor, and active TCP socket PID inspector." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <Button x:Name="BtnTestLatency" Grid.Column="1" Click="BtnTestLatency_Click" Style="{StaticResource ModernPrimaryButtonStyle}" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                        <TextBlock Text="PING TEST" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="TabDns" Click="NetTab_Click" Tag="DNS" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="DNS &amp; Benchmark" />
+                    <Button x:Name="TabHosts" Click="NetTab_Click" Tag="HOSTS" Style="{StaticResource SegmentedPillButtonStyle}" Content="HOSTS Editor" />
+                    <Button x:Name="TabSockets" Click="NetTab_Click" Tag="SOCKETS" Style="{StaticResource SegmentedPillButtonStyle}" Content="Active Connections" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Live Network Throughput Banner -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <Grid ColumnSpacing="18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="LIVE DOWNLOAD" Style="{StaticResource Type.Label}" />
+                        <TextBlock x:Name="TxtDownloadRate" Text="0 KB/s" Style="{StaticResource Type.Numeric}" FontSize="20" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" />
                     </StackPanel>
-                </Button>
-            </Grid>
 
-            <!-- Ping Results Cards -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3" Margin="8,0,0,0">
+                        <TextBlock Text="LIVE UPLOAD" Style="{StaticResource Type.Label}" />
+                        <TextBlock x:Name="TxtUploadRate" Text="0 KB/s" Style="{StaticResource Type.Numeric}" FontSize="20" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Purple}" />
+                    </StackPanel>
 
-                <!-- Cloudflare Ping -->
-                <Border Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Cloudflare DNS (1.1.1.1)" FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <TextBlock x:Name="TxtCloudflarePing" Text="--" FontSize="32" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
-                                <TextBlock Text="ms" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    <canvas:CanvasControl x:Name="NetSparkCanvas" Grid.Column="2" Height="42" VerticalAlignment="Center" Draw="NetSparkCanvas_Draw" />
+
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="4">
+                        <ComboBox x:Name="ComboAdapter" Width="210" SelectionChanged="ComboAdapter_SelectionChanged" />
+                        <TextBlock x:Name="TxtActiveDns" Text="DNS: Auto" FontFamily="{StaticResource Font.Mono}" FontSize="11" Foreground="{ThemeResource State.Good}" HorizontalAlignment="Right" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- TAB 1: DNS SWITCHER & BENCHMARK -->
+            <StackPanel x:Name="PanelDns" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="High-Performance Anycast DNS &amp; Windows 11 DoH" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock Text="Applies to the selected active adapter above. Benchmark providers first to find the lowest median + jitter." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                        </StackPanel>
-                        <Border Grid.Column="1" Width="44" Height="44" CornerRadius="12" Background="#1A00F5FF" VerticalAlignment="Center">
-                            <TextBlock Text="⚡" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </Grid>
+                            <CheckBox x:Name="ChkEnableDoh" Grid.Column="1" Content="Enable Windows 11 DoH" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid ColumnSpacing="8" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Button Grid.Row="0" Grid.Column="0" Click="BtnSetDns_Click" Tag="Cloudflare" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Cloudflare (1.1.1.1)"/>
+                            <Button Grid.Row="0" Grid.Column="1" Click="BtnSetDns_Click" Tag="Google" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Google (8.8.8.8)"/>
+                            <Button Grid.Row="0" Grid.Column="2" Click="BtnSetDns_Click" Tag="Quad9" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Quad9 (9.9.9.9)"/>
+                            <Button Grid.Row="0" Grid.Column="3" Click="BtnSetDns_Click" Tag="AdGuard" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="AdGuard (94.140.14.14)"/>
+                            <Button Grid.Row="1" Grid.Column="0" Click="BtnSetDns_Click" Tag="OpenDNS" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="OpenDNS"/>
+                            <Button Grid.Row="1" Grid.Column="1" Click="BtnSetDns_Click" Tag="NextDNS" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="NextDNS"/>
+                            <Button Grid.Row="1" Grid.Column="2" Click="BtnSetDns_Click" Tag="DHCP" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Auto (DHCP)"/>
+                        </Grid>
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Click="BtnFlushDns_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Flush DNS Cache"/>
+                            <Button Grid.Column="1" Click="BtnResetNetwork_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Reset TCP/IP &amp; Winsock"/>
+                            <Button x:Name="BtnRunDnsBench" Grid.Column="3" Click="BtnRunDnsBench_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Run Live UDP DNS Benchmark"/>
+                        </Grid>
+                    </StackPanel>
                 </Border>
 
-                <!-- Google Ping -->
-                <Border Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Google DNS (8.8.8.8)" FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <TextBlock x:Name="TxtGooglePing" Text="--" FontSize="32" FontWeight="Bold" Foreground="{StaticResource SuccessGreenBrush}"/>
-                                <TextBlock Text="ms" FontSize="16" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                <ItemsControl x:Name="DnsBenchList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12" Margin="0,0,0,8">
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding ProviderName}" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding ServerIp}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Style="{StaticResource Type.Numeric}" FontSize="12" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center">
+                                        <Run Text="Median: " /><Run Text="{Binding MedianMs}" /><Run Text="ms · P95: " /><Run Text="{Binding P95Ms}" /><Run Text="ms · Jitter: " /><Run Text="{Binding JitterMs}" /><Run Text="ms · Loss: " /><Run Text="{Binding LossPercent}" /><Run Text="%" />
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- TAB 2: HOSTS FILE EDITOR -->
+            <StackPanel x:Name="PanelHosts" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="HOSTS File Editor [ADMIN]" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtHostsStatus" Text="Manages C:\Windows\System32\drivers\etc\hosts with automatic timestamped backups and zero bundled blocklists." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                             </StackPanel>
-                        </StackPanel>
-                        <Border Grid.Column="1" Width="44" Height="44" CornerRadius="12" Background="#1A00E676" VerticalAlignment="Center">
-                            <TextBlock Text="🌐" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </Grid>
+                            <Button Grid.Column="1" Click="BtnRestoreHosts_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Restore Backup" VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Click="BtnReloadHosts_Click" Style="{StaticResource ModernGhostButtonStyle}" Content="Reload" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TxtHostsIp" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" Text="0.0.0.0" PlaceholderText="IP (e.g. 0.0.0.0)"/>
+                            <TextBox x:Name="TxtHostsDomain" Grid.Column="1" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Domain (e.g. ads.example.com)"/>
+                            <TextBox x:Name="TxtHostsComment" Grid.Column="2" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Comment (optional)"/>
+                            <TextBox x:Name="TxtHostsTag" Grid.Column="3" Style="{StaticResource ModernSearchBoxStyle}" PlaceholderText="Tag (optional)"/>
+                            <Button Grid.Column="4" Click="BtnAddHosts_Click" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Add Entry"/>
+                        </Grid>
+
+                        <ItemsControl x:Name="HostsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <ToggleSwitch IsOn="{Binding Enabled, Mode=OneWay}" Toggled="HostsToggle_Toggled" Tag="{Binding LineIndex}" MinWidth="44" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding IpAddress}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Hostname}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <Button Grid.Column="3" Click="BtnDeleteHosts_Click" Tag="{Binding LineIndex}" Style="{StaticResource GhostButtonStyle}" Content="Remove"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
-            </Grid>
+            </StackPanel>
 
-            <!-- Network Tools Grid -->
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="14"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- TAB 3: ACTIVE CONNECTIONS / LISTENING PORTS -->
+            <StackPanel x:Name="PanelSockets" Visibility="Collapsed" Spacing="16">
+                <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="Active TCP Sockets &amp; Listening Ports (PID Mapped)" FontSize="16" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}"/>
+                                <TextBlock x:Name="TxtSocketsStatus" Text="Enumerated via GetExtendedTcpTable. Critical OS processes cannot be terminated." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Click="BtnRefreshSockets_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource ModernPrimaryButtonStyle}" Content="Refresh Connections"/>
+                        </Grid>
 
-                <!-- Flush DNS -->
-                <Border Grid.Row="0" Grid.Column="0" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Flush DNS Cache" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Grid.Row="1" Text="Clears Windows client DNS cache, resolving address resolution deadlocks and website reachability problems." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,16"/>
-                        <Button Grid.Row="2" Click="BtnFlushDns_Click" Style="{StaticResource ModernPrimaryButtonStyle}" HorizontalAlignment="Stretch" Content="Flush DNS Cache"/>
-                    </Grid>
+                        <ItemsControl x:Name="SocketsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="14,10" Margin="0,0,0,8">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="160" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding ProcessName}" Style="{StaticResource Type.Body}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding LocalEndpoint}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding RemoteEndpoint}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding State}" FontFamily="{StaticResource Font.Mono}" FontSize="12" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="4" Click="BtnOpenSocketLocation_Click" Tag="{Binding ExecutablePath}" Style="{StaticResource GhostButtonStyle}" Content="Location"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </Border>
-
-                <!-- Reset TCP/IP Stack -->
-                <Border Grid.Row="0" Grid.Column="2" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Reset TCP/IP &amp; Winsock" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Grid.Row="1" Text="Rewrites corrupted Windows networking sockets and resets routing interfaces to clean factory defaults." FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,8,0,16"/>
-                        <Button Grid.Row="2" Click="BtnResetNetwork_Click" Style="{StaticResource ModernGhostButtonStyle}" HorizontalAlignment="Stretch" Content="Reset Network Stack"/>
-                    </Grid>
-                </Border>
-
-                <!-- DNS Switcher -->
-                <Border Grid.Row="2" Grid.ColumnSpan="3" Background="{StaticResource BgElevatedBrush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="20">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="High-Performance DNS Switcher" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Switch active network adapters to low-latency, privacy-first Anycast DNS servers." FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Button Click="BtnSetDns_Click" Tag="Cloudflare" Style="{StaticResource ModernGhostButtonStyle}" Content="Cloudflare (1.1.1.1)"/>
-                            <Button Click="BtnSetDns_Click" Tag="Google" Style="{StaticResource ModernGhostButtonStyle}" Content="Google (8.8.8.8)"/>
-                            <Button Click="BtnSetDns_Click" Tag="Quad9" Style="{StaticResource ModernGhostButtonStyle}" Content="Quad9 (9.9.9.9)"/>
-                            <Button Click="BtnSetDns_Click" Tag="DHCP" Style="{StaticResource ModernGhostButtonStyle}" Content="Automatic (DHCP)"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

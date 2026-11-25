@@ -7,10 +7,11 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="24" Padding="28,24,28,32">
-            <!-- Header -->
-            <Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" Padding="{StaticResource Page.Padding}">
+
+            <!-- 1. HEADER & GLOBAL ACTIONS -->
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -18,54 +19,220 @@
 
                 <StackPanel Spacing="4">
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="&#xE770;" FontFamily="{StaticResource IconFontFamily}" FontSize="24" Foreground="{StaticResource AccentCyanBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="PERFORMANCE TWEAKS" FontFamily="{StaticResource DisplayFontFamily}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <Border Width="36" Height="36" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE770;" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="KERNEL &amp; SYSTEM TWEAKER" Style="{StaticResource Type.Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <Border Style="{StaticResource Badge.Sm}" Margin="4,0,0,0">
+                            <TextBlock x:Name="TxtCatalogCount" Text="CATALOG V3" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}"/>
+                        </Border>
                     </StackPanel>
-                    <TextBlock Text="Fine-tune Windows scheduler, memory management, power plans, and telemetry overhead." FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Declarative registry, scheduler, GPU, privacy, and AI policy engine with live state detection and atomic revert." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Button x:Name="BtnApplyAll" Click="BtnApplyAll_Click" Style="{StaticResource ModernPrimaryButtonStyle}">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Button x:Name="BtnCreateRestorePoint" Click="BtnCreateRestorePoint_Click" Style="{StaticResource ModernGhostButtonStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
-                            <TextBlock Text="APPLY ALL RECOMMENDED" FontFamily="{StaticResource ConsoleFontFamily}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE777;" FontFamily="{StaticResource Font.Icon}" FontSize="14" Foreground="{ThemeResource State.Good}" VerticalAlignment="Center"/>
+                            <TextBlock Text="RESTORE POINT" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnRefreshState" Click="BtnRefreshState_Click" Style="{StaticResource ModernGhostButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource Font.Icon}" FontSize="13" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                            <TextBlock Text="DETECT" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="BtnRevertAll" Click="BtnRevertAll_Click" Style="{StaticResource ModernGhostButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="&#xE7A7;" FontFamily="{StaticResource Font.Icon}" FontSize="13" Foreground="{ThemeResource State.Warn}" VerticalAlignment="Center"/>
+                            <TextBlock Text="REVERT ALL" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>
 
-            <!-- Tweaks List -->
+            <!-- Status / Dry-Run Alert Banner -->
+            <Border x:Name="AlertBanner" Visibility="Collapsed" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Strong}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="16,12">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="AlertIcon" Text="&#xE73E;" FontFamily="{StaticResource Font.Icon}" FontSize="16" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="AlertText" Grid.Column="1" Text="Status update..." Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Primary}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" Click="AlertBannerClose_Click" Style="{StaticResource IconRaisedButtonStyle}" Width="28" Height="28" CornerRadius="8" AutomationProperties.Name="Dismiss Alert">
+                        <TextBlock Text="&#xE711;" FontFamily="{StaticResource Font.Icon}" FontSize="11" Foreground="{ThemeResource Text.Tertiary}"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- 2. PRESET PROFILES (DRY-RUN PREVIEWABLE) -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="{StaticResource Card.Padding}">
+                <StackPanel Spacing="14">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Border Style="{StaticResource Badge.Sm}">
+                                <TextBlock Text="PRESETS" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" />
+                            </Border>
+                            <TextBlock Text="CURATED PROFILES (WITH DRY-RUN PREVIEW)" Style="{StaticResource SectionHeaderTextStyle}" Foreground="{ThemeResource Text.Primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <CheckBox x:Name="ChkDryRun" Grid.Column="1" Content="Dry-Run Preview Before Applying" HorizontalAlignment="Right" VerticalAlignment="Center" IsChecked="False" />
+                    </Grid>
+
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Click="PresetEsports_Click" Style="{StaticResource TileButtonStyle}"
+                                HorizontalContentAlignment="Left" Padding="14,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Gaming / Esports" FontFamily="{StaticResource Font.Sans}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="QoS · Unpark · 1:1 Aim" Style="{StaticResource Type.Label}" FontSize="10" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="1" Click="PresetPrivacy_Click" Style="{StaticResource TileButtonStyle}"
+                                HorizontalContentAlignment="Left" Padding="14,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Privacy &amp; AI" FontFamily="{StaticResource Font.Sans}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="Copilot · Telemetry · Ads" Style="{StaticResource Type.Label}" FontSize="10" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2" Click="PresetBalanced_Click" Style="{StaticResource TileButtonStyle}"
+                                HorizontalContentAlignment="Left" Padding="14,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Balanced / Work" FontFamily="{StaticResource Font.Sans}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="Visuals · Office · Search" Style="{StaticResource Type.Label}" FontSize="10" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="3" Click="PresetLaptop_Click" Style="{StaticResource TileButtonStyle}"
+                                HorizontalContentAlignment="Left" Padding="14,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Laptop / Battery" FontFamily="{StaticResource Font.Sans}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="OneDrive · Telemetry · UI" Style="{StaticResource Type.Label}" FontSize="10" Foreground="{ThemeResource Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="4" Click="PresetStock_Click" Style="{StaticResource TileButtonStyle}"
+                                HorizontalContentAlignment="Left" Padding="14,12">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Stock (Revert)" FontFamily="{StaticResource Font.Sans}" FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource Text.Primary}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="Restore Prior Snapshots" Style="{StaticResource Type.Label}" FontSize="10" Foreground="{ThemeResource Text.Tertiary}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. SEARCH & CATEGORY FILTER BAR -->
+            <Border Style="{StaticResource CardPanelStyle}" Padding="16,12">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="SearchBox" Grid.Column="0" Style="{StaticResource ModernSearchBoxStyle}" TextChanged="SearchBox_TextChanged"
+                             PlaceholderText="Search tweaks, tags, keys..." VerticalAlignment="Center"/>
+
+                    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button x:Name="FilterBtnAll" Click="CategoryFilter_Click" Tag="ALL" Style="{StaticResource SegmentedPillActiveButtonStyle}" Content="ALL" />
+                            <Button x:Name="FilterBtnLatency" Click="CategoryFilter_Click" Tag="LATENCY" Style="{StaticResource SegmentedPillButtonStyle}" Content="LATENCY" />
+                            <Button x:Name="FilterBtnGaming" Click="CategoryFilter_Click" Tag="GAMING" Style="{StaticResource SegmentedPillButtonStyle}" Content="GAMING" />
+                            <Button x:Name="FilterBtnDisplay" Click="CategoryFilter_Click" Tag="DISPLAY" Style="{StaticResource SegmentedPillButtonStyle}" Content="GPU / DISPLAY" />
+                            <Button x:Name="FilterBtnPrivacy" Click="CategoryFilter_Click" Tag="PRIVACY" Style="{StaticResource SegmentedPillButtonStyle}" Content="PRIVACY / AI" />
+                            <Button x:Name="FilterBtnSystem" Click="CategoryFilter_Click" Tag="SYSTEM" Style="{StaticResource SegmentedPillButtonStyle}" Content="SYSTEM" />
+                            <Button x:Name="FilterBtnNetwork" Click="CategoryFilter_Click" Tag="NETWORK" Style="{StaticResource SegmentedPillButtonStyle}" Content="NETWORK" />
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Column="2" Style="{StaticResource Badge.Sm}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse Width="7" Height="7" Fill="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtActiveCount" Text="0 / 0 Active" Style="{StaticResource Type.Numeric}" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 4. CATALOG TWEAKS LIST -->
             <ItemsControl x:Name="TweaksList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="12" Padding="18,16" Margin="0,0,0,12">
-                            <Grid>
+                        <Border Background="{ThemeResource Bg.Surface}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="1" CornerRadius="{StaticResource Radius.Lg}" Padding="{StaticResource Card.Padding}" Margin="0,0,0,12" Opacity="{Binding CardOpacity}">
+                            <Grid ColumnSpacing="16">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <Border Width="42" Height="42" CornerRadius="10" Background="#181D2A" BorderBrush="#283247" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding IconGlyph}" FontFamily="{StaticResource IconFontFamily}" FontSize="18" Foreground="{StaticResource AccentCyanBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="{StaticResource Radius.Md}" Background="{ThemeResource Bg.Surface2}" BorderBrush="{ThemeResource Border.Subtle}" BorderThickness="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding IconGlyph}" FontFamily="{StaticResource Font.Icon}" FontSize="18" Foreground="{ThemeResource Accent.Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <Border Visibility="{Binding IsRecommendedVisibility}" Background="#1F00E5FF" BorderBrush="#4D00E5FF" BorderThickness="1" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                                            <TextBlock Text="RECOMMENDED" FontSize="9" FontWeight="Bold" Foreground="{StaticResource AccentCyanBrush}"/>
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource Type.Body}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <Border Style="{StaticResource Badge.Sm}">
+                                            <TextBlock Text="{Binding CategoryLabel}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Text.Secondary}"/>
+                                        </Border>
+                                        <Border Style="{StaticResource Badge.Sm}">
+                                            <TextBlock Text="{Binding EvidenceText}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Purple}"/>
+                                        </Border>
+                                        <Border Style="{StaticResource Badge.Sm}">
+                                            <TextBlock Text="{Binding RiskText}" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource State.Good}"/>
+                                        </Border>
+                                        <Border Visibility="{Binding DriftBadgeVisibility}" Style="{StaticResource Badge.Sm}" Background="{ThemeResource State.Warn.Glow}">
+                                            <TextBlock Text="DRIFTED · REAPPLY?" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource State.Warn}"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+
+                                    <TextBlock Text="{Binding Description}" Style="{StaticResource Type.Caption}" Foreground="{ThemeResource Text.Secondary}" TextWrapping="Wrap"/>
+
+                                    <Border Style="{StaticResource RegistryTargetBoxStyle}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="TARGET:" FontFamily="{StaticResource Font.Mono}" FontSize="10" FontWeight="SemiBold" Foreground="{ThemeResource Accent.Cyan}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding RegistryTarget}" Style="{StaticResource Type.Label}" FontSize="11" Foreground="{ThemeResource Text.Secondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
 
-                                <ToggleSwitch Grid.Column="2" IsOn="{Binding IsEnabled, Mode=TwoWay}" Toggled="TweakToggle_Toggled" Tag="{Binding Id}" VerticalAlignment="Center" Margin="14,0,0,0" OnContent="Active" OffContent="Disabled"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                    <Button Click="BtnPreviewTweak_Click" Tag="{Binding Id}" Style="{StaticResource GhostButtonStyle}" Height="28" Content="Preview"/>
+
+                                    <Border Style="{StaticResource Badge.Sm}" Padding="10,4">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Ellipse Width="6" Height="6" Fill="{Binding StatusDotBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding StatusText}" FontFamily="{StaticResource Font.Mono}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding StatusBrush}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <ToggleSwitch IsOn="{Binding IsEnabled, Mode=OneWay}" IsEnabled="{Binding IsApplicable}" Toggled="TweakToggle_Toggled" Tag="{Binding Id}" VerticalAlignment="Center" MinWidth="44" OnContent="" OffContent="" />
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

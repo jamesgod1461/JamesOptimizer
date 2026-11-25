@@ -1,90 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.Management;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
+using System.Management;
+using System.Runtime.Versioning;
+using System.ServiceProcess;
+using JamesOptimizer.Core;
 using Microsoft.Win32;
 
 namespace JamesOptimizer
 {
+    [SupportedOSPlatform("windows")]
     public class StartupItem
     {
         public string Name { get; set; } = "";
-        
+        public string ServiceName { get; set; } = "";
+
         private string _path = "";
-        public string Path 
-        { 
-            get => _path; 
-            set 
-            { 
-                _path = value; 
-                ResolvePublisher();
-            } 
+        public string Path
+        {
+            get => _path;
+            set
+            {
+                _path = value;
+                ResolveMetadata();
+            }
         }
 
         public string Source { get; set; } = "";
         public string Publisher { get; set; } = "";
         public bool IsEnabled { get; set; } = true;
-        public string Type { get; set; } = "App"; // App, Service, Autorun
+        public string Type { get; set; } = "App"; // App, ScheduledTask, Autorun, Service
+        public string ImpactLabel { get; set; } = "Low Impact";
+        public double EstimatedBootSeconds { get; set; } = 0.4;
+        public string TaskFullPath { get; set; } = "";
 
-        private void ResolvePublisher()
+        private void ResolveMetadata()
         {
             if (string.IsNullOrWhiteSpace(_path)) return;
             try
             {
-                string exePath = "";
-                if (_path.StartsWith("\""))
+                string exePath = ServiceInfo.ExtractExecutablePath(_path);
+                if (!File.Exists(exePath)) return;
+
+                long fileBytes = 0;
+                try { fileBytes = new FileInfo(exePath).Length; } catch { }
+
+                if (fileBytes > 30L * 1024 * 1024 ||
+                    _path.Contains("Steam", StringComparison.OrdinalIgnoreCase) ||
+                    _path.Contains("Discord", StringComparison.OrdinalIgnoreCase) ||
+                    _path.Contains("Teams", StringComparison.OrdinalIgnoreCase))
                 {
-                    int endQuote = _path.IndexOf("\"", 1);
-                    if (endQuote > 0)
-                        exePath = _path.Substring(1, endQuote - 1);
+                    ImpactLabel = "High Impact";
+                    EstimatedBootSeconds = 2.4;
+                }
+                else if (fileBytes > 5L * 1024 * 1024)
+                {
+                    ImpactLabel = "Medium Impact";
+                    EstimatedBootSeconds = 1.1;
                 }
                 else
                 {
-                    int exeIndex = _path.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-                    if (exeIndex > 0)
-                        exePath = _path.Substring(0, exeIndex + 4);
-                    else
-                        exePath = _path;
+                    ImpactLabel = "Low Impact";
+                    EstimatedBootSeconds = 0.4;
                 }
-                
-                exePath = exePath.Trim();
-                
-                // Handle native paths and environment variables
-                if (exePath.StartsWith(@"\??\")) exePath = exePath.Substring(4);
-                if (exePath.StartsWith(@"\SystemRoot\", StringComparison.OrdinalIgnoreCase)) 
-                    exePath = exePath.Replace(@"\SystemRoot\", @"%SystemRoot%\");
-                
-                exePath = Environment.ExpandEnvironmentVariables(exePath);
 
-                if (System.IO.File.Exists(exePath))
-                {
-                    try
-                    {
-                        #pragma warning disable SYSLIB0057
-                        var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(exePath);
-                        #pragma warning restore SYSLIB0057
-                        string subject = cert.Subject;
-                        var parts = subject.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                        string? cn = null, o = null;
-                        foreach (var part in parts)
-                        {
-                            if (part.StartsWith("O=")) o = part.Substring(2);
-                            else if (part.StartsWith("CN=")) cn = part.Substring(3);
-                        }
-                        Publisher = (o ?? cn ?? subject).Replace("\"", "");
-                        Publisher = "[Verified] " + Publisher;
-                    }
-                    catch
-                    {
-                        var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
-                        Publisher = versionInfo.CompanyName ?? "";
-                    }
-                }
+                Publisher = NativeSystemHelper.ResolvePublisherLabel(exePath);
             }
-            catch (Exception ex) { HardwareLogger.LogError("ResolvePublisher failed", ex); }
+            catch (Exception ex)
+            {
+                HardwareLogger.LogError("ResolveMetadata failed", ex);
+            }
         }
     }
 
+    [SupportedOSPlatform("windows")]
     public static class StartupManagerService
     {
         public static List<StartupItem> GetStartupApps()
@@ -92,136 +82,177 @@ namespace JamesOptimizer
             var items = new List<StartupItem>();
             try
             {
-                // HKCU Run
                 ReadRegistryKey(items, Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Run", @"HKCU\Software\Microsoft\Windows\CurrentVersion\Run", @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run");
-
-                // HKLM Run
                 ReadRegistryKey(items, Registry.LocalMachine, @"Software\Microsoft\Windows\CurrentVersion\Run", @"HKLM\Software\Microsoft\Windows\CurrentVersion\Run", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run");
 
-                // Startup Folder
                 string startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
                 if (Directory.Exists(startupFolder))
                 {
                     foreach (string file in Directory.GetFiles(startupFolder))
                     {
-                        string name = Path.GetFileName(file);
+                        string name = System.IO.Path.GetFileName(file);
                         bool isEnabled = CheckStartupApproved(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", name);
-
                         items.Add(new StartupItem { Name = name, Path = file, Source = startupFolder, Type = "App", IsEnabled = isEnabled });
                     }
                 }
+
+                ApplyBootDiagnosticsImpact(items);
             }
             catch (Exception ex) { HardwareLogger.LogError("GetStartupApps failed", ex); }
             return items;
         }
 
-        private static void ReadRegistryKey(List<StartupItem> items, RegistryKey root, string subKey, string sourceName, string approvedKeyPath)
+        private static void ApplyBootDiagnosticsImpact(List<StartupItem> items)
         {
-            using (RegistryKey? key = root.OpenSubKey(subKey, false))
-            {
-                if (key != null)
-                {
-                    foreach (string valName in key.GetValueNames())
-                    {
-                        bool isEnabled = CheckStartupApproved(root, approvedKeyPath, valName);
-                        items.Add(new StartupItem { Name = valName, Path = key.GetValue(valName)?.ToString() ?? "", Source = sourceName, Type = "App", IsEnabled = isEnabled });
-                    }
-                }
-            }
-        }
+            if (items.Count == 0) return;
+            var itemExes = items
+                .Select(i => (Item: i, ExeName: System.IO.Path.GetFileNameWithoutExtension(ServiceInfo.ExtractExecutablePath(i.Path))))
+                .Where(x => !string.IsNullOrEmpty(x.ExeName))
+                .ToList();
+            if (itemExes.Count == 0) return;
 
-        private static bool CheckStartupApproved(RegistryKey root, string approvedKeyPath, string valueName)
-        {
             try
             {
-                using (RegistryKey? key = root.OpenSubKey(approvedKeyPath, false))
+                var query = new EventLogQuery("Microsoft-Windows-Diagnostics-Performance/Operational", PathType.LogName, "*[System[(EventID>=100 and EventID<=110)]]");
+                query.ReverseDirection = true;
+                using var reader = new EventLogReader(query);
+                int inspected = 0;
+                while (inspected < 40)
                 {
-                    if (key != null)
+                    using var evt = reader.ReadEvent();
+                    if (evt == null) break;
+                    inspected++;
+                    string xml = evt.ToXml();
+                    foreach (var (item, exeName) in itemExes)
                     {
-                        object? val = key.GetValue(valueName);
-                        if (val is byte[] bytes && bytes.Length > 0)
+                        if (xml.Contains(exeName, StringComparison.OrdinalIgnoreCase))
                         {
-                            return bytes[0] == 0x02; // 0x02 is enabled, 0x03/0x0B is disabled
+                            item.ImpactLabel = "Measured Boot Impact";
+                            break;
                         }
                     }
                 }
             }
-            catch (Exception ex) { HardwareLogger.LogError("CheckStartupApproved failed", ex); }
-            return true; // Default to enabled if no StartupApproved entry exists
-        }
-
-        public static void ToggleStartupItem(StartupItem item, bool enable)
-        {
-            try
+            catch
             {
-                if (item.Type == "App")
-                {
-                    if (item.Source.StartsWith("HKCU"))
-                    {
-                        ToggleRegistryStartupApproved(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", item.Name, enable);
-                    }
-                    else if (item.Source.StartsWith("HKLM"))
-                    {
-                        ToggleRegistryStartupApproved(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", item.Name, enable);
-                    }
-                    else // Startup Folder
-                    {
-                        ToggleRegistryStartupApproved(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", item.Name, enable);
-                    }
-                }
+                // Event log may require elevated/Diagnostics-Performance access on some SKUs
             }
-            catch (Exception ex) { HardwareLogger.LogError("ToggleStartupItem failed", ex); }
         }
 
-        private static void ToggleRegistryStartupApproved(RegistryKey root, string approvedKeyPath, string valueName, bool enable)
-        {
-            try
-            {
-                using (RegistryKey? key = root.CreateSubKey(approvedKeyPath))
-                {
-                    if (key != null)
-                    {
-                        if (enable)
-                        {
-                            // Writing 0x02 for enabled (12 bytes total)
-                            byte[] data = new byte[] { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-                            key.SetValue(valueName, data, RegistryValueKind.Binary);
-                        }
-                        else
-                        {
-                            // Writing 0x03 for disabled (12 bytes total)
-                            byte[] data = new byte[] { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-                            key.SetValue(valueName, data, RegistryValueKind.Binary);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex) { HardwareLogger.LogError("ToggleRegistryStartupApproved failed", ex); }
-        }
-
-        public static List<StartupItem> GetAutomaticServices()
+        public static List<StartupItem> GetScheduledTasks()
         {
             var items = new List<StartupItem>();
             try
             {
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name, DisplayName, PathName FROM Win32_Service WHERE StartMode = 'Auto'"))
+                var comType = Type.GetTypeFromProgID("Schedule.Service");
+                if (comType == null) return items;
+                dynamic? scheduler = Activator.CreateInstance(comType);
+                if (scheduler == null) return items;
+                scheduler.Connect();
+                dynamic rootFolder = scheduler.GetFolder("\\");
+                CollectTasksRecursive(rootFolder, items);
+            }
+            catch (Exception ex)
+            {
+                HardwareLogger.LogError("GetScheduledTasks failed", ex);
+            }
+            return items;
+        }
+
+        private static void CollectTasksRecursive(dynamic folder, List<StartupItem> items)
+        {
+            try
+            {
+                string folderPath = folder.Path ?? "\\";
+                if (folderPath.StartsWith("\\Microsoft\\Windows", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                foreach (dynamic task in folder.GetTasks(0))
                 {
-                    foreach (ManagementObject queryObj in searcher.Get())
+                    try
                     {
-                        string name = queryObj["DisplayName"]?.ToString() ?? queryObj["Name"]?.ToString() ?? "Unknown";
-                        string path = queryObj["PathName"]?.ToString() ?? "";
-                        items.Add(new StartupItem { Name = name, Path = path, Source = "Windows Service (Auto)", Type = "Service", IsEnabled = true });
+                        string name = task.Name ?? "";
+                        string path = task.Path ?? "";
+                        bool enabled = task.Enabled;
+                        string xml = task.Xml ?? "";
+                        bool isBootOrLogon = xml.Contains("<LogonTrigger", StringComparison.OrdinalIgnoreCase) ||
+                                             xml.Contains("<BootTrigger", StringComparison.OrdinalIgnoreCase);
+                        if (!isBootOrLogon) continue;
+
+                        string exec = ExtractTag(xml, "Command");
+                        string args = ExtractTag(xml, "Arguments");
+                        string fullCmd = string.IsNullOrWhiteSpace(args) ? exec : $"{exec} {args}";
+                        if (string.IsNullOrWhiteSpace(fullCmd)) continue;
+
+                        items.Add(new StartupItem
+                        {
+                            Name = name,
+                            TaskFullPath = path,
+                            Path = fullCmd,
+                            Source = $"Task: {folderPath}",
+                            Type = "ScheduledTask",
+                            IsEnabled = enabled
+                        });
                     }
+                    catch { }
+                }
+
+                foreach (dynamic sub in folder.GetFolders(0))
+                {
+                    CollectTasksRecursive(sub, items);
                 }
             }
-            catch (Exception ex) { HardwareLogger.LogError("GetAutomaticServices failed", ex); }
+            catch { }
+        }
+
+        private static string ExtractTag(string xml, string tag)
+        {
+            string open = $"<{tag}>";
+            string close = $"</{tag}>";
+            int s = xml.IndexOf(open, StringComparison.OrdinalIgnoreCase);
+            if (s < 0) return "";
+            s += open.Length;
+            int e = xml.IndexOf(close, s, StringComparison.OrdinalIgnoreCase);
+            return e > s ? xml[s..e].Trim() : "";
+        }
+
+        public static List<StartupItem> GetThirdPartyServices()
+        {
+            var items = new List<StartupItem>();
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Name, DisplayName, PathName, StartMode FROM Win32_Service WHERE StartMode = 'Auto'");
+                using var results = searcher.Get();
+                foreach (ManagementObject queryObj in results)
+                using (queryObj)
+                {
+                    string svcName = queryObj["Name"]?.ToString() ?? "";
+                    if (CoreConstants.IsProtectedService(svcName)) continue;
+
+                    string path = queryObj["PathName"]?.ToString() ?? "";
+                    string exe = ServiceInfo.ExtractExecutablePath(path);
+                    string pub = NativeSystemHelper.ResolvePublisherLabel(exe);
+                    if (pub.Contains("Microsoft", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    items.Add(new StartupItem
+                    {
+                        Name = queryObj["DisplayName"]?.ToString() ?? svcName,
+                        ServiceName = svcName,
+                        Path = path,
+                        Source = "3rd-Party Auto Service",
+                        Type = "Service",
+                        IsEnabled = true
+                    });
+                }
+            }
+            catch (Exception ex) { HardwareLogger.LogError("GetThirdPartyServices failed", ex); }
             return items;
         }
 
         public static List<StartupItem> GetRegistryAutoruns()
         {
             var items = new List<StartupItem>();
-            string[] autorunKeys = new string[]
+            string[] autorunKeys =
             {
                 @"Software\Microsoft\Windows\CurrentVersion\RunOnce",
                 @"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run",
@@ -231,61 +262,136 @@ namespace JamesOptimizer
 
             foreach (string path in autorunKeys)
             {
-                try
-                {
-                    using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(path, false))
-                    {
-                        if (key != null)
-                        {
-                            foreach (string valName in key.GetValueNames())
-                            {
-                                items.Add(new StartupItem { Name = valName, Path = key.GetValue(valName)?.ToString() ?? "", Source = @"HKLM\" + path, Type = "Autorun", IsEnabled = true });
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex) { HardwareLogger.LogError($"GetRegistryAutoruns HKLM failed for {path}", ex); }
-                try
-                {
-                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(path, false))
-                    {
-                        if (key != null)
-                        {
-                            foreach (string valName in key.GetValueNames())
-                            {
-                                items.Add(new StartupItem { Name = valName, Path = key.GetValue(valName)?.ToString() ?? "", Source = @"HKCU\" + path, Type = "Autorun", IsEnabled = true });
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex) { HardwareLogger.LogError($"GetRegistryAutoruns HKCU failed for {path}", ex); }
+                ReadAutorunHive(items, Registry.LocalMachine, @"HKLM\", path);
+                ReadAutorunHive(items, Registry.CurrentUser, @"HKCU\", path);
             }
             return items;
         }
 
-        public static void SetStartupState(StartupItem item, bool enable)
+        private static void ReadAutorunHive(List<StartupItem> items, RegistryKey root, string prefix, string path)
         {
-            ToggleStartupItem(item, enable);
-            item.IsEnabled = enable;
+            try
+            {
+                using var key = root.OpenSubKey(path, false);
+                if (key == null) return;
+                foreach (string valName in key.GetValueNames())
+                {
+                    items.Add(new StartupItem
+                    {
+                        Name = valName,
+                        Path = key.GetValue(valName)?.ToString() ?? "",
+                        Source = prefix + path,
+                        Type = "Autorun",
+                        IsEnabled = true
+                    });
+                }
+            }
+            catch (Exception ex) { HardwareLogger.LogError($"GetRegistryAutoruns failed for {prefix}{path}", ex); }
+        }
+
+        private static void ReadRegistryKey(List<StartupItem> items, RegistryKey root, string subKey, string sourceName, string approvedKeyPath)
+        {
+            using RegistryKey? key = root.OpenSubKey(subKey, false);
+            if (key == null) return;
+            foreach (string valName in key.GetValueNames())
+            {
+                bool isEnabled = CheckStartupApproved(root, approvedKeyPath, valName);
+                items.Add(new StartupItem
+                {
+                    Name = valName,
+                    Path = key.GetValue(valName)?.ToString() ?? "",
+                    Source = sourceName,
+                    Type = "App",
+                    IsEnabled = isEnabled
+                });
+            }
+        }
+
+        private static bool CheckStartupApproved(RegistryKey root, string approvedKeyPath, string valueName)
+        {
+            try
+            {
+                using RegistryKey? key = root.OpenSubKey(approvedKeyPath, false);
+                if (key?.GetValue(valueName) is byte[] bytes && bytes.Length > 0)
+                    return bytes[0] == 0x02;
+            }
+            catch (Exception ex) { HardwareLogger.LogError("CheckStartupApproved failed", ex); }
+            return true;
+        }
+
+        public static bool SetStartupState(StartupItem item, bool enable)
+        {
+            try
+            {
+                if (item.Type == "App")
+                {
+                    if (item.Source.StartsWith("HKCU", StringComparison.OrdinalIgnoreCase))
+                        ToggleRegistryStartupApproved(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", item.Name, enable);
+                    else if (item.Source.StartsWith("HKLM", StringComparison.OrdinalIgnoreCase))
+                        ToggleRegistryStartupApproved(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", item.Name, enable);
+                    else
+                        ToggleRegistryStartupApproved(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", item.Name, enable);
+                }
+                else if (item.Type == "ScheduledTask" && !string.IsNullOrEmpty(item.TaskFullPath))
+                {
+                    string flag = enable ? "/ENABLE" : "/DISABLE";
+                    var res = NativeSystemHelper.RunSystem32ToolSync("schtasks.exe", new[] { "/Change", "/TN", item.TaskFullPath, flag });
+                    if (res.ExitCode != 0) return false;
+                    TweakBackupService.RecordSnapshot(new TweakSnapshot
+                    {
+                        TweakId = $"task_{item.Name}",
+                        Category = "STARTUP",
+                        Title = $"Task '{item.Name}' -> {(enable ? "Enabled" : "Disabled")}",
+                        KeyPath = item.TaskFullPath,
+                        Steps = new List<SnapshotStep>
+                        {
+                            new() { Kind = SnapshotStepKind.ScheduledTask, ExtraTarget = item.TaskFullPath, OriginalValueText = (!enable).ToString() }
+                        }
+                    });
+                }
+                else if (item.Type == "Service" && !string.IsNullOrEmpty(item.ServiceName))
+                {
+                    if (CoreConstants.IsProtectedService(item.ServiceName)) return false;
+                    TweakBackupService.SetServiceStartMode(item.ServiceName, enable ? "Automatic" : "Manual");
+                    if (!enable) ServiceManagerLogic.StopService(item.ServiceName);
+                }
+
+                item.IsEnabled = enable;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                HardwareLogger.LogError("SetStartupState failed", ex);
+                return false;
+            }
+        }
+
+        private static void ToggleRegistryStartupApproved(RegistryKey root, string approvedKeyPath, string valueName, bool enable)
+        {
+            using RegistryKey? key = root.CreateSubKey(approvedKeyPath);
+            if (key == null) return;
+            byte[] data = new byte[12];
+            data[0] = enable ? (byte)0x02 : (byte)0x03;
+            key.SetValue(valueName, data, RegistryValueKind.Binary);
         }
 
         public static void DeleteStartupItem(StartupItem item)
         {
             try
             {
-                if (item.Source.StartsWith("HKCU"))
+                if (item.Source.StartsWith("HKCU", StringComparison.OrdinalIgnoreCase))
                 {
                     using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
                     key?.DeleteValue(item.Name, false);
                 }
-                else if (item.Source.StartsWith("HKLM"))
+                else if (item.Source.StartsWith("HKLM", StringComparison.OrdinalIgnoreCase))
                 {
                     using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
                     key?.DeleteValue(item.Name, false);
                 }
-                else if (File.Exists(item.Path))
+                else if (item.Type == "App" && File.Exists(item.Path))
                 {
-                    File.Delete(item.Path);
+                    NativeSystemHelper.MoveToRecycleBin(item.Path);
                 }
             }
             catch (Exception ex)
@@ -295,5 +401,3 @@ namespace JamesOptimizer
         }
     }
 }
-
-

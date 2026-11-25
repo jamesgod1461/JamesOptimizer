@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace JamesOptimizer
 {
@@ -27,7 +30,9 @@ namespace JamesOptimizer
                 try
                 {
                     using var osSearcher = new ManagementObjectSearcher("SELECT Caption, OSArchitecture, Version FROM Win32_OperatingSystem");
-                    foreach (var o in osSearcher.Get())
+                    using var osResults = osSearcher.Get();
+                    foreach (var o in osResults)
+                    using (o)
                     {
                         osName = $"{o["Caption"]} ({o["OSArchitecture"]}) - Build {o["Version"]}".Replace("Microsoft", "").Trim();
                         break;
@@ -38,7 +43,9 @@ namespace JamesOptimizer
                 try
                 {
                     using var cpuSearcher = new ManagementObjectSearcher("SELECT Name, NumberOfCores, NumberOfLogicalProcessors FROM Win32_Processor");
-                    foreach (var c in cpuSearcher.Get())
+                    using var cpuResults = cpuSearcher.Get();
+                    foreach (var c in cpuResults)
+                    using (c)
                     {
                         cpuName = $"{c["Name"]} ({c["NumberOfCores"]} Cores, {c["NumberOfLogicalProcessors"]} Threads)";
                         break;
@@ -49,7 +56,9 @@ namespace JamesOptimizer
                 try
                 {
                     using var csSearcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
-                    foreach (var cs in csSearcher.Get())
+                    using var csResults = csSearcher.Get();
+                    foreach (var cs in csResults)
+                    using (cs)
                     {
                         if (ulong.TryParse(cs["TotalPhysicalMemory"]?.ToString(), out ulong bytes))
                         {
@@ -90,11 +99,88 @@ namespace JamesOptimizer
                 }
                 catch { }
 
+                var statusRows = new List<(string Name, string Detail, bool Applied)>();
+                int liveScore = 60;
+
+                try
+                {
+                    var schemeRes = JamesOptimizer.Core.NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/getactivescheme" }, 2000);
+                    string scheme = schemeRes.StdOut;
+                    bool highPerf = scheme.Contains("e9a42b02", StringComparison.OrdinalIgnoreCase)
+                                 || scheme.Contains("8c5e7fda", StringComparison.OrdinalIgnoreCase)
+                                 || scheme.Contains("Ultimate", StringComparison.OrdinalIgnoreCase)
+                                 || scheme.Contains("High performance", StringComparison.OrdinalIgnoreCase);
+                    if (highPerf) liveScore += 12;
+                    statusRows.Add(("Power Plan", highPerf ? "High / Ultimate Performance scheme active." : "Running standard Balanced or Power Saver scheme.", highPerf));
+                }
+                catch { }
+
+                try
+                {
+                    int? telemetry = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", null) as int?;
+                    bool blocked = telemetry == 0;
+                    if (blocked) liveScore += 10;
+                    statusRows.Add(("Telemetry Policy", blocked ? "AllowTelemetry=0 diagnostic suppression active." : "Default Windows telemetry policy active.", blocked));
+                }
+                catch { }
+
+                try
+                {
+                    int? netThrottle = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex", null) as int?;
+                    int? sysResp = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness", null) as int?;
+                    bool tuned = netThrottle == unchecked((int)0xFFFFFFFF) || sysResp == 0;
+                    if (tuned) liveScore += 10;
+                    statusRows.Add(("Network & MMCSS Profile", tuned ? "Network throttling disabled and multimedia responsiveness tuned." : "Stock MMCSS scheduling parameters active.", tuned));
+                }
+                catch { }
+
+                try
+                {
+                    var sysDrive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady && d.Name.StartsWith(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:", StringComparison.OrdinalIgnoreCase));
+                    if (sysDrive != null && sysDrive.TotalSize > 0)
+                    {
+                        double freeRatio = sysDrive.TotalFreeSpace / (double)sysDrive.TotalSize;
+                        bool healthyDisk = freeRatio >= 0.15;
+                        if (healthyDisk) liveScore += 8;
+                        statusRows.Add(("System Drive Headroom", $"{sysDrive.Name.TrimEnd('\\')} has {freeRatio * 100:F0}% free space.", healthyDisk));
+                    }
+                }
+                catch { }
+
+                liveScore = Math.Clamp(liveScore, 0, 100);
+                var statusHtml = new StringBuilder();
+                foreach (var row in statusRows)
+                {
+                    string badge = row.Applied ? "✓ APPLIED" : "○ DEFAULT";
+                    string badgeStyle = row.Applied ? "" : " style='background:rgba(148,163,184,0.15);color:#94A3B8;'";
+                    statusHtml.Append($"<li class='tweak-item'><span class='tweak-badge'{badgeStyle}>{badge}</span><span><strong>{WebUtility.HtmlEncode(row.Name)}</strong> — {WebUtility.HtmlEncode(row.Detail)}</span></li>\n");
+                }
+
+                string benchHtml = "";
+                try
+                {
+                    var history = OptimizationEngine.GetBenchmarkHistory();
+                    if (history.Count > 0)
+                    {
+                        var first = history[0];
+                        var latest = history[^1];
+                        int delta = latest.TotalScore - first.TotalScore;
+                        string deltaSign = delta >= 0 ? $"+{delta}" : delta.ToString();
+                        benchHtml = $@"
+        <div class='section-title'>Benchmark History &amp; Delta</div>
+        <div class='card' style='margin-bottom:24px;'>
+            <div class='spec-row'><span class='spec-label'>Baseline ({first.Timestamp:yyyy-MM-dd} · {WebUtility.HtmlEncode(first.PowerPlanName)})</span><span class='spec-val'>{first.TotalScore} / 100 (CPU {first.CpuScore}, RAM {first.RamScore}, Disk {first.DiskScore})</span></div>
+            <div class='spec-row'><span class='spec-label'>Latest ({latest.Timestamp:yyyy-MM-dd} · {WebUtility.HtmlEncode(latest.PowerPlanName)})</span><span class='spec-val'>{latest.TotalScore} / 100 ({deltaSign} pts)</span></div>
+        </div>";
+                    }
+                }
+                catch { }
+
                 string html = $@"<!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
-    <title>James Optimizer · Executive Optimization Report</title>
+    <title>JamesOptimizer V3 · System Optimization Report</title>
     <style>
         :root {{
             --bg: #0B0E14;
@@ -300,11 +386,11 @@ namespace JamesOptimizer
 
         <div class='score-hero'>
             <div class='score-details'>
-                <h2>System Tuned for Peak Efficiency</h2>
-                <p>Telemetry blocks active, high-priority background scheduling engaged, and volatile memory flushed. All kernel tweaks verified operational.</p>
+                <h2>Live System Optimization Audit</h2>
+                <p>Snapshot compiled from active power policy, Windows telemetry policy, MMCSS responsiveness keys, memory, and volume headroom.</p>
             </div>
             <div class='score-circle'>
-                <span class='score-num'>96</span>
+                <span class='score-num'>{liveScore}</span>
                 <span class='score-max'>/ 100</span>
             </div>
         </div>
@@ -312,11 +398,11 @@ namespace JamesOptimizer
         <div class='section-title'>Hardware &amp; Operating Environment</div>
         <div class='grid-2'>
             <div class='card'>
-                <div class='spec-row'><span class='spec-label'>Operating System</span><span class='spec-val'>{osName}</span></div>
-                <div class='spec-row'><span class='spec-label'>Processor</span><span class='spec-val'>{cpuName}</span></div>
-                <div class='spec-row'><span class='spec-label'>Physical Memory</span><span class='spec-val'>{totalRamStr}</span></div>
-                <div class='spec-row'><span class='spec-label'>Active User</span><span class='spec-val'>{Environment.UserName}</span></div>
-                <div class='spec-row'><span class='spec-label'>Machine Host</span><span class='spec-val'>{Environment.MachineName}</span></div>
+                <div class='spec-row'><span class='spec-label'>Operating System</span><span class='spec-val'>{WebUtility.HtmlEncode(osName)}</span></div>
+                <div class='spec-row'><span class='spec-label'>Processor</span><span class='spec-val'>{WebUtility.HtmlEncode(cpuName)}</span></div>
+                <div class='spec-row'><span class='spec-label'>Physical Memory</span><span class='spec-val'>{WebUtility.HtmlEncode(totalRamStr)}</span></div>
+                <div class='spec-row'><span class='spec-label'>Active User</span><span class='spec-val'>{WebUtility.HtmlEncode(Environment.UserName)}</span></div>
+                <div class='spec-row'><span class='spec-label'>Machine Host</span><span class='spec-val'>{WebUtility.HtmlEncode(Environment.MachineName)}</span></div>
             </div>
             <div class='card'>
                 <div style='font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 12px;'>STORAGE VOLUMES</div>
@@ -324,19 +410,16 @@ namespace JamesOptimizer
             </div>
         </div>
 
-        <div class='section-title'>Applied Engine Optimizations</div>
+        <div class='section-title'>Verified System Configuration Checks</div>
         <div class='card'>
             <ul class='tweak-list'>
-                <li class='tweak-item'><span class='tweak-badge'>✓ APPLIED</span><span><strong>Windows OS Debloat</strong> — Diagnostics tracking, customer experience improvement program, and cortana telemetry silenced.</span></li>
-                <li class='tweak-item'><span class='tweak-badge'>✓ APPLIED</span><span><strong>Ultimate Performance Power Plan</strong> — CPU unparked, minimal core sleep states, zero throttle frequency caps.</span></li>
-                <li class='tweak-item'><span class='tweak-badge'>✓ APPLIED</span><span><strong>Input Latency Smoothing</strong> — Mouse acceleration curve neutralized, keyboard poll buffer optimized for zero keypress delay.</span></li>
-                <li class='tweak-item'><span class='tweak-badge'>✓ APPLIED</span><span><strong>Network TCP/IP Auto-Tuning</strong> — CTCP provider enabled, network throttling index removed for unrestricted gaming bandwidth.</span></li>
-                <li class='tweak-item'><span class='tweak-badge'>✓ APPLIED</span><span><strong>DirectX Shader &amp; Standby List Purge</strong> — Working sets released, standby RAM returned to active free pool.</span></li>
+                {statusHtml}
             </ul>
         </div>
+        {benchHtml}
 
         <div class='footer'>
-            Generated automatically by <strong>James Optimizer Pro</strong> · Designed for ultra performance and zero compromises.
+            Generated automatically by <strong>JamesOptimizer V3</strong> · Designed for ultra performance and zero compromises.
         </div>
     </div>
 </body>

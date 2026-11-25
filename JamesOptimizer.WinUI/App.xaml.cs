@@ -1,20 +1,29 @@
 using System;
 using System.IO;
-using Microsoft.UI.Xaml;
+using System.Linq;
+using System.Text.Json;
+using JamesOptimizer.Core;
 using JamesOptimizer.WinUI.ViewModels;
+using Microsoft.UI.Xaml;
 
 namespace JamesOptimizer.WinUI;
 
-/// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
-/// </summary>
 public partial class App : Application
 {
     private Window? _window;
     public static DashboardViewModel ViewModel { get; private set; } = null!;
+    public static string? StartupFileLockTarget { get; set; }
 
     public App()
     {
+        SharedLogger.ConfigureForUi();
+
+        if (TryHandleHeadlessCli(Environment.GetCommandLineArgs(), out int exitCode))
+        {
+            Environment.Exit(exitCode);
+            return;
+        }
+
         InitializeComponent();
         RequestedTheme = ApplicationTheme.Dark;
 
@@ -26,26 +35,111 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
             if (e.ExceptionObject is Exception ex)
-            {
                 LogCrash("AppDomain UnhandledException", ex, ex.Message);
-            }
         };
+    }
+
+    private static bool TryHandleHeadlessCli(string[] rawArgs, out int exitCode)
+    {
+        exitCode = 0;
+        var args = rawArgs.Skip(1).ToArray();
+        if (args.Length == 0) return false;
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i].Equals("--file-lock", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                StartupFileLockTarget = args[i + 1];
+                return false; // Launch UI directly to File Lock inspector
+            }
+        }
+
+        if (args.Any(a => a.Equals("--revert-all", StringComparison.OrdinalIgnoreCase)))
+        {
+            var (ok, fail, errors) = TweakBackupService.RevertAllSnapshots();
+            SharedLogger.Info("CLI", $"--revert-all completed: {ok} reverted, {fail} failed.");
+            if (fail > 0) SharedLogger.Warn("CLI", string.Join("; ", errors));
+            exitCode = fail == 0 ? 0 : 2;
+            return true;
+        }
+
+        if (args.Any(a => a.Equals("--revert-last", StringComparison.OrdinalIgnoreCase)))
+        {
+            var latest = TweakBackupService.GetHistory().FirstOrDefault(s => !s.IsReverted);
+            if (latest == null)
+            {
+                SharedLogger.Info("CLI", "--revert-last: nothing to revert.");
+                exitCode = 0;
+                return true;
+            }
+            bool ok = TweakBackupService.RevertSnapshot(latest.Id, out string msg);
+            SharedLogger.Info("CLI", $"--revert-last: {msg}");
+            exitCode = ok ? 0 : 2;
+            return true;
+        }
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i].Equals("--export", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                string outPath = args[i + 1];
+                var profile = ProfileConfigService.ExportCurrentProfile();
+                ProfileConfigService.SaveProfileToFile(outPath, profile);
+                SharedLogger.Info("CLI", $"Exported profile ({profile.EnabledTweakIds.Count} tweaks) to '{outPath}'.");
+                exitCode = 0;
+                return true;
+            }
+
+            if (args[i].Equals("--apply", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                string path = args[i + 1];
+                bool dryRun = args.Any(a => a.Equals("--dry-run", StringComparison.OrdinalIgnoreCase));
+                if (!File.Exists(path))
+                {
+                    SharedLogger.Error("CLI", $"Profile file not found: {path}");
+                    exitCode = 3;
+                    return true;
+                }
+
+                var preview = ProfileConfigService.PreviewImport(File.ReadAllText(path));
+                if (!preview.IsValid)
+                {
+                    SharedLogger.Error("CLI", $"Profile validation failed: {preview.ErrorMessage}");
+                    exitCode = 4;
+                    return true;
+                }
+
+                if (dryRun)
+                {
+                    SharedLogger.Info("CLI", $"--dry-run: {preview.ToApply.Count} to apply, {preview.AlreadyApplied.Count} already applied, {preview.SkippedUnknownOrIncompatible.Count} skipped.");
+                    exitCode = 0;
+                    return true;
+                }
+
+                var (applied, failed, messages) = ProfileConfigService.ApplyPreviewedProfile(preview);
+                SharedLogger.Info("CLI", $"--apply completed: {applied} applied, {failed} failed. {string.Join(" | ", messages)}");
+                exitCode = failed == 0 ? 0 : 5;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void LogCrash(string source, Exception? ex, string message)
     {
+        SharedLogger.Error(source, message, ex);
         try
         {
-            string logPath = Path.Combine(AppContext.BaseDirectory, "crash.log");
+            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JamesOptimizer");
+            Directory.CreateDirectory(logDir);
+            string logPath = Path.Combine(logDir, "winui_crash.log");
             string content = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{source}] {message}\nException: {ex?.ToString()}\nInner: {ex?.InnerException?.ToString()}\n----------------------------------------\n";
             File.AppendAllText(logPath, content);
         }
         catch { }
     }
 
-    /// <summary>
-    /// Invoked when the application is launched.
-    /// </summary>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         try

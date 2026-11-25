@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.ServiceProcess;
 using System.Linq;
 using System.Management;
+using System.Runtime.Versioning;
+using System.ServiceProcess;
+using JamesOptimizer.Core;
 
 namespace JamesOptimizer
 {
+    [SupportedOSPlatform("windows")]
     public class ServiceInfo
     {
         public string ServiceName { get; set; } = "";
@@ -16,65 +19,46 @@ namespace JamesOptimizer
         public string Publisher { get; set; } = "";
         public bool IsRunning => Status == "Running";
         public bool CanStop { get; set; }
+        public bool IsProtected => CoreConstants.IsProtectedService(ServiceName);
 
         public void ResolvePublisher()
         {
             if (string.IsNullOrWhiteSpace(PathName)) return;
             try
             {
-                string exePath = "";
-                if (PathName.StartsWith("\""))
-                {
-                    int endQuote = PathName.IndexOf("\"", 1);
-                    if (endQuote > 0)
-                        exePath = PathName.Substring(1, endQuote - 1);
-                }
-                else
-                {
-                    int exeIndex = PathName.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-                    if (exeIndex > 0)
-                        exePath = PathName.Substring(0, exeIndex + 4);
-                    else
-                        exePath = PathName;
-                }
-                
-                exePath = exePath.Trim();
-                
-                if (exePath.StartsWith(@"\??\")) exePath = exePath.Substring(4);
-                if (exePath.StartsWith(@"\SystemRoot\", StringComparison.OrdinalIgnoreCase)) 
-                    exePath = exePath.Replace(@"\SystemRoot\", @"%SystemRoot%\");
-                
-                exePath = Environment.ExpandEnvironmentVariables(exePath);
-
-                if (System.IO.File.Exists(exePath))
-                {
-                    try
-                    {
-                        #pragma warning disable SYSLIB0057
-                        var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(exePath);
-                        #pragma warning restore SYSLIB0057
-                        string subject = cert.Subject;
-                        var parts = subject.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-                        string? cn = null, o = null;
-                        foreach (var part in parts)
-                        {
-                            if (part.StartsWith("O=")) o = part.Substring(2);
-                            else if (part.StartsWith("CN=")) cn = part.Substring(3);
-                        }
-                        Publisher = (o ?? cn ?? subject).Replace("\"", "");
-                        Publisher = "[Verified] " + Publisher;
-                    }
-                    catch
-                    {
-                        var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(exePath);
-                        Publisher = versionInfo.CompanyName ?? "";
-                    }
-                }
+                string exePath = ExtractExecutablePath(PathName);
+                if (!string.IsNullOrEmpty(exePath))
+                    Publisher = NativeSystemHelper.ResolvePublisherLabel(exePath);
             }
-            catch (Exception ex) { HardwareLogger.LogError("ResolvePublisher failed", ex); }
+            catch (Exception ex)
+            {
+                HardwareLogger.LogError("ResolvePublisher failed", ex);
+            }
+        }
+
+        internal static string ExtractExecutablePath(string rawPath)
+        {
+            string exePath;
+            if (rawPath.StartsWith('"'))
+            {
+                int endQuote = rawPath.IndexOf('"', 1);
+                exePath = endQuote > 0 ? rawPath[1..endQuote] : rawPath;
+            }
+            else
+            {
+                int exeIndex = rawPath.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+                exePath = exeIndex > 0 ? rawPath[..(exeIndex + 4)] : rawPath;
+            }
+
+            exePath = exePath.Trim();
+            if (exePath.StartsWith(@"\??\", StringComparison.Ordinal)) exePath = exePath[4..];
+            if (exePath.StartsWith(@"\SystemRoot\", StringComparison.OrdinalIgnoreCase))
+                exePath = exePath.Replace(@"\SystemRoot\", @"%SystemRoot%\", StringComparison.OrdinalIgnoreCase);
+            return Environment.ExpandEnvironmentVariables(exePath);
         }
     }
 
+    [SupportedOSPlatform("windows")]
     public static class ServiceManagerLogic
     {
         public static List<ServiceInfo> GetAllServices()
@@ -83,24 +67,21 @@ namespace JamesOptimizer
             try
             {
                 var services = ServiceController.GetServices();
-                
-                // We can use WMI to get Startup Type quickly
-                Dictionary<string, string> startTypes = new Dictionary<string, string>();
-                Dictionary<string, string> pathNames = new Dictionary<string, string>();
+                var startTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var pathNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
                 try
                 {
-                    using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name, StartMode, PathName FROM Win32_Service"))
+                    using var searcher = new ManagementObjectSearcher("SELECT Name, StartMode, PathName FROM Win32_Service");
+                    using var results = searcher.Get();
+                    foreach (ManagementObject queryObj in results)
+                    using (queryObj)
                     {
-                        foreach (ManagementObject queryObj in searcher.Get())
+                        string name = queryObj["Name"]?.ToString() ?? "";
+                        if (!string.IsNullOrEmpty(name))
                         {
-                            string name = queryObj["Name"]?.ToString() ?? "";
-                            string startMode = queryObj["StartMode"]?.ToString() ?? "Unknown";
-                            string pathName = queryObj["PathName"]?.ToString() ?? "";
-                            if (!string.IsNullOrEmpty(name))
-                            {
-                                startTypes[name] = startMode;
-                                pathNames[name] = pathName;
-                            }
+                            startTypes[name] = queryObj["StartMode"]?.ToString() ?? "Unknown";
+                            pathNames[name] = queryObj["PathName"]?.ToString() ?? "";
                         }
                     }
                 }
@@ -108,27 +89,20 @@ namespace JamesOptimizer
 
                 foreach (var sc in services)
                 {
-                    string startType = "Unknown";
-                    string pathName = "";
-                    if (startTypes.ContainsKey(sc.ServiceName))
-                    {
-                        startType = startTypes[sc.ServiceName];
-                        pathName = pathNames[sc.ServiceName];
-                    }
+                    startTypes.TryGetValue(sc.ServiceName, out string? startType);
+                    pathNames.TryGetValue(sc.ServiceName, out string? pathName);
 
                     var info = new ServiceInfo
                     {
                         ServiceName = sc.ServiceName,
                         DisplayName = sc.DisplayName,
                         Status = sc.Status.ToString(),
-                        StartType = startType,
-                        PathName = pathName,
-                        CanStop = sc.CanStop
+                        StartType = startType ?? "Unknown",
+                        PathName = pathName ?? "",
+                        CanStop = sc.CanStop && !CoreConstants.IsProtectedService(sc.ServiceName)
                     };
                     info.ResolvePublisher();
                     result.Add(info);
-                    
-                    // Dispose the ServiceController to prevent resource leaks
                     sc.Dispose();
                 }
             }
@@ -137,36 +111,53 @@ namespace JamesOptimizer
             return result.OrderBy(s => s.DisplayName).ToList();
         }
 
-        public static void ToggleServiceState(string serviceName, bool start)
+        public static bool ToggleServiceState(string serviceName, bool start)
         {
+            if (!start && CoreConstants.IsProtectedService(serviceName))
+            {
+                HardwareLogger.Log($"Blocked attempt to stop protected service '{serviceName}'.");
+                return false;
+            }
+
             try
             {
-                using (var sc = new ServiceController(serviceName))
+                using var sc = new ServiceController(serviceName);
+                if (start && sc.Status == ServiceControllerStatus.Stopped)
                 {
-                    if (start && sc.Status == ServiceControllerStatus.Stopped)
-                    {
-                        sc.Start();
-                        sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(5));
-                    }
-                    else if (!start && sc.CanStop && sc.Status == ServiceControllerStatus.Running)
-                    {
-                        sc.Stop();
-                        sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(5));
-                    }
+                    sc.Start();
+                    sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(5));
+                    return sc.Status == ServiceControllerStatus.Running;
                 }
+                if (!start && sc.CanStop && sc.Status == ServiceControllerStatus.Running)
+                {
+                    sc.Stop();
+                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(5));
+                    return sc.Status == ServiceControllerStatus.Stopped;
+                }
+                return (start && sc.Status == ServiceControllerStatus.Running)
+                    || (!start && sc.Status == ServiceControllerStatus.Stopped);
             }
-            catch (Exception ex) { HardwareLogger.LogError($"ToggleServiceState failed for {serviceName}", ex); }
+            catch (Exception ex)
+            {
+                HardwareLogger.LogError($"ToggleServiceState failed for {serviceName}", ex);
+                return false;
+            }
         }
 
-        public static void StartService(string serviceName) => ToggleServiceState(serviceName, true);
-        public static void StopService(string serviceName) => ToggleServiceState(serviceName, false);
+        public static bool StartService(string serviceName) => ToggleServiceState(serviceName, true);
+        public static bool StopService(string serviceName) => ToggleServiceState(serviceName, false);
 
         public static void ChangeStartType(string serviceName, string startMode)
         {
+            if (CoreConstants.IsProtectedService(serviceName))
+            {
+                HardwareLogger.Log($"Blocked attempt to reconfigure protected service '{serviceName}'.");
+                return;
+            }
+
             try
             {
-                using var mo = new ManagementObject($"Win32_Service.Name='{serviceName}'");
-                mo.InvokeMethod("ChangeStartMode", new object[] { startMode });
+                TweakBackupService.SetServiceStartMode(serviceName, startMode);
             }
             catch (Exception ex)
             {
@@ -175,5 +166,3 @@ namespace JamesOptimizer
         }
     }
 }
-
-
