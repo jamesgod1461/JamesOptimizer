@@ -107,11 +107,11 @@ public class DashboardViewModel : INotifyPropertyChanged, IDisposable
                 AddLog("OPTIMIZER", $"Auto-Run background interval set to: {(value ? "Active (Every 30m)" : "Off")}");
                 _ = Task.Run(async () =>
                 {
-                    bool ok = await BackgroundServiceClient.SetAutoTimerAsync(timerMinutes);
-                    if (ok)
-                    {
+                    var res = await BackgroundServiceClient.SetAutoTimerAsync(timerMinutes);
+                    if (res.Success)
                         AddLog("SERVICE", $"Background Service AutoTimer synchronized to {timerMinutes}m.");
-                    }
+                    else if (!res.IsOffline && !string.IsNullOrWhiteSpace(res.Error))
+                        AddLog("SERVICE", $"AutoTimer sync rejected: {res.Error}");
                 });
             }
         }

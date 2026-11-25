@@ -71,16 +71,17 @@ public class PerformanceTweakItem : INotifyPropertyChanged
         }
     }
 
-    private static readonly SolidColorBrush ActiveTextBrush = ThemeEffects.GetSolidBrush("Accent.Cyan");
-    private static readonly SolidColorBrush ActiveDotBrush = ThemeEffects.GetSolidBrush("State.Good");
-    private static readonly SolidColorBrush MutedBrush = ThemeEffects.GetSolidBrush("Text.Secondary");
-    private static readonly SolidColorBrush ActiveBorderBrush = ThemeEffects.GetSolidBrush("Border.Strong");
-    private static readonly SolidColorBrush InactiveBorderBrush = ThemeEffects.GetSolidBrush("Border.Subtle");
-
     public string StatusText => !IsApplicable ? "N/A" : _isEnabled ? "ACTIVE" : "STOCK";
-    public SolidColorBrush StatusBrush => _isEnabled ? ActiveTextBrush : MutedBrush;
-    public SolidColorBrush StatusDotBrush => _isEnabled ? ActiveDotBrush : MutedBrush;
-    public SolidColorBrush CardBorderBrush => _isEnabled ? ActiveBorderBrush : InactiveBorderBrush;
+    public SolidColorBrush StatusBrush => ThemeEffects.GetSolidBrush(_isEnabled ? "Accent.Cyan" : "Text.Secondary");
+    public SolidColorBrush StatusDotBrush => ThemeEffects.GetSolidBrush(_isEnabled ? "State.Good" : "Text.Secondary");
+    public SolidColorBrush CardBorderBrush => ThemeEffects.GetSolidBrush(_isEnabled ? "Border.Strong" : "Border.Subtle");
+
+    public void RefreshThemeBrushes()
+    {
+        OnPropertyChanged(nameof(StatusBrush));
+        OnPropertyChanged(nameof(StatusDotBrush));
+        OnPropertyChanged(nameof(CardBorderBrush));
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? prop = null) =>
@@ -95,6 +96,7 @@ public sealed partial class PerformancePage : Page
     private string _currentCategory = "ALL";
     private string _searchFilter = "";
     private bool _suppressToggleEvents = false;
+    private bool _themeHooked = false;
 
     public PerformancePage()
     {
@@ -104,15 +106,41 @@ public sealed partial class PerformancePage : Page
 
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
+        if (!_themeHooked)
+        {
+            ActualThemeChanged += Page_ActualThemeChanged;
+            _themeHooked = true;
+        }
+
         if (_allTweaks.Count == 0)
         {
             foreach (var def in TweakCatalog.All)
                 _allTweaks.Add(new PerformanceTweakItem { Definition = def });
             TxtCatalogCount.Text = $"{_allTweaks.Count} TWEAKS";
         }
+        else
+        {
+            foreach (var item in _allTweaks)
+                item.RefreshThemeBrushes();
+        }
 
         await RefreshLiveStatesAsync();
         ApplyFilter();
+    }
+
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (_themeHooked)
+        {
+            ActualThemeChanged -= Page_ActualThemeChanged;
+            _themeHooked = false;
+        }
+    }
+
+    private void Page_ActualThemeChanged(FrameworkElement sender, object args)
+    {
+        foreach (var item in _allTweaks)
+            item.RefreshThemeBrushes();
     }
 
     private async Task RefreshLiveStatesAsync()

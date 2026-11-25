@@ -81,10 +81,13 @@ public sealed partial class SettingsPage : Page
             MinStandbyMb = Math.Max(512, thresh / 2),
             PauseDuringFullscreen = ChkPauseFullscreen.IsChecked == true
         };
-        bool ok = await BackgroundServiceClient.SetSmartRamSettingsAsync(cfg);
-        MainWindow.Current?.ShowToast(ok ? "Smart RAM Saved" : "Service Offline",
-            ok ? $"Purge threshold < {thresh} MB Free synced." : "Start JamesOptimizer.Service to enable Smart RAM daemon.",
-            ok ? "State.Good" : "State.Warn");
+        var res = await BackgroundServiceClient.SetSmartRamSettingsAsync(cfg);
+        if (res.Success)
+            MainWindow.Current?.ShowToast("Smart RAM Saved", $"Purge threshold < {thresh} MB Free synced.", "State.Good");
+        else if (res.IsOffline)
+            MainWindow.Current?.ShowToast("Service Offline", "Start JamesOptimizer.Service to enable Smart RAM daemon.", "State.Warn");
+        else
+            MainWindow.Current?.ShowToast("Smart RAM Update Failed", res.Error ?? "Service rejected Smart RAM configuration.", "State.Bad");
     }
 
     private void ToggleReduceAnimations_Toggled(object sender, RoutedEventArgs e)
@@ -173,7 +176,9 @@ public sealed partial class SettingsPage : Page
                 key?.SetValue("AutoTimer", minutes, RegistryValueKind.DWord);
             }
             catch { }
-            await BackgroundServiceClient.SetAutoTimerAsync(minutes);
+            var res = await BackgroundServiceClient.SetAutoTimerAsync(minutes);
+            if (!res.Success && !res.IsOffline)
+                MainWindow.Current?.ShowToast("AutoTimer Update Failed", res.Error ?? "Service rejected timer interval.", "State.Bad");
         }
     }
 

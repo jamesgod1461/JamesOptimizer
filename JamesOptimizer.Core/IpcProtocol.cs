@@ -89,6 +89,32 @@ public static partial class IpcProtocol
         return true;
     }
 
+    public static bool TryParseSuccessResponse(string? response, out string? error)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            error = "No response from background service.";
+            return false;
+        }
+        if (response.StartsWith("SUCCESS", StringComparison.OrdinalIgnoreCase))
+        {
+            error = null;
+            return true;
+        }
+        if (response.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
+        {
+            error = response[6..].Trim();
+            return false;
+        }
+        if (response.StartsWith("OFFLINE:", StringComparison.OrdinalIgnoreCase))
+        {
+            error = response[8..].Trim();
+            return false;
+        }
+        error = response;
+        return false;
+    }
+
     public static bool VerifyPipeClient(NamedPipeServerStream server, out string reason)
     {
         reason = string.Empty;

@@ -79,11 +79,19 @@ public sealed partial class GamingModePage : Page
 
     private async Task SyncGameProfilesAsync()
     {
-        bool ok = await BackgroundServiceClient.SetGameProfilesAsync(_gameConfig);
-        MainWindow.Current?.ShowToast(
-            ok ? "Per-Game Daemon Synced" : "Service Offline",
-            ok ? $"{_gameConfig.Rules.Count} game rule(s) active on background service." : "Start JamesOptimizer.Service to enable automatic game switching.",
-            ok ? "Accent.Cyan" : "State.Warn");
+        var res = await BackgroundServiceClient.SetGameProfilesAsync(_gameConfig);
+        if (res.Success)
+        {
+            MainWindow.Current?.ShowToast("Per-Game Daemon Synced", $"{_gameConfig.Rules.Count} game rule(s) active on background service.", "Accent.Cyan");
+        }
+        else if (res.IsOffline)
+        {
+            MainWindow.Current?.ShowToast("Service Offline", "Start JamesOptimizer.Service to enable automatic game switching.", "State.Warn");
+        }
+        else
+        {
+            MainWindow.Current?.ShowToast("Service Rejected Update", res.Error ?? "Unknown error updating game profiles.", "State.Bad");
+        }
     }
 
     private async void BtnActivateTurbo_Click(object sender, RoutedEventArgs e)

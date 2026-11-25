@@ -61,7 +61,7 @@ public sealed partial class ToolboxPage : Page
             TxtLockTargetPath.Text = App.StartupFileLockTarget;
             App.StartupFileLockTarget = null;
             SwitchToolboxTab("LOCK");
-            RefreshLocks();
+            _ = RefreshLocksAsync();
         }
     }
 
@@ -279,36 +279,82 @@ public sealed partial class ToolboxPage : Page
 
     #region File Lock Unlocker
 
-    private void RefreshLocks()
+    private async Task RefreshLocksAsync(Button? triggerBtn = null)
     {
-        LockProcesses.Clear();
         string target = (TxtLockTargetPath.Text ?? "").Trim().Trim('"');
-        if (string.IsNullOrWhiteSpace(target)) return;
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            LockProcesses.Clear();
+            return;
+        }
 
-        var locks = FileLockService.FindLockingProcesses(target);
-        foreach (var l in locks) LockProcesses.Add(l);
-        TxtLockStatus.Text = locks.Count > 0
-            ? $"Found {locks.Count} process(es) locking '{Path.GetFileName(target)}'."
-            : $"No Restart Manager locks detected on '{target}'.";
+        if (triggerBtn != null) triggerBtn.IsEnabled = false;
+        try
+        {
+            var locks = await Task.Run(() => FileLockService.FindLockingProcesses(target));
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LockProcesses.Clear();
+                foreach (var l in locks) LockProcesses.Add(l);
+                TxtLockStatus.Text = locks.Count > 0
+                    ? $"Found {locks.Count} process(es) locking '{Path.GetFileName(target)}'."
+                    : $"No Restart Manager locks detected on '{target}'.";
+            });
+        }
+        finally
+        {
+            if (triggerBtn != null) triggerBtn.IsEnabled = true;
+        }
     }
 
-    private void BtnFindLocks_Click(object sender, RoutedEventArgs e) => RefreshLocks();
+    private async void BtnFindLocks_Click(object sender, RoutedEventArgs e) =>
+        await RefreshLocksAsync(sender as Button);
 
-    private void BtnGracefulShutdownLocks_Click(object sender, RoutedEventArgs e)
+    private async void BtnGracefulShutdownLocks_Click(object sender, RoutedEventArgs e)
     {
-        var (ok, msg) = FileLockService.ShutdownGracefully((TxtLockTargetPath.Text ?? "").Trim().Trim('"'));
-        TxtLockStatus.Text = msg;
-        RefreshLocks();
-        MainWindow.Current?.ShowToast(ok ? "Graceful Close Sent" : "Close Failed", msg, ok ? "State.Good" : "State.Warn");
+        string target = (TxtLockTargetPath.Text ?? "").Trim().Trim('"');
+        var btn = sender as Button;
+        if (btn != null) btn.IsEnabled = false;
+        try
+        {
+            var (ok, msg, locks) = await Task.Run(() =>
+            {
+                var res = FileLockService.ShutdownGracefully(target);
+                var remaining = string.IsNullOrWhiteSpace(target)
+                    ? new System.Collections.Generic.List<LockingProcessInfo>()
+                    : FileLockService.FindLockingProcesses(target);
+                return (res.Ok, res.Message, remaining);
+            });
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                TxtLockStatus.Text = msg;
+                LockProcesses.Clear();
+                foreach (var l in locks) LockProcesses.Add(l);
+                MainWindow.Current?.ShowToast(ok ? "Graceful Close Sent" : "Close Failed", msg, ok ? "State.Good" : "State.Warn");
+            });
+        }
+        finally
+        {
+            if (btn != null) btn.IsEnabled = true;
+        }
     }
 
-    private void BtnKillLockingProc_Click(object sender, RoutedEventArgs e)
+    private async void BtnKillLockingProc_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not int pid) return;
-        var (ok, msg) = FileLockService.TerminateLockingProcess(pid);
-        TxtLockStatus.Text = msg;
-        RefreshLocks();
-        MainWindow.Current?.ShowToast(ok ? "Process Terminated" : "Protected Process", msg, ok ? "State.Good" : "State.Bad");
+        btn.IsEnabled = false;
+        try
+        {
+            var (ok, msg) = await Task.Run(() => FileLockService.TerminateLockingProcess(pid));
+            TxtLockStatus.Text = msg;
+            await RefreshLocksAsync();
+            MainWindow.Current?.ShowToast(ok ? "Process Terminated" : "Protected Process", msg, ok ? "State.Good" : "State.Bad");
+        }
+        finally
+        {
+            btn.IsEnabled = true;
+        }
     }
 
     private void BtnScheduleDeleteReboot_Click(object sender, RoutedEventArgs e)
@@ -362,18 +408,35 @@ public sealed partial class ToolboxPage : Page
 
     private void BtnRefreshPath_Click(object sender, RoutedEventArgs e) => RefreshPaths();
 
-    private void BtnCleanUserPath_Click(object sender, RoutedEventArgs e)
-    {
-        var (ok, msg) = IntegratorService.CleanDeadAndDuplicatePaths("User");
-        TxtPathStatus.Text = msg;
-        RefreshPaths();
-    }
+    private async void BtnCleanUserPath_Click(object sender, RoutedEventArgs e) =>
+        await CleanEnvironmentPathAsync("User", sender as Button);
 
-    private void BtnCleanSystemPath_Click(object sender, RoutedEventArgs e)
+    private async void BtnCleanSystemPath_Click(object sender, RoutedEventArgs e) =>
+        await CleanEnvironmentPathAsync("System", sender as Button);
+
+    private async Task CleanEnvironmentPathAsync(string scope, Button? triggerBtn)
     {
-        var (ok, msg) = IntegratorService.CleanDeadAndDuplicatePaths("System");
-        TxtPathStatus.Text = msg;
-        RefreshPaths();
+        if (triggerBtn != null) triggerBtn.IsEnabled = false;
+        try
+        {
+            var (_, msg, entries) = await Task.Run(() =>
+            {
+                var res = IntegratorService.CleanDeadAndDuplicatePaths(scope);
+                var updated = IntegratorService.InspectEnvironmentPaths();
+                return (res.Ok, res.Message, updated);
+            });
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                TxtPathStatus.Text = msg;
+                PathEntries.Clear();
+                foreach (var p in entries) PathEntries.Add(p);
+            });
+        }
+        finally
+        {
+            if (triggerBtn != null) triggerBtn.IsEnabled = true;
+        }
     }
 
     #endregion

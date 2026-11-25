@@ -864,4 +864,20 @@ public class CoreSafetyAndParityTests : IDisposable
         Assert.Equal(1, nvidiaCalls);
         Assert.Equal(3, acpiCalls);
     }
+
+    [Fact]
+    public void IpcProtocol_TryParseSuccessResponse_DistinguishesSuccessErrorAndOffline()
+    {
+        Assert.True(IpcProtocol.TryParseSuccessResponse("SUCCESS:Game automation profiles updated.", out string? err1));
+        Assert.Null(err1);
+
+        Assert.False(IpcProtocol.TryParseSuccessResponse("ERROR:GameAutomationConfig.Rules must not be null.", out string? err2));
+        Assert.Equal("GameAutomationConfig.Rules must not be null.", err2);
+
+        Assert.False(IpcProtocol.TryParseSuccessResponse("OFFLINE:The semaphore timeout period has expired.", out string? err3));
+        Assert.Equal("The semaphore timeout period has expired.", err3);
+
+        Assert.False(IpcProtocol.TryParseSuccessResponse("", out string? err4));
+        Assert.NotNull(err4);
+    }
 }

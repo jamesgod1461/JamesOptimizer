@@ -9,6 +9,8 @@ using JamesOptimizer.Core;
 
 namespace JamesOptimizer.WinUI.Services;
 
+public readonly record struct ServiceCommandResult(bool Success, string? Error, bool IsOffline = false);
+
 public class BackgroundServiceClient
 {
     public static async Task<string> SendCommandAsync(string command, int timeoutMs = 1500)
@@ -56,16 +58,16 @@ public class BackgroundServiceClient
 
     public static Task<string> RequestOptimizationAsync() => SendCommandAsync("OPTIMIZE", 10000);
 
-    public static async Task<bool> SetAutoTimerAsync(int minutes)
+    public static async Task<ServiceCommandResult> SetAutoTimerAsync(int minutes)
     {
         var res = await SendCommandAsync($"SET_TIMER:{minutes}", 2000);
-        return res.StartsWith("SUCCESS", StringComparison.OrdinalIgnoreCase);
+        return ParseCommandResult(res);
     }
 
-    public static async Task<bool> SetGameWatchAsync(bool enabled, string gamesCsv)
+    public static async Task<ServiceCommandResult> SetGameWatchAsync(bool enabled, string gamesCsv)
     {
         var res = await SendCommandAsync($"SET_GAME_WATCH:{(enabled ? "1" : "0")}|{gamesCsv}", 2000);
-        return res.StartsWith("SUCCESS", StringComparison.OrdinalIgnoreCase);
+        return ParseCommandResult(res);
     }
 
     public static async Task<SmartRamSettings?> GetSmartRamSettingsAsync()
@@ -75,10 +77,10 @@ public class BackgroundServiceClient
         try { return JsonSerializer.Deserialize<SmartRamSettings>(res[9..]); } catch { return null; }
     }
 
-    public static async Task<bool> SetSmartRamSettingsAsync(SmartRamSettings settings)
+    public static async Task<ServiceCommandResult> SetSmartRamSettingsAsync(SmartRamSettings settings)
     {
         var res = await SendCommandAsync("SET_SMART_RAM:" + JsonSerializer.Serialize(settings), 2000);
-        return res.StartsWith("SUCCESS", StringComparison.OrdinalIgnoreCase);
+        return ParseCommandResult(res);
     }
 
     public static async Task<GameAutomationConfig?> GetGameProfilesAsync()
@@ -88,9 +90,17 @@ public class BackgroundServiceClient
         try { return JsonSerializer.Deserialize<GameAutomationConfig>(res[13..]); } catch { return null; }
     }
 
-    public static async Task<bool> SetGameProfilesAsync(GameAutomationConfig cfg)
+    public static async Task<ServiceCommandResult> SetGameProfilesAsync(GameAutomationConfig cfg)
     {
         var res = await SendCommandAsync("SET_GAME_PROFILES:" + JsonSerializer.Serialize(cfg), 2000);
-        return res.StartsWith("SUCCESS", StringComparison.OrdinalIgnoreCase);
+        return ParseCommandResult(res);
+    }
+
+    private static ServiceCommandResult ParseCommandResult(string res)
+    {
+        bool offline = res.StartsWith("OFFLINE:", StringComparison.OrdinalIgnoreCase) ||
+                       res.Equals("NO_RESPONSE", StringComparison.OrdinalIgnoreCase);
+        bool ok = IpcProtocol.TryParseSuccessResponse(res, out string? error);
+        return new ServiceCommandResult(ok, error, offline);
     }
 }
