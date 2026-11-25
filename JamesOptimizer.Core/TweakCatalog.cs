@@ -338,170 +338,10 @@ public static class TweakCatalog
         var list = new List<TweakDefinition>();
 
         // 1. Ultimate Performance Power Plan
-        list.Add(new TweakDefinition
-        {
-            Id = "power",
-            Title = "Ultimate Performance Power Plan",
-            Description = "Activates Windows highest-throughput power scheme for maximum CPU boost clocks and zero core downthrottling.",
-            Category = "LATENCY",
-            CategoryLabel = "Latency & CPU",
-            IconGlyph = "\uE7E8",
-            ImpactText = "MAX BOOST",
-            Risk = TweakRisk.Safe,
-            Evidence = EvidenceRating.Measured,
-            RequiresAdmin = false,
-            TargetDisplay = "powercfg /setactive Ultimate Performance",
-            Tags = new[] { "power", "cpu", "gaming", "boost" },
-            Detect = () =>
-            {
-                string active = GetActivePowerSchemeGuid();
-                bool isUlt = active.Equals(CoreConstants.UltimatePerformanceGuid, StringComparison.OrdinalIgnoreCase);
-                if (!isUlt)
-                {
-                    var outp = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/getactivescheme" }).StdOut;
-                    isUlt = outp.Contains("Ultimate Performance", StringComparison.OrdinalIgnoreCase);
-                }
-                return new TweakDetectState(isUlt, true, null, TweakBackupService.GetLatestActiveForTweak("power") != null && !isUlt);
-            },
-            Preview = () => new[] { new TweakChangeItem("Active Power Plan", GetActivePowerSchemeGuid(), CoreConstants.UltimatePerformanceGuid) },
-            Apply = () =>
-            {
-                string prev = GetActivePowerSchemeGuid();
-                var step = new SnapshotStep { Kind = SnapshotStepKind.PowerPlan, OriginalValueText = prev };
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "power",
-                    Category = "LATENCY",
-                    Title = "Ultimate Performance Power Plan",
-                    KeyPath = "powercfg /getactivescheme",
-                    OriginalValueText = prev,
-                    AppliedValueDisplay = "Ultimate Performance",
-                    Steps = new List<SnapshotStep> { step }
-                };
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "power", snap);
-                try
-                {
-                    string listOut = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/list" }).StdOut;
-                    string targetGuid = CoreConstants.UltimatePerformanceGuid;
-                    if (!listOut.Contains(targetGuid, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var lineMatch = listOut.Split('\n').FirstOrDefault(l => l.Contains("Ultimate Performance", StringComparison.OrdinalIgnoreCase));
-                        var m = lineMatch != null ? Regex.Match(lineMatch, @"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}") : Match.Empty;
-                        if (m.Success) targetGuid = m.Value;
-                        else
-                        {
-                            var dup = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "-duplicatescheme", CoreConstants.UltimatePerformanceGuid });
-                            var dm = Regex.Match(dup.StdOut, @"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
-                            if (dm.Success) targetGuid = dm.Value;
-                        }
-                    }
-                    var setRes = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setactive", targetGuid });
-                    if (setRes.ExitCode != 0)
-                        throw new InvalidOperationException($"powercfg /setactive failed (exit {setRes.ExitCode}): {setRes.StdErr}".Trim());
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, "Ultimate Performance power plan activated.");
-                }
-                catch (Exception ex)
-                {
-                    WriteAheadJournal.MarkFailed(j.Id, ex.Message);
-                    throw;
-                }
-            }
-        });
+        list.Add(BuildPowerPlanTweak());
 
         // 2. CPU Core Parking
-        list.Add(new TweakDefinition
-        {
-            Id = "core_parking",
-            Title = "Disable CPU Core Parking",
-            Description = "Sets processor minimum unparked cores to 100% on AC power, reducing thread wakeup latency in heavy workloads.",
-            Category = "LATENCY",
-            CategoryLabel = "Latency & CPU",
-            IconGlyph = "\uE950",
-            ImpactText = "LOW LATENCY",
-            Risk = TweakRisk.Safe,
-            Evidence = EvidenceRating.Measured,
-            RequiresAdmin = true,
-            TargetDisplay = "powercfg SUB_PROCESSOR CPMINCORES=100",
-            Tags = new[] { "cpu", "parking", "cores", "latency" },
-            Detect = () =>
-            {
-                var res = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/query", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES" });
-                // BUG FIX: Check only the AC Power Setting Index line to avoid false positives from the DC setting.
-                bool unparked = System.Text.RegularExpressions.Regex.IsMatch(
-                    res.StdOut, @"Current AC Power Setting Index:\s*0x00000064", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                return new TweakDetectState(unparked, true, null, TweakBackupService.GetLatestActiveForTweak("core_parking") != null && !unparked);
-            },
-            Preview = () => new[] { new TweakChangeItem("SUB_PROCESSOR\\CPMINCORES (AC)", "Current", "100%") },
-            Apply = () =>
-            {
-                string prevGuid = GetActivePowerSchemeGuid();
-                var res = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/query", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES" });
-                var m = Regex.Match(res.StdOut, @"Current AC Power Setting Index:\s*0x([0-9a-fA-F]+)");
-                int prevVal = m.Success ? Convert.ToInt32(m.Groups[1].Value, 16) : 10;
-
-                // BUG FIX: Record a structured PowerSetting step so Audit Drawer, Panic Revert, and crash recovery work.
-                var step = new SnapshotStep
-                {
-                    Kind = SnapshotStepKind.PowerSetting,
-                    KeyPath = "SUB_PROCESSOR",
-                    ExtraTarget = "CPMINCORES",
-                    OriginalValueText = prevVal.ToString(),
-                    AppliedValueDisplay = "100"
-                };
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "core_parking",
-                    Category = "LATENCY",
-                    Title = "Disable CPU Core Parking",
-                    KeyPath = $"powercfg:{prevGuid}:CPMINCORES",
-                    OriginalValueText = prevVal.ToString(),
-                    AppliedValueDisplay = "100%",
-                    Steps = new List<SnapshotStep> { step }
-                };
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "core_parking", snap);
-                try
-                {
-                    var r1 = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES", "100" });
-                    if (r1.ExitCode != 0)
-                        throw new InvalidOperationException($"powercfg /setacvalueindex failed (exit {r1.ExitCode}): {r1.StdErr}".Trim());
-
-                    var r2 = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setactive", "SCHEME_CURRENT" });
-                    if (r2.ExitCode != 0)
-                    {
-                        try { TweakBackupService.RevertStep(step); } catch { }
-                        throw new InvalidOperationException($"powercfg /setactive failed (exit {r2.ExitCode}): {r2.StdErr}".Trim());
-                    }
-
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, "CPU Core Parking disabled (100% min unparked cores).");
-                }
-                catch (Exception ex) { WriteAheadJournal.MarkFailed(j.Id, ex.Message); throw; }
-            },
-            Revert = () =>
-            {
-                var snap = TweakBackupService.GetLatestActiveForTweak("core_parking");
-                if (snap == null)
-                    return new TweakExecutionResult(TweakStatus.Failed, "No backup snapshot recorded for Core Parking.");
-
-                // Backwards compatibility for snapshots created before PowerSetting step existed.
-                if (snap.Steps.Count == 0 && int.TryParse(snap.OriginalValueText, out int legacyOrig))
-                {
-                    snap.Steps.Add(new SnapshotStep
-                    {
-                        Kind = SnapshotStepKind.PowerSetting,
-                        KeyPath = "SUB_PROCESSOR",
-                        ExtraTarget = "CPMINCORES",
-                        OriginalValueText = legacyOrig.ToString()
-                    });
-                }
-
-                bool ok = TweakBackupService.RevertSnapshot(snap.Id, out string msg);
-                return new TweakExecutionResult(ok ? TweakStatus.Success : TweakStatus.Failed, msg);
-            }
-        });
+        list.Add(BuildCoreParkingTweak());
 
         // 3. System Responsiveness QoS
         list.Add(MakeRegistryTweak(
@@ -626,101 +466,7 @@ public static class TweakCatalog
             tags: new[] { "gamedvr", "xbox", "recording" }));
 
         // 12. Windows Telemetry & DiagTrack (honest policy labeling)
-        list.Add(new TweakDefinition
-        {
-            Id = "telemetry",
-            Title = "Minimize Windows Telemetry & Diagnostics",
-            Description = "Sets AllowTelemetry to Security/Basic (0; Windows Home/Pro enforces Basic minimum) and disables DiagTrack/dmwappushservice.",
-            Category = "PRIVACY",
-            CategoryLabel = "Privacy & AI",
-            IconGlyph = "\uE72E",
-            ImpactText = "PRIVACY SHIELD",
-            Risk = TweakRisk.SystemWide,
-            Evidence = EvidenceRating.Measured,
-            RequiresAdmin = true,
-            TargetDisplay = "AllowTelemetry=0 | Services: DiagTrack, dmwappushservice",
-            Tags = new[] { "telemetry", "diagtrack", "privacy" },
-            Detect = () =>
-            {
-                int? val = SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry") as int?;
-                bool applied = val == 0;
-                return new TweakDetectState(applied, true, null, TweakBackupService.GetLatestActiveForTweak("telemetry") != null && !applied);
-            },
-            Preview = () => new[]
-            {
-                new TweakChangeItem(@"HKLM\...\DataCollection\AllowTelemetry", SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry")?.ToString() ?? "<absent>", "0"),
-                new TweakChangeItem("Service: DiagTrack", "Current", "Disabled"),
-                new TweakChangeItem("Service: dmwappushservice", "Current", "Disabled")
-            },
-            Apply = () =>
-            {
-                var steps = new List<SnapshotStep>
-                {
-                    TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord),
-                    TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "MaxTelemetryAllowed", 0, RegistryValueKind.DWord)
-                };
-                var serviceSteps = new List<SnapshotStep>();
-                foreach (string svc in new[] { "DiagTrack", "dmwappushservice" })
-                {
-                    var svcStep = TryCaptureServiceStep(svc);
-                    if (svcStep != null)
-                    {
-                        steps.Add(svcStep);
-                        serviceSteps.Add(svcStep);
-                    }
-                }
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "telemetry",
-                    Category = "PRIVACY",
-                    Title = "Minimize Windows Telemetry & Diagnostics",
-                    KeyPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection",
-                    ValueName = "AllowTelemetry",
-                    AppliedValueDisplay = "0 + Services Disabled",
-                    Steps = steps
-                };
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "telemetry", snap);
-                var appliedSteps = new List<SnapshotStep>();
-                try
-                {
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord);
-                    appliedSteps.Add(steps[0]);
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "MaxTelemetryAllowed", 0, RegistryValueKind.DWord);
-                    appliedSteps.Add(steps[1]);
-                    foreach (var svcStep in serviceSteps)
-                    {
-                        string svc = svcStep.ServiceName;
-                        try
-                        {
-                            using var sc = new ServiceController(svc);
-                            if (sc.CanStop && sc.Status == ServiceControllerStatus.Running)
-                            {
-                                sc.Stop();
-                                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(4));
-                            }
-                            TweakBackupService.SetServiceStartMode(svc, "Disabled");
-                            appliedSteps.Add(svcStep);
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            SharedLogger.Warn("TweakCatalog", $"Telemetry service '{svc}' step note: {ex.Message}");
-                        }
-                    }
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, "Telemetry minimized and diagnostic services disabled.");
-                }
-                catch (Exception ex)
-                {
-                    for (int i = appliedSteps.Count - 1; i >= 0; i--)
-                    {
-                        try { TweakBackupService.RevertStep(appliedSteps[i]); } catch { }
-                    }
-                    WriteAheadJournal.MarkFailed(j.Id, ex.Message);
-                    throw;
-                }
-            }
-        });
+        list.Add(BuildTelemetryTweak());
 
         // 13. Copilot (Win11 + Edge)
         list.Add(MakeRegistryTweak(
@@ -862,72 +608,7 @@ public static class TweakCatalog
             tags: new[] { "visual", "animations", "ui" }));
 
         // 22. Windows Search Indexer
-        list.Add(new TweakDefinition
-        {
-            Id = "indexing",
-            Title = "Disable Windows Search Indexer (WSearch)",
-            Description = "Sets WSearch startup to Disabled and stops background disk indexing (note: Start/Explorer search becomes slower).",
-            Category = "SYSTEM",
-            CategoryLabel = "System & I/O",
-            IconGlyph = "\uE8B7",
-            ImpactText = "DISK I/O",
-            Risk = TweakRisk.SystemWide,
-            Evidence = EvidenceRating.Situational,
-            RequiresAdmin = true,
-            TargetDisplay = "Service: WSearch -> Disabled",
-            Tags = new[] { "search", "indexing", "ssd" },
-            Detect = () =>
-            {
-                try
-                {
-                    using var sc = new ServiceController("WSearch");
-                    bool disabled = sc.StartType == ServiceStartMode.Disabled && sc.Status == ServiceControllerStatus.Stopped;
-                    return new TweakDetectState(disabled, true);
-                }
-                catch { return new TweakDetectState(false, false, "WSearch service not found."); }
-            },
-            Preview = () => new[] { new TweakChangeItem("Service: WSearch", "Current", "Disabled / Stopped") },
-            Apply = () =>
-            {
-                var step = TryCaptureServiceStep("WSearch")
-                    ?? throw new InvalidOperationException("WSearch service was not found on this system.");
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "indexing",
-                    Category = "SYSTEM",
-                    Title = "Disable Windows Search Indexer",
-                    KeyPath = "Service:WSearch",
-                    OriginalValueText = step.OriginalStartMode,
-                    AppliedValueDisplay = "Disabled",
-                    Steps = new List<SnapshotStep> { step }
-                };
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "indexing", snap);
-                bool stoppedService = false;
-                try
-                {
-                    using var sc = new ServiceController("WSearch");
-                    if (sc.CanStop && sc.Status == ServiceControllerStatus.Running)
-                    {
-                        sc.Stop();
-                        sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(5));
-                        stoppedService = true;
-                    }
-                    TweakBackupService.SetServiceStartMode("WSearch", "Disabled");
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, "Windows Search Indexer disabled.");
-                }
-                catch (Exception ex)
-                {
-                    if (stoppedService)
-                    {
-                        try { TweakBackupService.RevertStep(step); } catch { }
-                    }
-                    WriteAheadJournal.MarkFailed(j.Id, ex.Message);
-                    throw;
-                }
-            }
-        });
+        list.Add(BuildIndexingTweak());
 
         // 23. UTC Hardware Clock
         list.Add(MakeRegistryTweak(
@@ -957,94 +638,7 @@ public static class TweakCatalog
             requiresLaptop: true, requiresS3: true));
 
         // 25. Elite BCD Timers
-        list.Add(new TweakDefinition
-        {
-            Id = "elite_bcd_timers",
-            Title = "Disable Dynamic Tick & Force Enhanced TSC Sync",
-            Description = "Configures bcdedit disabledynamictick=yes and tscsyncpolicy=Enhanced for deterministic interrupt timing (situational).",
-            Category = "LATENCY",
-            CategoryLabel = "Latency & CPU",
-            IconGlyph = "\uE950",
-            ImpactText = "TIMER SYNC",
-            Risk = TweakRisk.RebootRequired,
-            Evidence = EvidenceRating.Situational,
-            RequiresAdmin = true,
-            RequiresReboot = true,
-            TargetDisplay = "bcdedit: disabledynamictick, tscsyncpolicy",
-            Tags = new[] { "bcdedit", "timer", "tsc", "elite" },
-            Detect = () =>
-            {
-                var res = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/enum", "{current}" });
-                // BUG FIX: "Yes" / "Enhanced" match anywhere in bcdedit output causes false positives.
-                // Use line-anchored regexes to match only the relevant BCD entries.
-                bool dyn = System.Text.RegularExpressions.Regex.IsMatch(
-                    res.StdOut, @"(?m)^\s*disabledynamictick\s+Yes\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                bool tsc = System.Text.RegularExpressions.Regex.IsMatch(
-                    res.StdOut, @"(?m)^\s*tscsyncpolicy\s+Enhanced\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                return new TweakDetectState(dyn && tsc, true);
-            },
-            Preview = () => new[]
-            {
-                new TweakChangeItem("bcdedit disabledynamictick", "Current", "yes"),
-                new TweakChangeItem("bcdedit tscsyncpolicy", "Current", "Enhanced")
-            },
-            Apply = () =>
-            {
-                string cur = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/enum", "{current}" }).StdOut;
-                var dynMatch = Regex.Match(cur, @"(?im)^\s*disabledynamictick\s+(\S+)\s*$");
-                var tscMatch = Regex.Match(cur, @"(?im)^\s*tscsyncpolicy\s+(\S+)\s*$");
-                var dynStep = new SnapshotStep
-                {
-                    Kind = SnapshotStepKind.BcdValue,
-                    ExtraTarget = "disabledynamictick",
-                    WasAbsent = !dynMatch.Success,
-                    OriginalValueText = dynMatch.Success ? dynMatch.Groups[1].Value : ""
-                };
-                var tscStep = new SnapshotStep
-                {
-                    Kind = SnapshotStepKind.BcdValue,
-                    ExtraTarget = "tscsyncpolicy",
-                    WasAbsent = !tscMatch.Success,
-                    OriginalValueText = tscMatch.Success ? tscMatch.Groups[1].Value : ""
-                };
-                var steps = new List<SnapshotStep> { dynStep, tscStep };
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "elite_bcd_timers",
-                    Category = "LATENCY",
-                    Title = "Disable Dynamic Tick & Force Enhanced TSC Sync",
-                    KeyPath = "bcdedit:{current}",
-                    AppliedValueDisplay = "disabledynamictick=yes, tscsyncpolicy=Enhanced",
-                    Steps = steps
-                };
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "elite_bcd_timers", snap);
-                bool firstApplied = false;
-                try
-                {
-                    var r1 = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/set", "disabledynamictick", "yes" });
-                    if (r1.ExitCode != 0)
-                        throw new InvalidOperationException($"bcdedit /set disabledynamictick failed (exit {r1.ExitCode}): {r1.StdErr}".Trim());
-                    firstApplied = true;
-
-                    var r2 = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/set", "tscsyncpolicy", "Enhanced" });
-                    if (r2.ExitCode != 0)
-                        throw new InvalidOperationException($"bcdedit /set tscsyncpolicy failed (exit {r2.ExitCode}): {r2.StdErr}".Trim());
-
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, "BCD timer policies updated.");
-                }
-                catch (Exception ex)
-                {
-                    if (firstApplied)
-                    {
-                        try { TweakBackupService.RevertStep(dynStep); } catch { }
-                    }
-                    WriteAheadJournal.MarkFailed(j.Id, ex.Message);
-                    throw;
-                }
-            }
-        });
+        list.Add(BuildEliteBcdTimersTweak());
 
         // 26. Elite NTFS fsutil tweaks (via native FileSystem registry keys)
         list.Add(MakeRegistryTweak(
@@ -1074,88 +668,7 @@ public static class TweakCatalog
             tags: new[] { "ram", "compression", "elite" }));
 
         // 28. TCP/IP Low-Latency (Nagle + QoS reserve)
-        list.Add(new TweakDefinition
-        {
-            Id = "net_tcp_low_latency",
-            Title = "Disable Nagle's Algorithm & QoS Bandwidth Reserve",
-            Description = "Sets TcpAckFrequency=1 & TCPNoDelay=1 on active physical interfaces and removes Psched 20% NonBestEffortLimit.",
-            Category = "NETWORK",
-            CategoryLabel = "Network",
-            IconGlyph = "\uE774",
-            ImpactText = "LOW PING",
-            Risk = TweakRisk.SystemWide,
-            Evidence = EvidenceRating.Situational,
-            RequiresAdmin = true,
-            TargetDisplay = @"Tcpip\Parameters\Interfaces + Psched\NonBestEffortLimit=0",
-            Tags = new[] { "nagle", "tcp", "qos", "network" },
-            Detect = () =>
-            {
-                int? psched = SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit") as int?;
-                return new TweakDetectState(psched == 0, true);
-            },
-            Preview = () => new[]
-            {
-                new TweakChangeItem(@"HKLM\...\Psched\NonBestEffortLimit", SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit")?.ToString() ?? "<absent>", "0"),
-                new TweakChangeItem(@"Active Interfaces (TcpAckFrequency / TCPNoDelay)", "Current", "1 / 1")
-            },
-            Apply = () =>
-            {
-                var steps = new List<SnapshotStep>
-                {
-                    TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit", 0, RegistryValueKind.DWord)
-                };
-                var activeIds = NetworkInterface.GetAllNetworkInterfaces()
-                    .Where(n => n.OperationalStatus == OperationalStatus.Up &&
-                                (n.NetworkInterfaceType == NetworkInterfaceType.Ethernet || n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
-                    .Select(n => n.Id)
-                    .ToList();
-
-                foreach (string guid in activeIds)
-                {
-                    string ifPath = $@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{guid}";
-                    steps.Add(TweakBackupService.CaptureRegistryStep(ifPath, "TcpAckFrequency", 1, RegistryValueKind.DWord));
-                    steps.Add(TweakBackupService.CaptureRegistryStep(ifPath, "TCPNoDelay", 1, RegistryValueKind.DWord));
-                }
-
-                var snap = new TweakSnapshot
-                {
-                    TweakId = "net_tcp_low_latency",
-                    Category = "NETWORK",
-                    Title = "Disable Nagle's Algorithm & QoS Reserve",
-                    KeyPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched",
-                    AppliedValueDisplay = $"{activeIds.Count} interface(s)",
-                    Steps = steps
-                };
-
-                var j = WriteAheadJournal.Begin("APPLY_TWEAK", "net_tcp_low_latency", snap);
-                int appliedStepIdx = 0;
-                try
-                {
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit", 0, RegistryValueKind.DWord);
-                    appliedStepIdx++;
-                    foreach (string guid in activeIds)
-                    {
-                        string ifPath = $@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{guid}";
-                        Registry.SetValue(ifPath, "TcpAckFrequency", 1, RegistryValueKind.DWord);
-                        appliedStepIdx++;
-                        Registry.SetValue(ifPath, "TCPNoDelay", 1, RegistryValueKind.DWord);
-                        appliedStepIdx++;
-                    }
-                    TweakBackupService.RecordSnapshot(snap);
-                    WriteAheadJournal.MarkCommitted(j.Id);
-                    return new TweakExecutionResult(TweakStatus.Success, $"Low-latency TCP applied across {activeIds.Count} interface(s).");
-                }
-                catch (Exception ex)
-                {
-                    for (int i = appliedStepIdx - 1; i >= 0; i--)
-                    {
-                        try { TweakBackupService.RevertStep(steps[i]); } catch { }
-                    }
-                    WriteAheadJournal.MarkFailed(j.Id, ex.Message);
-                    throw;
-                }
-            }
-        });
+        list.Add(BuildNetTcpLowLatencyTweak());
 
         // 29. AMD ULPS Disable (Hardware gated)
         list.Add(MakeRegistryTweak(
@@ -1187,4 +700,503 @@ public static class TweakCatalog
 
         return list;
     }
+
+    private static TweakDefinition BuildPowerPlanTweak() => new()
+    {
+        Id = "power",
+        Title = "Ultimate Performance Power Plan",
+        Description = "Activates Windows highest-throughput power scheme for maximum CPU boost clocks and zero core downthrottling.",
+        Category = "LATENCY",
+        CategoryLabel = "Latency & CPU",
+        IconGlyph = "\uE7E8",
+        ImpactText = "MAX BOOST",
+        Risk = TweakRisk.Safe,
+        Evidence = EvidenceRating.Measured,
+        RequiresAdmin = false,
+        TargetDisplay = "powercfg /setactive Ultimate Performance",
+        Tags = new[] { "power", "cpu", "gaming", "boost" },
+        Detect = () =>
+        {
+            string active = GetActivePowerSchemeGuid();
+            bool isUlt = active.Equals(CoreConstants.UltimatePerformanceGuid, StringComparison.OrdinalIgnoreCase);
+            if (!isUlt)
+            {
+                var outp = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/getactivescheme" }).StdOut;
+                isUlt = outp.Contains("Ultimate Performance", StringComparison.OrdinalIgnoreCase);
+            }
+            return new TweakDetectState(isUlt, true, null, TweakBackupService.GetLatestActiveForTweak("power") != null && !isUlt);
+        },
+        Preview = () => new[] { new TweakChangeItem("Active Power Plan", GetActivePowerSchemeGuid(), CoreConstants.UltimatePerformanceGuid) },
+        Apply = () =>
+        {
+            string prev = GetActivePowerSchemeGuid();
+            var step = new SnapshotStep { Kind = SnapshotStepKind.PowerPlan, OriginalValueText = prev };
+            var snap = new TweakSnapshot
+            {
+                TweakId = "power",
+                Category = "LATENCY",
+                Title = "Ultimate Performance Power Plan",
+                KeyPath = "powercfg /getactivescheme",
+                OriginalValueText = prev,
+                AppliedValueDisplay = "Ultimate Performance",
+                Steps = new List<SnapshotStep> { step }
+            };
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "power", snap);
+            try
+            {
+                string listOut = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/list" }).StdOut;
+                string targetGuid = CoreConstants.UltimatePerformanceGuid;
+                if (!listOut.Contains(targetGuid, StringComparison.OrdinalIgnoreCase))
+                {
+                    var lineMatch = listOut.Split('\n').FirstOrDefault(l => l.Contains("Ultimate Performance", StringComparison.OrdinalIgnoreCase));
+                    var m = lineMatch != null ? Regex.Match(lineMatch, @"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}") : Match.Empty;
+                    if (m.Success) targetGuid = m.Value;
+                    else
+                    {
+                        var dup = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "-duplicatescheme", CoreConstants.UltimatePerformanceGuid });
+                        var dm = Regex.Match(dup.StdOut, @"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+                        if (dm.Success) targetGuid = dm.Value;
+                    }
+                }
+                var setRes = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setactive", targetGuid });
+                if (setRes.ExitCode != 0)
+                    throw new InvalidOperationException($"powercfg /setactive failed (exit {setRes.ExitCode}): {setRes.StdErr}".Trim());
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, "Ultimate Performance power plan activated.");
+            }
+            catch (Exception ex)
+            {
+                WriteAheadJournal.MarkFailed(j.Id, ex.Message);
+                throw;
+            }
+        }
+    };
+
+    private static TweakDefinition BuildCoreParkingTweak() => new()
+    {
+        Id = "core_parking",
+        Title = "Disable CPU Core Parking",
+        Description = "Sets processor minimum unparked cores to 100% on AC power, reducing thread wakeup latency in heavy workloads.",
+        Category = "LATENCY",
+        CategoryLabel = "Latency & CPU",
+        IconGlyph = "\uE950",
+        ImpactText = "LOW LATENCY",
+        Risk = TweakRisk.Safe,
+        Evidence = EvidenceRating.Measured,
+        RequiresAdmin = true,
+        TargetDisplay = "powercfg SUB_PROCESSOR CPMINCORES=100",
+        Tags = new[] { "cpu", "parking", "cores", "latency" },
+        Detect = () =>
+        {
+            var res = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/query", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES" });
+            // BUG FIX: Check only the AC Power Setting Index line to avoid false positives from the DC setting.
+            bool unparked = Regex.IsMatch(
+                res.StdOut, @"Current AC Power Setting Index:\s*0x00000064", RegexOptions.IgnoreCase);
+            return new TweakDetectState(unparked, true, null, TweakBackupService.GetLatestActiveForTweak("core_parking") != null && !unparked);
+        },
+        Preview = () => new[] { new TweakChangeItem("SUB_PROCESSOR\\CPMINCORES (AC)", "Current", "100%") },
+        Apply = () =>
+        {
+            string prevGuid = GetActivePowerSchemeGuid();
+            var res = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/query", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES" });
+            var m = Regex.Match(res.StdOut, @"Current AC Power Setting Index:\s*0x([0-9a-fA-F]+)");
+            int prevVal = m.Success ? Convert.ToInt32(m.Groups[1].Value, 16) : 10;
+
+            // BUG FIX: Record a structured PowerSetting step so Audit Drawer, Panic Revert, and crash recovery work.
+            var step = new SnapshotStep
+            {
+                Kind = SnapshotStepKind.PowerSetting,
+                KeyPath = "SUB_PROCESSOR",
+                ExtraTarget = "CPMINCORES",
+                OriginalValueText = prevVal.ToString(),
+                AppliedValueDisplay = "100"
+            };
+            var snap = new TweakSnapshot
+            {
+                TweakId = "core_parking",
+                Category = "LATENCY",
+                Title = "Disable CPU Core Parking",
+                KeyPath = $"powercfg:{prevGuid}:CPMINCORES",
+                OriginalValueText = prevVal.ToString(),
+                AppliedValueDisplay = "100%",
+                Steps = new List<SnapshotStep> { step }
+            };
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "core_parking", snap);
+            try
+            {
+                var r1 = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES", "100" });
+                if (r1.ExitCode != 0)
+                    throw new InvalidOperationException($"powercfg /setacvalueindex failed (exit {r1.ExitCode}): {r1.StdErr}".Trim());
+
+                var r2 = NativeSystemHelper.RunSystem32ToolSync("powercfg.exe", new[] { "/setactive", "SCHEME_CURRENT" });
+                if (r2.ExitCode != 0)
+                {
+                    try { TweakBackupService.RevertStep(step); } catch { }
+                    throw new InvalidOperationException($"powercfg /setactive failed (exit {r2.ExitCode}): {r2.StdErr}".Trim());
+                }
+
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, "CPU Core Parking disabled (100% min unparked cores).");
+            }
+            catch (Exception ex) { WriteAheadJournal.MarkFailed(j.Id, ex.Message); throw; }
+        },
+        Revert = () =>
+        {
+            var snap = TweakBackupService.GetLatestActiveForTweak("core_parking");
+            if (snap == null)
+                return new TweakExecutionResult(TweakStatus.Failed, "No backup snapshot recorded for Core Parking.");
+
+            // Backwards compatibility for snapshots created before PowerSetting step existed.
+            if (snap.Steps.Count == 0 && int.TryParse(snap.OriginalValueText, out int legacyOrig))
+            {
+                snap.Steps.Add(new SnapshotStep
+                {
+                    Kind = SnapshotStepKind.PowerSetting,
+                    KeyPath = "SUB_PROCESSOR",
+                    ExtraTarget = "CPMINCORES",
+                    OriginalValueText = legacyOrig.ToString()
+                });
+            }
+
+            bool ok = TweakBackupService.RevertSnapshot(snap.Id, out string msg);
+            return new TweakExecutionResult(ok ? TweakStatus.Success : TweakStatus.Failed, msg);
+        }
+    };
+
+    private static TweakDefinition BuildTelemetryTweak() => new()
+    {
+        Id = "telemetry",
+        Title = "Minimize Windows Telemetry & Diagnostics",
+        Description = "Sets AllowTelemetry to Security/Basic (0; Windows Home/Pro enforces Basic minimum) and disables DiagTrack/dmwappushservice.",
+        Category = "PRIVACY",
+        CategoryLabel = "Privacy & AI",
+        IconGlyph = "\uE72E",
+        ImpactText = "PRIVACY SHIELD",
+        Risk = TweakRisk.SystemWide,
+        Evidence = EvidenceRating.Measured,
+        RequiresAdmin = true,
+        TargetDisplay = "AllowTelemetry=0 | Services: DiagTrack, dmwappushservice",
+        Tags = new[] { "telemetry", "diagtrack", "privacy" },
+        Detect = () =>
+        {
+            int? val = SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry") as int?;
+            bool applied = val == 0;
+            return new TweakDetectState(applied, true, null, TweakBackupService.GetLatestActiveForTweak("telemetry") != null && !applied);
+        },
+        Preview = () => new[]
+        {
+            new TweakChangeItem(@"HKLM\...\DataCollection\AllowTelemetry", SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry")?.ToString() ?? "<absent>", "0"),
+            new TweakChangeItem("Service: DiagTrack", "Current", "Disabled"),
+            new TweakChangeItem("Service: dmwappushservice", "Current", "Disabled")
+        },
+        Apply = () =>
+        {
+            var steps = new List<SnapshotStep>
+            {
+                TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord),
+                TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "MaxTelemetryAllowed", 0, RegistryValueKind.DWord)
+            };
+            var serviceSteps = new List<SnapshotStep>();
+            foreach (string svc in new[] { "DiagTrack", "dmwappushservice" })
+            {
+                var svcStep = TryCaptureServiceStep(svc);
+                if (svcStep != null)
+                {
+                    steps.Add(svcStep);
+                    serviceSteps.Add(svcStep);
+                }
+            }
+            var snap = new TweakSnapshot
+            {
+                TweakId = "telemetry",
+                Category = "PRIVACY",
+                Title = "Minimize Windows Telemetry & Diagnostics",
+                KeyPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection",
+                ValueName = "AllowTelemetry",
+                AppliedValueDisplay = "0 + Services Disabled",
+                Steps = steps
+            };
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "telemetry", snap);
+            var appliedSteps = new List<SnapshotStep>();
+            try
+            {
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord);
+                appliedSteps.Add(steps[0]);
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "MaxTelemetryAllowed", 0, RegistryValueKind.DWord);
+                appliedSteps.Add(steps[1]);
+                foreach (var svcStep in serviceSteps)
+                {
+                    string svc = svcStep.ServiceName;
+                    try
+                    {
+                        using var sc = new ServiceController(svc);
+                        if (sc.CanStop && sc.Status == ServiceControllerStatus.Running)
+                        {
+                            sc.Stop();
+                            sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(4));
+                        }
+                        TweakBackupService.SetServiceStartMode(svc, "Disabled");
+                        appliedSteps.Add(svcStep);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        SharedLogger.Warn("TweakCatalog", $"Telemetry service '{svc}' step note: {ex.Message}");
+                    }
+                }
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, "Telemetry minimized and diagnostic services disabled.");
+            }
+            catch (Exception ex)
+            {
+                for (int i = appliedSteps.Count - 1; i >= 0; i--)
+                {
+                    try { TweakBackupService.RevertStep(appliedSteps[i]); } catch { }
+                }
+                WriteAheadJournal.MarkFailed(j.Id, ex.Message);
+                throw;
+            }
+        }
+    };
+
+    private static TweakDefinition BuildIndexingTweak() => new()
+    {
+        Id = "indexing",
+        Title = "Disable Windows Search Indexer (WSearch)",
+        Description = "Sets WSearch startup to Disabled and stops background disk indexing (note: Start/Explorer search becomes slower).",
+        Category = "SYSTEM",
+        CategoryLabel = "System & I/O",
+        IconGlyph = "\uE8B7",
+        ImpactText = "DISK I/O",
+        Risk = TweakRisk.SystemWide,
+        Evidence = EvidenceRating.Situational,
+        RequiresAdmin = true,
+        TargetDisplay = "Service: WSearch -> Disabled",
+        Tags = new[] { "search", "indexing", "ssd" },
+        Detect = () =>
+        {
+            try
+            {
+                using var sc = new ServiceController("WSearch");
+                bool disabled = sc.StartType == ServiceStartMode.Disabled && sc.Status == ServiceControllerStatus.Stopped;
+                return new TweakDetectState(disabled, true);
+            }
+            catch { return new TweakDetectState(false, false, "WSearch service not found."); }
+        },
+        Preview = () => new[] { new TweakChangeItem("Service: WSearch", "Current", "Disabled / Stopped") },
+        Apply = () =>
+        {
+            var step = TryCaptureServiceStep("WSearch")
+                ?? throw new InvalidOperationException("WSearch service was not found on this system.");
+            var snap = new TweakSnapshot
+            {
+                TweakId = "indexing",
+                Category = "SYSTEM",
+                Title = "Disable Windows Search Indexer",
+                KeyPath = "Service:WSearch",
+                OriginalValueText = step.OriginalStartMode,
+                AppliedValueDisplay = "Disabled",
+                Steps = new List<SnapshotStep> { step }
+            };
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "indexing", snap);
+            bool stoppedService = false;
+            try
+            {
+                using var sc = new ServiceController("WSearch");
+                if (sc.CanStop && sc.Status == ServiceControllerStatus.Running)
+                {
+                    sc.Stop();
+                    sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(5));
+                    stoppedService = true;
+                }
+                TweakBackupService.SetServiceStartMode("WSearch", "Disabled");
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, "Windows Search Indexer disabled.");
+            }
+            catch (Exception ex)
+            {
+                if (stoppedService)
+                {
+                    try { TweakBackupService.RevertStep(step); } catch { }
+                }
+                WriteAheadJournal.MarkFailed(j.Id, ex.Message);
+                throw;
+            }
+        }
+    };
+
+    private static TweakDefinition BuildEliteBcdTimersTweak() => new()
+    {
+        Id = "elite_bcd_timers",
+        Title = "Disable Dynamic Tick & Force Enhanced TSC Sync",
+        Description = "Configures bcdedit disabledynamictick=yes and tscsyncpolicy=Enhanced for deterministic interrupt timing (situational).",
+        Category = "LATENCY",
+        CategoryLabel = "Latency & CPU",
+        IconGlyph = "\uE950",
+        ImpactText = "TIMER SYNC",
+        Risk = TweakRisk.RebootRequired,
+        Evidence = EvidenceRating.Situational,
+        RequiresAdmin = true,
+        RequiresReboot = true,
+        TargetDisplay = "bcdedit: disabledynamictick, tscsyncpolicy",
+        Tags = new[] { "bcdedit", "timer", "tsc", "elite" },
+        Detect = () =>
+        {
+            var res = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/enum", "{current}" });
+            // BUG FIX: "Yes" / "Enhanced" match anywhere in bcdedit output causes false positives.
+            // Use line-anchored regexes to match only the relevant BCD entries.
+            bool dyn = Regex.IsMatch(
+                res.StdOut, @"(?m)^\s*disabledynamictick\s+Yes\s*$", RegexOptions.IgnoreCase);
+            bool tsc = Regex.IsMatch(
+                res.StdOut, @"(?m)^\s*tscsyncpolicy\s+Enhanced\s*$", RegexOptions.IgnoreCase);
+            return new TweakDetectState(dyn && tsc, true);
+        },
+        Preview = () => new[]
+        {
+            new TweakChangeItem("bcdedit disabledynamictick", "Current", "yes"),
+            new TweakChangeItem("bcdedit tscsyncpolicy", "Current", "Enhanced")
+        },
+        Apply = () =>
+        {
+            string cur = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/enum", "{current}" }).StdOut;
+            var dynMatch = Regex.Match(cur, @"(?im)^\s*disabledynamictick\s+(\S+)\s*$");
+            var tscMatch = Regex.Match(cur, @"(?im)^\s*tscsyncpolicy\s+(\S+)\s*$");
+            var dynStep = new SnapshotStep
+            {
+                Kind = SnapshotStepKind.BcdValue,
+                ExtraTarget = "disabledynamictick",
+                WasAbsent = !dynMatch.Success,
+                OriginalValueText = dynMatch.Success ? dynMatch.Groups[1].Value : ""
+            };
+            var tscStep = new SnapshotStep
+            {
+                Kind = SnapshotStepKind.BcdValue,
+                ExtraTarget = "tscsyncpolicy",
+                WasAbsent = !tscMatch.Success,
+                OriginalValueText = tscMatch.Success ? tscMatch.Groups[1].Value : ""
+            };
+            var steps = new List<SnapshotStep> { dynStep, tscStep };
+            var snap = new TweakSnapshot
+            {
+                TweakId = "elite_bcd_timers",
+                Category = "LATENCY",
+                Title = "Disable Dynamic Tick & Force Enhanced TSC Sync",
+                KeyPath = "bcdedit:{current}",
+                AppliedValueDisplay = "disabledynamictick=yes, tscsyncpolicy=Enhanced",
+                Steps = steps
+            };
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "elite_bcd_timers", snap);
+            bool firstApplied = false;
+            try
+            {
+                var r1 = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/set", "disabledynamictick", "yes" });
+                if (r1.ExitCode != 0)
+                    throw new InvalidOperationException($"bcdedit /set disabledynamictick failed (exit {r1.ExitCode}): {r1.StdErr}".Trim());
+                firstApplied = true;
+
+                var r2 = NativeSystemHelper.RunSystem32ToolSync("bcdedit.exe", new[] { "/set", "tscsyncpolicy", "Enhanced" });
+                if (r2.ExitCode != 0)
+                    throw new InvalidOperationException($"bcdedit /set tscsyncpolicy failed (exit {r2.ExitCode}): {r2.StdErr}".Trim());
+
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, "BCD timer policies updated.");
+            }
+            catch (Exception ex)
+            {
+                if (firstApplied)
+                {
+                    try { TweakBackupService.RevertStep(dynStep); } catch { }
+                }
+                WriteAheadJournal.MarkFailed(j.Id, ex.Message);
+                throw;
+            }
+        }
+    };
+
+    private static TweakDefinition BuildNetTcpLowLatencyTweak() => new()
+    {
+        Id = "net_tcp_low_latency",
+        Title = "Disable Nagle's Algorithm & QoS Bandwidth Reserve",
+        Description = "Sets TcpAckFrequency=1 & TCPNoDelay=1 on active physical interfaces and removes Psched 20% NonBestEffortLimit.",
+        Category = "NETWORK",
+        CategoryLabel = "Network",
+        IconGlyph = "\uE774",
+        ImpactText = "LOW PING",
+        Risk = TweakRisk.SystemWide,
+        Evidence = EvidenceRating.Situational,
+        RequiresAdmin = true,
+        TargetDisplay = @"Tcpip\Parameters\Interfaces + Psched\NonBestEffortLimit=0",
+        Tags = new[] { "nagle", "tcp", "qos", "network" },
+        Detect = () =>
+        {
+            int? psched = SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit") as int?;
+            return new TweakDetectState(psched == 0, true);
+        },
+        Preview = () => new[]
+        {
+            new TweakChangeItem(@"HKLM\...\Psched\NonBestEffortLimit", SafeGetRegValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit")?.ToString() ?? "<absent>", "0"),
+            new TweakChangeItem(@"Active Interfaces (TcpAckFrequency / TCPNoDelay)", "Current", "1 / 1")
+        },
+        Apply = () =>
+        {
+            var steps = new List<SnapshotStep>
+            {
+                TweakBackupService.CaptureRegistryStep(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit", 0, RegistryValueKind.DWord)
+            };
+            var activeIds = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                            (n.NetworkInterfaceType == NetworkInterfaceType.Ethernet || n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
+                .Select(n => n.Id)
+                .ToList();
+
+            foreach (string guid in activeIds)
+            {
+                string ifPath = $@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{guid}";
+                steps.Add(TweakBackupService.CaptureRegistryStep(ifPath, "TcpAckFrequency", 1, RegistryValueKind.DWord));
+                steps.Add(TweakBackupService.CaptureRegistryStep(ifPath, "TCPNoDelay", 1, RegistryValueKind.DWord));
+            }
+
+            var snap = new TweakSnapshot
+            {
+                TweakId = "net_tcp_low_latency",
+                Category = "NETWORK",
+                Title = "Disable Nagle's Algorithm & QoS Reserve",
+                KeyPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched",
+                AppliedValueDisplay = $"{activeIds.Count} interface(s)",
+                Steps = steps
+            };
+
+            var j = WriteAheadJournal.Begin("APPLY_TWEAK", "net_tcp_low_latency", snap);
+            int appliedStepIdx = 0;
+            try
+            {
+                Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Psched", "NonBestEffortLimit", 0, RegistryValueKind.DWord);
+                appliedStepIdx++;
+                foreach (string guid in activeIds)
+                {
+                    string ifPath = $@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{guid}";
+                    Registry.SetValue(ifPath, "TcpAckFrequency", 1, RegistryValueKind.DWord);
+                    appliedStepIdx++;
+                    Registry.SetValue(ifPath, "TCPNoDelay", 1, RegistryValueKind.DWord);
+                    appliedStepIdx++;
+                }
+                TweakBackupService.RecordSnapshot(snap);
+                WriteAheadJournal.MarkCommitted(j.Id);
+                return new TweakExecutionResult(TweakStatus.Success, $"Low-latency TCP applied across {activeIds.Count} interface(s).");
+            }
+            catch (Exception ex)
+            {
+                for (int i = appliedStepIdx - 1; i >= 0; i--)
+                {
+                    try { TweakBackupService.RevertStep(steps[i]); } catch { }
+                }
+                WriteAheadJournal.MarkFailed(j.Id, ex.Message);
+                throw;
+            }
+        }
+    };
 }

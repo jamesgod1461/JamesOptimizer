@@ -880,4 +880,23 @@ public class CoreSafetyAndParityTests : IDisposable
         Assert.False(IpcProtocol.TryParseSuccessResponse("", out string? err4));
         Assert.NotNull(err4);
     }
+
+    [Fact]
+    public void TweakCatalog_BuildCatalog_MatchesPreRefactorSnapshotByteForByte()
+    {
+        var sb = new System.Text.StringBuilder();
+        int idx = 0;
+        foreach (var t in TweakCatalog.All)
+        {
+            sb.Append($"{idx}|{t.Id}|{t.Title}|{t.Category}|{t.CategoryLabel}|{t.ImpactText}|{t.Risk}|{t.Evidence}|Admin={t.RequiresAdmin}|Reboot={t.RequiresReboot}|Build={t.MinOsBuild}|Laptop={t.RequiresLaptop}|S3={t.RequiresS3Sleep}|Gpu={t.RequiredGpuVendor}|CustomRevert={t.Revert != null}|Target={t.TargetDisplay}|Tags={string.Join(",", t.Tags)}\r\n");
+            foreach (var c in t.Preview())
+                sb.Append($"  PREVIEW:{c.Target}=>{c.After}\r\n");
+            idx++;
+        }
+
+        byte[] actualBytes = new System.Text.UTF8Encoding(false).GetBytes(sb.ToString());
+        string actualSha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(actualBytes));
+        Assert.Equal(30, idx);
+        Assert.Equal("0092E8F40D42C4A325B435475B0A34DAE4FEFA4BF0B52BF1F768918196492BD3", actualSha);
+    }
 }
