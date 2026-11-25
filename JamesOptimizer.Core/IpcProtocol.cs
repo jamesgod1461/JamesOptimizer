@@ -177,11 +177,15 @@ public static partial class IpcProtocol
             }
 
 #if !DEBUG
-            if (!NativeSystemHelper.VerifyAuthenticodeSignature(exePath, out string? subject) ||
-                string.IsNullOrWhiteSpace(subject) ||
-                !subject.Contains(CoreConstants.PublisherName, StringComparison.OrdinalIgnoreCase))
+            NativeSystemHelper.VerifyAuthenticodeDetails(exePath, out int clientTrustStatus, out string? clientSubject, out string? clientThumbprint);
+            string? servicePath = Environment.ProcessPath;
+            string? serviceThumbprint = null;
+            if (!string.IsNullOrWhiteSpace(servicePath))
+                NativeSystemHelper.VerifyAuthenticodeDetails(servicePath, out _, out _, out serviceThumbprint);
+
+            if (!IsTrustedPipeClientSignature(clientTrustStatus, clientSubject, clientThumbprint, exePath, serviceThumbprint, servicePath))
             {
-                reason = $"Client binary '{exePath}' failed Authenticode verification.";
+                reason = $"Client binary '{exePath}' failed Authenticode verification (WinVerifyTrust=0x{clientTrustStatus:X8}).";
                 return false;
             }
 #endif
@@ -190,6 +194,55 @@ public static partial class IpcProtocol
         catch (Exception ex)
         {
             reason = $"Client verification error: {ex.Message}";
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Evaluates whether a pipe client's Authenticode verification satisfies Release IPC security rules:
+    /// either full Windows root-chain trust (status 0) for the expected publisher, or an intact self-signed
+    /// digest (CERT_E_UNTRUSTEDROOT) whose leaf thumbprint matches the running service binary in the same install tree.
+    /// </summary>
+    public static bool IsTrustedPipeClientSignature(
+        int clientTrustStatus,
+        string? clientSubject,
+        string? clientThumbprint,
+        string clientExePath,
+        string? serviceThumbprint,
+        string? serviceExePath)
+    {
+        if (string.IsNullOrWhiteSpace(clientSubject) ||
+            !clientSubject.Contains(CoreConstants.PublisherName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (clientTrustStatus == 0)
+            return true;
+
+        const int CertE_UntrustedRoot = unchecked((int)0x800B0109);
+        if (clientTrustStatus != CertE_UntrustedRoot)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(clientThumbprint) ||
+            string.IsNullOrWhiteSpace(serviceThumbprint) ||
+            !string.Equals(clientThumbprint, serviceThumbprint, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(clientExePath) || string.IsNullOrWhiteSpace(serviceExePath))
+            return false;
+
+        try
+        {
+            string? clientDir = Path.GetDirectoryName(Path.GetFullPath(clientExePath));
+            string? serviceDir = Path.GetDirectoryName(Path.GetFullPath(serviceExePath));
+            if (string.IsNullOrWhiteSpace(clientDir) || string.IsNullOrWhiteSpace(serviceDir))
+                return false;
+
+            string serviceParentDir = Directory.GetParent(serviceDir)?.FullName ?? serviceDir;
+            return string.Equals(clientDir, serviceDir, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(clientDir, serviceParentDir, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
             return false;
         }
     }

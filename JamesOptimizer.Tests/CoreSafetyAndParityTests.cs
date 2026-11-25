@@ -938,4 +938,26 @@ public class CoreSafetyAndParityTests : IDisposable
 
         Assert.Equal("HELLO:ERROR:Missing version", IpcProtocol.EvaluateHello(""));
     }
+
+    [Fact]
+    public void IpcProtocol_IsTrustedPipeClientSignature_EnforcesRootOrSameInstallSelfSignedMatch()
+    {
+        const int untrustedRoot = unchecked((int)0x800B0109);
+        const int badDigest = unchecked((int)0xC000A000);
+        const string clientPath = @"C:\Program Files\JamesOptimizer\JamesOptimizer.WinUI.exe";
+        const string servicePath = @"C:\Program Files\JamesOptimizer\Service\JamesOptimizer.Service.exe";
+        const string thumb = "F1B6BC5D4DA1CCB03FA58E1969E7A2D56EFFF5FB";
+
+        // Full Windows trust passes for expected publisher
+        Assert.True(IpcProtocol.IsTrustedPipeClientSignature(0, "CN=James God", thumb, clientPath, thumb, servicePath));
+
+        // Self-signed (CERT_E_UNTRUSTEDROOT) passes ONLY when thumbprint and install tree match
+        Assert.True(IpcProtocol.IsTrustedPipeClientSignature(untrustedRoot, "CN=James God", thumb, clientPath, thumb, servicePath));
+
+        // Tampered digest, wrong publisher, mismatched thumbprint, or outside directory must fail
+        Assert.False(IpcProtocol.IsTrustedPipeClientSignature(badDigest, "CN=James God", thumb, clientPath, thumb, servicePath));
+        Assert.False(IpcProtocol.IsTrustedPipeClientSignature(untrustedRoot, "CN=Other Vendor", thumb, clientPath, thumb, servicePath));
+        Assert.False(IpcProtocol.IsTrustedPipeClientSignature(untrustedRoot, "CN=James God", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", clientPath, thumb, servicePath));
+        Assert.False(IpcProtocol.IsTrustedPipeClientSignature(untrustedRoot, "CN=James God", thumb, @"C:\Temp\JamesOptimizer.WinUI.exe", thumb, servicePath));
+    }
 }

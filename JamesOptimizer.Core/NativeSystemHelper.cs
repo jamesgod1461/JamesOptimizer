@@ -276,9 +276,18 @@ public static class NativeSystemHelper
         }
     }
 
-    public static bool VerifyAuthenticodeSignature(string filePath, out string? signerSubject)
+    public static bool VerifyAuthenticodeSignature(string filePath, out string? signerSubject) =>
+        VerifyAuthenticodeDetails(filePath, out int status, out signerSubject, out _) && status == 0;
+
+    internal static bool VerifyAuthenticodeDetails(
+        string filePath,
+        out int winTrustStatus,
+        out string? signerSubject,
+        out string? signerThumbprint)
     {
+        winTrustStatus = -1;
         signerSubject = null;
+        signerThumbprint = null;
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             return false;
 
@@ -310,11 +319,9 @@ public static class NativeSystemHelper
                 trustData.dwStateAction = 2; // WTD_STATEACTION_CLOSE
                 WinVerifyTrust(IntPtr.Zero, ref action, ref trustData);
 
-                if (status != 0)
-                    return false;
+                winTrustStatus = status;
 
-                // BUG FIX: Resolve the actual leaf Authenticode signer via CMSG_SIGNER_CERT_INFO_PARAM +
-                // CertFindCertificateInStore instead of grabbing the first cert in the PKCS#7 bag (which is often the CA).
+                // Resolve the leaf Authenticode signer via CMSG_SIGNER_CERT_INFO_PARAM + CertFindCertificateInStore.
                 if (CryptQueryObject(
                         1, // CERT_QUERY_OBJECT_FILE
                         filePath,
@@ -344,6 +351,7 @@ public static class NativeSystemHelper
                                             {
                                                 using var cert = new X509Certificate2(certCtx);
                                                 signerSubject = cert.Subject;
+                                                signerThumbprint = cert.Thumbprint;
                                             }
                                             finally
                                             {
@@ -366,7 +374,7 @@ public static class NativeSystemHelper
                     }
                 }
 
-                return true;
+                return status == 0;
             }
             finally
             {
